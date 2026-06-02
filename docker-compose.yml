@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16
+    container_name: storage-manager-db
+    environment:
+      POSTGRES_DB: storage_manager
+      POSTGRES_USER: brahyam
+      POSTGRES_PASSWORD: brahyam123
+    ports:
+      - "5433:5432"
+    volumes:
+      - storage-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: storage-manager-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/storage_manager
+      SPRING_DATASOURCE_USERNAME: brahyam
+      SPRING_DATASOURCE_PASSWORD: brahyam123
+    depends_on:
+      - db
+
+volumes:
+  storage-data:
