@@ -16,8 +16,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -30,3 +28,8 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000

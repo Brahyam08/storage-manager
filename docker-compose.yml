@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: storage-manager-db
     environment:
-      POSTGRES_DB: storage_manager
-      POSTGRES_USER: brahyam
-      POSTGRES_PASSWORD: brahyam123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -17,9 +17,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/storage_manager
-      SPRING_DATASOURCE_USERNAME: brahyam
-      SPRING_DATASOURCE_PASSWORD: brahyam123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       - db
 

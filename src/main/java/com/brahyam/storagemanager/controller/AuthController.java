@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import com.brahyam.storagemanager.entity.Role;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,7 +29,7 @@ public class AuthController {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
-        user.setRole(request.getRole());
+        user.setRole(Role.VIEWER);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(user));
     }
 

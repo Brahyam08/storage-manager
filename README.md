@@ -4,7 +4,7 @@ REST API for managing physical inventory across storage locations. Built to solv
 
 ## Tech Stack
 
-- **Java 21** + **Spring Boot 3.x**
+- **Java 21** + **Spring Boot 4.x**
 - **PostgreSQL 16**
 - **Spring Security** with JWT authentication
 - **Spring Data JPA** with Hibernate
@@ -15,13 +15,13 @@ REST API for managing physical inventory across storage locations. Built to solv
 
 ## Features
 
-- Full CRUD for locations, items, and users
-- JWT-based authentication with role support (ADMIN / VIEWER)
+- Full CRUD for locations and items, with user queries and deletion
+- JWT-based authentication; public registrations receive the VIEWER role
 - Item movement tracking with full history — every time an item is moved between locations, the system records where it came from, where it went, the quantity moved, and the timestamp
 - Search and filtering — find items by name, category, or location
 - Automatic API documentation via Swagger UI
-- Global error handling with meaningful HTTP status codes
-- Input validation on all request bodies
+- Centralized error handling for API responses
+- Input validation for location and item requests
 - Dockerized for easy deployment
 
 ## Getting Started
@@ -43,15 +43,26 @@ CREATE DATABASE storage_manager;
 \q
 ```
 
-2. Update `src/main/resources/application.yml` with your database credentials.
+2. Update `src/main/resources/application.yaml` with your database credentials.
 
-3. Run the application:
+3. Set a local `JWT_SECRET` environment variable with at least 32 characters.
+
+4. Run the application:
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 ### Option 2 — Run with Docker
+
+1. Copy the environment template:
+
+```bash
+cp .env.example .env
+```
+2. Replace the placeholder values in `.env`.
+
+3. Start the services:
 
 ```bash
 docker compose up --build
@@ -118,10 +129,9 @@ Filters can be combined: `?search=lipo&category=Battery`
 ```json
 POST /api/auth/register
 {
-    "username": "admin",
-    "email": "admin@example.com",
-    "password": "your_password",
-    "role": "ADMIN"
+    "username": "viewer",
+    "email": "viewer@example.com",
+    "password": "your_password"
 }
 ```
 

@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:storage_manager_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+security:
+  jwt:
+    secret: storage-manager-test-secret-key-which-is-long-enough
+    expiration: 86400000
