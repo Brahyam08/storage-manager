@@ -19,6 +19,7 @@ public class LocationService {
     private final ItemRepository items;
     private final ItemMovementRepository movements;
     private final ItemConsumptionRepository consumptions;
+    private final ItemUseRepository uses;
 
     public List<LocationResponse> findAll(Long houseId, User user) {
         houseService.findById(houseId, user);
@@ -59,7 +60,7 @@ public class LocationService {
     public void deleteById(Long id, User user) {
         Location location = lockForUpdate(id, user);
         if (locationRepository.existsByParentId(id) || items.existsByLocationId(id)
-                || movements.existsByFromLocationIdOrToLocationId(id, id) || consumptions.existsByLocationId(id)) {
+                || movements.existsByFromLocationIdOrToLocationId(id, id) || consumptions.existsByLocationId(id) || uses.existsByLocationId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "La ubicación contiene otras ubicaciones, objetos o historial");
         }

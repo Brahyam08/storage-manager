@@ -15,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ItemController {
     private final ItemService items;
+    private final ItemUseService uses;
     private final ItemMovementService movements;
     private final UserService users;
 
@@ -62,6 +63,22 @@ public class ItemController {
     @GetMapping("/{id}/consumptions")
     public List<ItemConsumptionResponse> consumptions(@PathVariable Long id, Principal principal) {
         return items.consumptionHistory(id, users.findByEmail(principal.getName()));
+    }
+
+    @PostMapping("/{id}/uses")
+    public ResponseEntity<ItemUseResponse> take(@PathVariable Long id, @Valid @RequestBody UseItemRequest request, Principal principal) {
+        ItemUseResponse use = uses.take(id, request.quantity(), users.findByEmail(principal.getName()));
+        return ResponseEntity.created(URI.create("/api/items/" + id + "/uses/" + use.id())).body(use);
+    }
+
+    @PostMapping("/{id}/uses/{useId}/return")
+    public ItemUseResponse giveBack(@PathVariable Long id, @PathVariable Long useId, Principal principal) {
+        return uses.giveBack(id, useId, users.findByEmail(principal.getName()));
+    }
+
+    @GetMapping("/{id}/uses")
+    public List<ItemUseResponse> useHistory(@PathVariable Long id, Principal principal) {
+        return uses.history(id, users.findByEmail(principal.getName()));
     }
 
     @GetMapping("/{id}/history")

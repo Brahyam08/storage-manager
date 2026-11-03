@@ -204,6 +204,29 @@ def verify():
             check(api("GET", f"/api/items/{shared_id}", owner)[1]["quantity"] == 0, "Rejected conversion changed stock")
             print("Reusable items reject consumption; consumed items preserve their type/history", flush=True)
 
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                take_results = list(pool.map(lambda actor: api("POST", f"/api/items/{reusable_id}/uses", actor,
+                        {"quantity": 1}, expected=None), [owner, member]))
+            check(sorted(result[0] for result in take_results) == [201, 409], "Concurrent use overspent availability")
+            use_id = next(result[1]["id"] for result in take_results if result[0] == 201)
+            _, used_item = api("GET", f"/api/items/{reusable_id}", owner)
+            check(used_item["quantity"] == 1 and used_item["inUseQuantity"] == 1 and used_item["availableQuantity"] == 0,
+                  "Use changed total or did not reserve availability")
+            api("PATCH", f"/api/items/{reusable_id}/move?toLocationId={places[1]}&quantity=1", owner, expected=409)
+            query("CREATE FUNCTION verification_reject_return() RETURNS trigger LANGUAGE plpgsql AS $$ "
+                  f"BEGIN IF NEW.id = {use_id} AND NEW.returned_at IS NOT NULL THEN RAISE EXCEPTION 'verification failure'; END IF; RETURN NEW; END; $$; "
+                  "CREATE TRIGGER verification_reject_return BEFORE UPDATE ON item_uses "
+                  "FOR EACH ROW EXECUTE FUNCTION verification_reject_return();")
+            api("POST", f"/api/items/{reusable_id}/uses/{use_id}/return", owner, expected=500)
+            check(api("GET", f"/api/items/{reusable_id}", owner)[1]["availableQuantity"] == 0, "Failed return released inventory")
+            check(query(f"SELECT count(*) FROM item_uses WHERE id={use_id} AND returned_at IS NULL;") == "1", "Failed return did not roll back")
+            query("DROP TRIGGER verification_reject_return ON item_uses; DROP FUNCTION verification_reject_return();")
+            api("POST", f"/api/items/{reusable_id}/uses/{use_id}/return", owner)
+            api("POST", f"/api/items/{reusable_id}/uses/{use_id}/return", owner, expected=409)
+            check(api("GET", f"/api/items/{reusable_id}", owner)[1]["availableQuantity"] == 1, "Return did not restore availability")
+            use_history = api("GET", f"/api/items/{reusable_id}/uses", owner)[1]
+            print("Reusable use concurrency, return rollback and duplicate-return protection passed", flush=True)
+
             moving_id = create_item("Concurrent movement", quantity=2)
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
                 results = list(pool.map(lambda place: api("PATCH",
@@ -245,6 +268,7 @@ def verify():
                 owner = login["token"]
                 _, saved = api("GET", f"/api/items/{shared_id}", owner)
                 check(api("GET", f"/api/items/{reusable_id}", owner)[1]["kind"] == "REUSABLE", "Reusable kind did not persist")
+                check(api("GET", f"/api/items/{reusable_id}/uses", owner)[1] == use_history, "Use history did not persist")
                 check(saved["quantity"] == 0 and saved["location"]["id"] == places[1], "Inventory did not persist")
                 check(api("GET", f"/api/items/{shared_id}/consumptions", owner)[1] == consumption_history, "Consumption history did not persist")
                 check(api("GET", f"/api/items/{moving_id}/history", owner)[1] == history, "Movement history did not persist")

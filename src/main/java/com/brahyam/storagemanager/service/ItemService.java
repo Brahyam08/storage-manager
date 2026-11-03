@@ -16,13 +16,14 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ItemService {
     private final ItemRepository items;
+    private final ItemUseRepository uses;
     private final ItemMovementRepository movements;
     private final ItemConsumptionRepository consumptions;
     private final LocationService locations;
     private final HouseService houses;
 
     public ItemResponse findById(Long id, User user) {
-        return ItemResponse.from(requireAccessible(id, user));
+        return response(requireAccessible(id, user));
     }
 
     Item requireAccessible(Long id, User user) {
@@ -33,7 +34,7 @@ public class ItemService {
         if (houseId != null) houses.findById(houseId, user);
         if (locationId != null) locations.findById(locationId, user);
         return items.findAccessibleWithFilters(user.getId(), houseId, search, category, locationId).stream()
-                .map(ItemResponse::from).toList();
+                .map(this::response).toList();
     }
 
     @Transactional
@@ -45,7 +46,7 @@ public class ItemService {
         item.setVisibility(request.getVisibility() == null ? ItemVisibility.PRIVATE : request.getVisibility());
         applyKind(item, request);
         applyDetails(item, request);
-        return ItemResponse.from(items.save(item));
+        return response(items.save(item));
     }
 
     @Transactional
@@ -59,17 +60,26 @@ public class ItemService {
                 && consumptions.existsByItemId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con consumos registrados");
         }
+        if (request.getKind() != null && request.getKind() != item.getKind() && uses.existsByItemId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con usos registrados");
+        }
+        long inUse = uses.activeQuantity(id);
+        if (inUse > 0 && (request.getQuantity() < inUse
+                || (request.getKind() != null && request.getKind() != item.getKind())
+                || (request.getVisibility() != null && request.getVisibility() != item.getVisibility()))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Hay objetos en uso: no puedes reducirlos por debajo de los retirados ni cambiar su tipo o visibilidad");
+        }
         applyKind(item, request);
         applyDetails(item, request);
         if (request.getVisibility() != null) item.setVisibility(request.getVisibility());
-        return ItemResponse.from(items.save(item));
+        return response(items.save(item));
     }
 
     @Transactional
     public void deleteById(Long id, User user) {
         Item item = forUpdate(id, user);
         requireOwner(item, user);
-        if (movements.existsByItemId(id) || consumptions.existsByItemId(id)) {
+        if (movements.existsByItemId(id) || consumptions.existsByItemId(id) || uses.existsByItemId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El objeto tiene historial");
         }
         items.delete(item);
@@ -78,6 +88,7 @@ public class ItemService {
     @Transactional
     public ItemResponse move(Long id, Long toLocationId, Integer quantity, User user) {
         Item item = forUpdate(id, user);
+        if (uses.activeQuantity(id) > 0) throw new ResponseStatusException(HttpStatus.CONFLICT, "Devuelve los objetos en uso antes de trasladarlos");
         if (quantity == null || quantity < 1 || !quantity.equals(item.getQuantity())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Se debe mover la cantidad completa del objeto");
         }
@@ -96,7 +107,7 @@ public class ItemService {
         movement.setMovedAt(LocalDateTime.now());
         movements.save(movement);
         item.setLocation(destination);
-        return ItemResponse.from(items.save(item));
+        return response(items.save(item));
     }
 
     @Transactional
@@ -120,7 +131,7 @@ public class ItemService {
         consumption.setRemainingQuantity(item.getQuantity());
         consumption.setConsumedAt(LocalDateTime.now());
         consumptions.save(consumption);
-        return ItemResponse.from(items.save(item));
+        return response(items.save(item));
     }
 
     public List<ItemConsumptionResponse> consumptionHistory(Long id, User user) {
@@ -129,7 +140,7 @@ public class ItemService {
                 .map(ItemConsumptionResponse::from).toList();
     }
 
-    private Item forUpdate(Long id, User user) {
+    Item forUpdate(Long id, User user) {
         Long houseId = items.findAccessibleHouseId(id, user.getId()).orElseThrow(this::notFound);
         houses.lockForUpdate(houseId, user);
         return requireAccessible(id, user);
@@ -139,6 +150,10 @@ public class ItemService {
         if (!item.getOwner().getId().equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el propietario puede modificar o borrar el objeto");
         }
+    }
+
+    private ItemResponse response(Item item) {
+        return ItemResponse.from(item, Math.toIntExact(uses.activeQuantity(item.getId())));
     }
 
     private void applyKind(Item item, ItemRequest request) {

@@ -15,9 +15,9 @@ el historial conserva su significado. La propiedad, visibilidad y permisos de
 movimiento se mantienen. `kind` no concede acceso a objetos privados.
 
 Angular permite elegir el tipo, filtrar por él y muestra los reutilizables como
-objetos guardados; no ofrece acciones de consumo ni historial de consumos para
-ellos. No se han implementado aún préstamos, estados «en uso» ni devoluciones.
-Esa gestión será una entrega posterior; «guardado» describe la ubicación registrada.
+objetos registrados; no ofrece acciones de consumo ni historial de consumos para
+ellos. La gestión de [uso y devolución](reusable-usage.md) distingue objetos
+disponibles y retirados, conservando el total y la ubicación habitual.
 
 ## Compatibilidad de los datos
 

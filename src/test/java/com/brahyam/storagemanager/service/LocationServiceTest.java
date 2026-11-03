@@ -6,6 +6,7 @@ import com.brahyam.storagemanager.entity.User;
 import com.brahyam.storagemanager.dto.LocationRequest;
 import com.brahyam.storagemanager.dto.LocationResponse;
 import com.brahyam.storagemanager.repository.ItemRepository;
+import com.brahyam.storagemanager.repository.ItemUseRepository;
 import com.brahyam.storagemanager.repository.ItemConsumptionRepository;
 import com.brahyam.storagemanager.repository.ItemMovementRepository;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,6 +36,8 @@ class LocationServiceTest {
     private ItemMovementRepository movements;
     @Mock
     private ItemConsumptionRepository consumptions;
+    @Mock
+    private ItemUseRepository uses;
     private final User user = new User();
     private final House house = new House(5L, "Casa", user);
 
@@ -46,6 +49,15 @@ class LocationServiceTest {
 
     @InjectMocks
     private LocationService locationService;
+
+    @Test
+    void shouldPreserveLocationReferencedByUseHistory() {
+        Location location = new Location(1L, "Cajón", null);
+        stubLocation(1L, location);
+        when(uses.existsByLocationId(1L)).thenReturn(true);
+        assertThrows(ResponseStatusException.class, () -> locationService.deleteById(1L, user));
+        verify(locationRepository, never()).delete(any(Location.class));
+    }
 
     @Test
     void shouldReturnLocationWhenItExists() {
