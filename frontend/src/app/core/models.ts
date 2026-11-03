@@ -31,3 +31,19 @@ export interface InventoryItem {
   location: StorageLocation;
   outOfStock: boolean;
 }
+
+export interface CreateLocation {
+  name: string;
+  description: string;
+  houseId: number;
+  parentId: number | null;
+}
+
+export interface CreateItem {
+  name: string;
+  description: string;
+  category: string;
+  quantity: number;
+  locationId: number;
+  visibility: InventoryItem['visibility'];
+}

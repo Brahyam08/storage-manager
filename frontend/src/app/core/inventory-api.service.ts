@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { House, InventoryItem } from './models';
+import { House, InventoryItem, StorageLocation, CreateLocation, CreateItem } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryApiService {
@@ -20,6 +20,18 @@ export class InventoryApiService {
 
   renewInvitation(houseId: number) {
     return this.http.post<{ code: string }>(`/api/houses/${houseId}/invitation`, {});
+  }
+
+  locations(houseId: number) {
+    return this.http.get<StorageLocation[]>('/api/locations', { params: { houseId } });
+  }
+
+  createLocation(request: CreateLocation) {
+    return this.http.post<StorageLocation>('/api/locations', request);
+  }
+
+  createItem(request: CreateItem) {
+    return this.http.post<InventoryItem>('/api/items', request);
   }
 
   items(houseId: number, search: string) {

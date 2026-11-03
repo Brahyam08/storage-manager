@@ -21,6 +21,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
+import { InventoryCreateComponent } from './inventory-create.component';
+import { Subject } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
@@ -30,7 +32,7 @@ type ItemFilter = 'all' | 'private' | 'shared' | 'empty';
 
 @Component({
   selector: 'app-inventory-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, InventoryCreateComponent],
   templateUrl: './inventory-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,6 +42,7 @@ export class InventoryPageComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  private readonly refreshItems = new Subject<void>();
   readonly houses = signal<House[]>([]);
   readonly items = signal<InventoryItem[]>([]);
   readonly loadingHouses = signal(true);
@@ -98,6 +101,7 @@ export class InventoryPageComponent {
         debounceTime(250),
         distinctUntilChanged(),
       ),
+      this.refreshItems.pipe(startWith(undefined)),
     ])
       .pipe(
         switchMap(([houseId, search]) => {
@@ -216,6 +220,12 @@ export class InventoryPageComponent {
         },
         error: (error) => this.error.set(apiError(error)),
       });
+  }
+
+  itemCreated() {
+    this.filter.set('all');
+    this.searchControl.setValue('');
+    this.refreshItems.next();
   }
 
   setFilter(event: Event) {

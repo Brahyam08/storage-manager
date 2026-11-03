@@ -34,6 +34,8 @@ describe('House switching', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(InventoryPageComponent);
     http.expectOne('/api/houses').flush(houses);
+    fixture.detectChanges();
+    http.expectOne((request) => request.url === '/api/locations').flush([]);
   });
   afterEach(() => {
     fixture.destroy();
@@ -47,6 +49,12 @@ describe('House switching', () => {
       ),
     );
     fixture.componentInstance.houseControl.setValue(2);
+    fixture.detectChanges();
+    http
+      .expectOne(
+        (request) => request.url === '/api/locations' && request.params.get('houseId') === '2',
+      )
+      .flush([]);
     expect(first.cancelled).toBe(true);
     http
       .expectOne((request) => request.url === '/api/items' && request.params.get('houseId') === '2')
@@ -60,6 +68,12 @@ describe('House switching', () => {
     fixture.componentInstance.renewInvitation();
     const invitation = http.expectOne('/api/houses/1/invitation');
     fixture.componentInstance.houseControl.setValue(2);
+    fixture.detectChanges();
+    http
+      .expectOne(
+        (request) => request.url === '/api/locations' && request.params.get('houseId') === '2',
+      )
+      .flush([]);
     http.expectOne((request) => request.url === '/api/items').flush([]);
     invitation.flush({ code: 'first-house-invitation' });
     expect(fixture.componentInstance.invitationCode()).toBe('');

@@ -22,10 +22,11 @@ Angular 21 matches the installed Node version; consult the
 
 - Registration, login, verified profile, logout and session expiration.
 - Create/join houses; renew invitations as the house owner.
+- Create nested locations and objects with quantity and private/shared visibility.
 - Read inventory, search by name and filter private/shared/out-of-stock items.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 
-Inventory editing, location management, consumption, movement and histories still
+Editing/deleting objects and locations, consumption, movement and histories still
 need frontend forms. Those operations are available through the API. There is no
 bundled demo account.
 
@@ -38,7 +39,9 @@ Passwords are never trimmed; registration validates the BCrypt 72-byte UTF-8
 limit. If automatic login fails after registration, the account remains usable.
 
 House changes cancel previous inventory requests. Late invitation responses for
-another house are ignored. The backend enforces membership and private-item
+another house are ignored. Creation forms reset and pending requests are cancelled
+on house changes. Cancellation does not roll back an operation already accepted
+by the server; reopening the house reloads its current inventory. The backend enforces membership and private-item
 access; UI filtering is presentation only.
 
 ## Verification
@@ -49,11 +52,12 @@ npm run build
 npm audit
 ```
 
-13 tests cover authentication, HTTP isolation, stale responses, password byte
+18 tests cover creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
-member, reload logout and mobile layout. The unchanged backend separately has
+member, reload logout and mobile layout. Creation checks also covered nested locations,
+empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. The unchanged backend separately has
 101 passing tests.
 
 Targeted Angular CLI overrides use glob 14.0.3 and minimatch 11.0.4 for

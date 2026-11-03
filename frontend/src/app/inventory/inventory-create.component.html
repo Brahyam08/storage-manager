@@ -1,0 +1,155 @@
+<section class="inventory-create" aria-label="Añadir al inventario">
+  <div class="creation-actions">
+    <button class="button secondary" type="button" [disabled]="busy()" (click)="open('location')">
+      + Nueva ubicación
+    </button>
+    <button class="button primary" type="button" [disabled]="busy()" (click)="open('item')">
+      + Nuevo objeto
+    </button>
+  </div>
+  @if (notice()) {
+    <p class="creation-notice" role="status">{{ notice() }}</p>
+  }
+  @if (mode()) {
+    <section
+      class="panel creation-panel"
+      [attr.aria-label]="mode() === 'location' ? 'Nueva ubicación' : 'Nuevo objeto'"
+    >
+      <div class="inventory-heading">
+        <h2>{{ mode() === 'location' ? 'Un sitio para tus cosas.' : 'Guarda algo nuevo.' }}</h2>
+        <button class="text-button" type="button" [disabled]="busy()" (click)="mode.set(null)">
+          Cerrar formulario
+        </button>
+      </div>
+      @if (loading()) {
+        <p role="status">Cargando ubicaciones…</p>
+      }
+      @if (locationError()) {
+        <p class="error-banner" role="alert">
+          {{ locationError() }}
+          <button
+            type="button"
+            class="text-button"
+            (click)="loadLocations()"
+            [disabled]="loading()"
+          >
+            Reintentar ubicaciones
+          </button>
+        </p>
+      }
+      @if (error()) {
+        <p class="error-banner" role="alert">{{ error() }}</p>
+      }
+      @if (mode() === 'location') {
+        <p class="muted">Crea una habitación, un mueble o un cajón dentro de otra ubicación.</p>
+        <form [formGroup]="locationForm" (ngSubmit)="createLocation()">
+          <fieldset class="creation-fields" [disabled]="busy() || loading() || !!locationError()">
+            <div>
+              <label for="location-name">Nombre de la ubicación</label
+              ><input
+                id="location-name"
+                formControlName="name"
+                maxlength="255"
+                placeholder="Por ejemplo, Cajón 2"
+              />
+              @if (locationForm.controls.name.touched && locationForm.controls.name.invalid) {
+                <small class="field-error">Escribe un nombre de hasta 255 caracteres.</small>
+              }
+            </div>
+            <div>
+              <label for="parent-location">Dentro de</label
+              ><select id="parent-location" formControlName="parentId">
+                <option [ngValue]="null">Directamente en la casa</option>
+                @for (location of locations(); track location.id) {
+                  <option [ngValue]="location.id">{{ location.path }}</option>
+                }
+              </select>
+            </div>
+            <div class="full-width">
+              <label for="location-description">Descripción de la ubicación (opcional)</label
+              ><input id="location-description" formControlName="description" maxlength="255" />
+            </div>
+            <button class="button primary" type="submit">
+              {{ busy() ? 'Guardando…' : 'Crear ubicación' }}
+            </button>
+          </fieldset>
+        </form>
+      } @else {
+        @if (!loading() && !locationError() && !locations().length) {
+          <p class="muted">Primero necesitas un lugar donde guardarlo.</p>
+          <button class="text-button" type="button" (click)="open('location')">
+            Crear mi primera ubicación
+          </button>
+        } @else {
+          <form [formGroup]="itemForm" (ngSubmit)="createItem()">
+            <fieldset class="creation-fields" [disabled]="busy() || loading() || !!locationError()">
+              <div>
+                <label for="item-name">Nombre del objeto</label
+                ><input
+                  id="item-name"
+                  formControlName="name"
+                  maxlength="255"
+                  placeholder="Por ejemplo, Tornillos M3"
+                />
+                @if (itemForm.controls.name.touched && itemForm.controls.name.invalid) {
+                  <small class="field-error">Escribe un nombre de hasta 255 caracteres.</small>
+                }
+              </div>
+              <div>
+                <label for="item-category">Categoría (opcional)</label
+                ><input
+                  id="item-category"
+                  formControlName="category"
+                  maxlength="255"
+                  placeholder="Ferretería"
+                />
+              </div>
+              <div>
+                <label for="item-location">Dónde lo guardas</label
+                ><select id="item-location" formControlName="locationId">
+                  <option [ngValue]="null">Elige una ubicación</option>
+                  @for (location of locations(); track location.id) {
+                    <option [ngValue]="location.id">{{ location.path }}</option>
+                  }
+                </select>
+                @if (itemForm.controls.locationId.touched && itemForm.controls.locationId.invalid) {
+                  <small class="field-error">Selecciona una ubicación.</small>
+                }
+              </div>
+              <div>
+                <label for="item-stock">Cantidad</label
+                ><input
+                  id="item-stock"
+                  type="number"
+                  formControlName="quantity"
+                  min="0"
+                  max="2147483647"
+                  step="1"
+                />
+                @if (itemForm.controls.quantity.touched && itemForm.controls.quantity.invalid) {
+                  <small class="field-error">Usa un número entero entre 0 y 2147483647.</small>
+                }
+              </div>
+              <div>
+                <label for="item-visibility">Quién puede verlo</label
+                ><select id="item-visibility" formControlName="visibility">
+                  <option value="PRIVATE">Privado: solo yo</option>
+                  <option value="HOUSE_SHARED">Compartido con la casa</option></select
+                ><small class="field-hint"
+                  >Los miembros pueden consumir y mover los objetos compartidos.</small
+                >
+              </div>
+              <div>
+                <label for="item-description">Descripción del objeto (opcional)</label
+                ><input id="item-description" formControlName="description" maxlength="255" />
+              </div>
+              <button class="button primary" type="submit">
+                {{ busy() ? 'Guardando…' : 'Guardar objeto' }}
+              </button>
+            </fieldset>
+          </form>
+        }
+      }
+    </section>
+  }
+</section>

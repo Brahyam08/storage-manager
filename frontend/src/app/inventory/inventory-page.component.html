@@ -157,6 +157,9 @@
           </section>
         }
       } @else {
+        @if (selectedHouse(); as house) {
+          <app-inventory-create [houseId]="house.id" (created)="itemCreated()" />
+        }
         <section class="summary-grid" aria-label="Resumen del inventario mostrado">
           <article class="summary-card">
             <span>Objetos encontrados</span><strong>{{ visibleItems().length }}</strong
