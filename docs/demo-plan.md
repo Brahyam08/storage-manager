@@ -13,7 +13,8 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
 4. Angular: registro/login, casas e invitaciones y consulta de inventario con
    búsqueda, filtros y diseño móvil implementados. Creación de ubicaciones anidadas
    y objetos con cantidad/visibilidad implementada. Edición por propietario, consumo
-   e historial de consumos implementados. Pendientes borrado, edición de ubicaciones,
+   e historial de consumos implementados. Tipos consumible/reutilizable explícitos,
+   con consumo bloqueado para reutilizables. Pendientes uso/devolución. Pendientes borrado, edición de ubicaciones,
    movimiento e historial de movimientos. Ver frontend/README.md.
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
    persistencia tras recrear contenedores. Pendientes demo completa, datos de

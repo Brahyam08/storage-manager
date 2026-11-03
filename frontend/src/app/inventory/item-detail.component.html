@@ -4,7 +4,16 @@
       <p class="eyebrow">{{ item.location.path }}</p>
       <h2 #detailTitle tabindex="-1">{{ item.name }}</h2>
       <p class="muted" role="status">
-        Quedan {{ item.quantity }} unidades ·
+        {{ item.kind === 'REUSABLE' ? 'Reutilizable ·' : 'Consumible · Quedan' }}
+        {{ item.quantity }}
+        {{
+          item.kind === 'REUSABLE'
+            ? item.quantity === 1
+              ? 'objeto guardado'
+              : 'objetos guardados'
+            : 'unidades'
+        }}
+        ·
         {{ item.visibility === 'PRIVATE' ? 'Privado' : 'Compartido con la casa' }}
       </p>
     </div>
@@ -19,17 +28,19 @@
         Editar objeto
       </button>
     }
-    <button
-      class="button primary"
-      type="button"
-      [disabled]="busy() || item.quantity === 0"
-      (click)="open('consume')"
-    >
-      Registrar consumo
-    </button>
-    <button class="button secondary" type="button" [disabled]="busy()" (click)="loadHistory()">
-      Ver consumos
-    </button>
+    @if (item.kind === 'CONSUMABLE') {
+      <button
+        class="button primary"
+        type="button"
+        [disabled]="busy() || item.quantity === 0"
+        (click)="open('consume')"
+      >
+        Registrar consumo
+      </button>
+      <button class="button secondary" type="button" [disabled]="busy()" (click)="loadHistory()">
+        Ver consumos
+      </button>
+    }
     <button class="text-button" type="button" [disabled]="busy()" (click)="refresh()">
       Actualizar objeto
     </button>
@@ -47,6 +58,15 @@
     <form [formGroup]="editForm" (ngSubmit)="save()">
       <fieldset class="creation-fields" [disabled]="busy()">
         <div>
+          <label for="edit-kind">Tipo de objeto</label
+          ><select id="edit-kind" formControlName="kind">
+            <option value="CONSUMABLE">Consumible: se gasta</option>
+            <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
+          ><small class="field-hint"
+            >Un objeto con consumos registrados no puede pasar a reutilizable.</small
+          >
+        </div>
+        <div>
           <label for="edit-name">Nombre del objeto</label
           ><input id="edit-name" formControlName="name" maxlength="255" />
           @if (editForm.controls.name.touched && editForm.controls.name.invalid) {
@@ -58,19 +78,30 @@
           ><input id="edit-category" formControlName="category" maxlength="255" />
         </div>
         <div>
-          <label for="edit-quantity">Cantidad actual (ajuste)</label
+          <label for="edit-quantity">{{
+            editForm.controls.kind.value === 'REUSABLE'
+              ? 'Número de objetos'
+              : 'Cantidad actual (ajuste)'
+          }}</label
           ><input
             id="edit-quantity"
             type="number"
             formControlName="quantity"
-            min="0"
+            [min]="editForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
             max="2147483647"
             step="1"
-          /><small class="field-hint"
-            >Para gastar unidades con historial, usa Registrar consumo.</small
-          >
-          @if (editForm.controls.quantity.touched && editForm.controls.quantity.invalid) {
-            <small class="field-error">Usa un número entero entre 0 y 2147483647.</small>
+          /><small class="field-hint">{{
+            editForm.controls.kind.value === 'REUSABLE'
+              ? 'Estos objetos se conservan al usarlos.'
+              : 'Para gastar unidades con historial, usa Registrar consumo.'
+          }}</small>
+          @if (
+            editForm.controls.quantity.touched &&
+            (editForm.controls.quantity.invalid || editForm.hasError('reusableQuantity'))
+          ) {
+            <small class="field-error"
+              >Usa un número entero válido; los reutilizables necesitan al menos un objeto.</small
+            >
           }
         </div>
         <div>

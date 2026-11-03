@@ -16,6 +16,7 @@ REST API for managing physical inventory across storage locations. Built to solv
 
 ## Features
 
+- Explicit consumable/reusable types: reusable objects cannot be consumed
 - House-based locations and inventory with private/shared items and own-profile access
 - JWT-based authentication; public registrations receive the VIEWER role
 - Item movement tracking with full history — every time an item is moved between locations, the system records where it came from, where it went, the quantity moved, and the timestamp
@@ -29,7 +30,8 @@ REST API for managing physical inventory across storage locations. Built to solv
 
 The first Angular delivery supports registration/login, house creation/joining,
 owner invitations, nested location creation, and item creation with quantity and
-private/shared visibility. Inventory supports search and stock/visibility filters.
+private/shared visibility and consumable/reusable type. Inventory supports search
+and stock/visibility/type filters. See [item behavior](docs/item-kinds.md).
 Desktop and mobile layouts include owner editing, consumption and consumption
 history. Movement/history and deletion forms remain pending; those operations
 already exist in the API.
@@ -272,7 +274,7 @@ src/main/java/com/brahyam/storagemanager/
 ## Verification
 
 Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
-by Maven; no machine-specific agent path is required. The current suite has 101 tests,
+by Maven; no machine-specific agent path is required. The current suite has 106 tests,
 including OpenAPI schema and Swagger UI checks. Docker verification also checks
 the packaged documentation endpoints.
 

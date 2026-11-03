@@ -13,7 +13,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
-import { InventoryItem, StorageLocation } from '../core/models';
+import { reusableQuantity } from './item-kind.validator';
+import { InventoryItem, StorageLocation, ItemKind } from '../core/models';
 
 @Component({
   selector: 'app-inventory-create',
@@ -45,22 +46,26 @@ export class InventoryCreateComponent implements OnChanges {
     description: this.fb.nonNullable.control('', Validators.maxLength(255)),
     parentId: this.fb.control<number | null>(null),
   });
-  readonly itemForm = this.fb.group({
-    name: this.fb.nonNullable.control('', this.nameValidators),
-    description: this.fb.nonNullable.control('', Validators.maxLength(255)),
-    category: this.fb.nonNullable.control('', Validators.maxLength(255)),
-    quantity: this.fb.nonNullable.control(1, [
-      Validators.required,
-      Validators.min(0),
-      Validators.max(2147483647),
-      Validators.pattern(/^\d+$/),
-    ]),
-    locationId: this.fb.control<number | null>(null, Validators.required),
-    visibility: this.fb.nonNullable.control<InventoryItem['visibility']>(
-      'PRIVATE',
-      Validators.required,
-    ),
-  });
+  readonly itemForm = this.fb.group(
+    {
+      kind: this.fb.nonNullable.control<ItemKind>('CONSUMABLE', Validators.required),
+      name: this.fb.nonNullable.control('', this.nameValidators),
+      description: this.fb.nonNullable.control('', Validators.maxLength(255)),
+      category: this.fb.nonNullable.control('', Validators.maxLength(255)),
+      quantity: this.fb.nonNullable.control(1, [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(2147483647),
+        Validators.pattern(/^\d+$/),
+      ]),
+      locationId: this.fb.control<number | null>(null, Validators.required),
+      visibility: this.fb.nonNullable.control<InventoryItem['visibility']>(
+        'PRIVATE',
+        Validators.required,
+      ),
+    },
+    { validators: reusableQuantity },
+  );
 
   ngOnChanges() {
     this.houseChanged.next();

@@ -22,7 +22,8 @@ Angular 21 matches the installed Node version; consult the
 
 - Registration, login, verified profile, logout and session expiration.
 - Create/join houses; renew invitations as the house owner.
-- Create nested locations and objects with quantity and private/shared visibility.
+- Create nested locations and objects with quantity, private/shared visibility and
+  explicit consumable/reusable type.
 - Read inventory, search by name and filter private/shared/out-of-stock items.
 - Open item details, edit as owner, record consumption and view consumption history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
@@ -53,7 +54,7 @@ npm run build
 npm audit
 ```
 
-25 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+27 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
@@ -81,7 +82,13 @@ development dependencies on 2026-11-03; deployment security remains a separate c
 
 Click an object's name to open its details. The owner can edit its details,
 visibility and current stock (an explicit adjustment). Location is retained;
-movement will have its own action. Use **Registrar consumo** when spending units:
+movement will have its own action. Reusable objects have at least one exemplar and no consumption actions. A single
+screw can still be consumable; several mice can be reusable. Existing items retain
+their previous consumable behavior until explicitly reclassified by their owner.
+An item with recorded consumption cannot become reusable. Usage/return tracking
+is still pending. See [type rules](../docs/item-kinds.md).
+
+Use **Registrar consumo** for consumables when spending units:
 it records the amount and remaining stock in the API history. A member can consume
 shared items; only the owner can edit them. UI controls supplement API permissions.
 

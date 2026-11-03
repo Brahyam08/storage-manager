@@ -29,7 +29,7 @@ import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { House, InventoryItem } from '../core/models';
 
-type ItemFilter = 'all' | 'private' | 'shared' | 'empty';
+type ItemFilter = 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
 
 @Component({
   selector: 'app-inventory-page',
@@ -69,6 +69,10 @@ export class InventoryPageComponent {
           return item.visibility === 'PRIVATE';
         case 'shared':
           return item.visibility === 'HOUSE_SHARED';
+        case 'consumable':
+          return item.kind === 'CONSUMABLE';
+        case 'reusable':
+          return item.kind === 'REUSABLE';
         case 'empty':
           return item.outOfStock;
         default:

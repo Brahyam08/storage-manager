@@ -41,6 +41,7 @@ describe('Inventory creation', () => {
     const request = http.expectOne('/api/items');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
+      kind: 'CONSUMABLE',
       name: 'Tornillos',
       description: '',
       category: '',
@@ -107,5 +108,18 @@ describe('Inventory creation', () => {
     expect(component.busy()).toBe(false);
     component.createItem();
     http.expectOne('/api/items').flush({ id: 4 });
+  });
+  it('requires at least one reusable object and sends its explicit kind', () => {
+    const component = fixture.componentInstance;
+    component.itemForm.patchValue({ name: 'Ratón', locationId: 3, kind: 'REUSABLE', quantity: 0 });
+    component.createItem();
+    expect(component.itemForm.hasError('reusableQuantity')).toBe(true);
+    http.expectNone('/api/items');
+    component.itemForm.controls.quantity.setValue(1);
+    component.createItem();
+    const request = http.expectOne('/api/items');
+    expect(request.request.body.kind).toBe('REUSABLE');
+    request.flush({ id: 4 });
+    expect(component.itemForm.controls.kind.value).toBe('CONSUMABLE');
   });
 });

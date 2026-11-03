@@ -5,6 +5,7 @@ import { ItemDetailComponent } from './item-detail.component';
 import { InventoryItem } from '../core/models';
 
 const item: InventoryItem = {
+  kind: 'CONSUMABLE',
   id: 4,
   name: 'Tornillos',
   description: null,
@@ -104,6 +105,7 @@ describe('Item detail', () => {
     const request = http.expectOne('/api/items/4');
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({
+      kind: 'CONSUMABLE',
       name: 'Tornillos M3',
       category: 'Ferretería',
       description: '',
@@ -138,20 +140,34 @@ describe('Item detail', () => {
   it('shows recorded quantities and remaining stock from consumption history', () => {
     const component = fixture.componentInstance;
     component.loadHistory();
-    http
-      .expectOne('/api/items/4/consumptions')
-      .flush([
-        {
-          id: 1,
-          quantity: 5,
-          remainingQuantity: 5,
-          consumedById: 7,
-          consumedAt: '2026-11-03T19:00:00',
-          location: item.location,
-        },
-      ]);
+    http.expectOne('/api/items/4/consumptions').flush([
+      {
+        id: 1,
+        quantity: 5,
+        remainingQuantity: 5,
+        consumedById: 7,
+        consumedAt: '2026-11-03T19:00:00',
+        location: item.location,
+      },
+    ]);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('5 unidades consumidas · Quedaron 5');
     expect(fixture.nativeElement.textContent).toContain('Despacho → Cajón');
+  });
+  it('hides consumption actions for reusable objects and never sends a consume request', () => {
+    fixture.componentRef.setInput('item', { ...item, kind: 'REUSABLE', quantity: 1 });
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.open('consume');
+    component.consume();
+    expect(component.mode()).toBeNull();
+    http.expectNone('/api/items/4/consume');
+    expect(fixture.nativeElement.textContent).not.toContain('Registrar consumo');
+    expect(fixture.nativeElement.textContent).not.toContain('Ver consumos');
+    expect(fixture.nativeElement.textContent).toContain('Reutilizable · 1 objeto guardado');
+    component.editForm.controls.quantity.setValue(0);
+    component.save();
+    expect(component.editForm.hasError('reusableQuantity')).toBe(true);
+    http.expectNone('/api/items/4');
   });
 });

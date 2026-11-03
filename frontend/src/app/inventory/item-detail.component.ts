@@ -17,7 +17,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
-import { InventoryItem, ItemConsumption } from '../core/models';
+import { reusableQuantity } from './item-kind.validator';
+import { InventoryItem, ItemConsumption, ItemKind } from '../core/models';
 
 @Component({
   selector: 'app-item-detail',
@@ -40,24 +41,28 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   readonly mode = signal<'edit' | 'consume' | 'history' | null>(null);
   readonly history = signal<ItemConsumption[]>([]);
   readonly historyLoaded = signal(false);
-  readonly editForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
-    description: ['', Validators.maxLength(255)],
-    category: ['', Validators.maxLength(255)],
-    quantity: [
-      0,
-      [
-        Validators.required,
-        Validators.min(0),
-        Validators.max(2147483647),
-        Validators.pattern(/^\d+$/),
+  readonly editForm = this.fb.nonNullable.group(
+    {
+      kind: this.fb.nonNullable.control<ItemKind>('CONSUMABLE', Validators.required),
+      name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
+      description: ['', Validators.maxLength(255)],
+      category: ['', Validators.maxLength(255)],
+      quantity: [
+        0,
+        [
+          Validators.required,
+          Validators.min(0),
+          Validators.max(2147483647),
+          Validators.pattern(/^\d+$/),
+        ],
       ],
-    ],
-    visibility: this.fb.nonNullable.control<InventoryItem['visibility']>(
-      'PRIVATE',
-      Validators.required,
-    ),
-  });
+      visibility: this.fb.nonNullable.control<InventoryItem['visibility']>(
+        'PRIVATE',
+        Validators.required,
+      ),
+    },
+    { validators: reusableQuantity },
+  );
   readonly consumeForm = this.fb.nonNullable.group({ quantity: [1] });
 
   ngOnChanges() {
@@ -67,6 +72,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     this.history.set([]);
     this.historyLoaded.set(false);
     this.editForm.reset({
+      kind: this.item.kind,
       name: this.item.name,
       description: this.item.description ?? '',
       category: this.item.category ?? '',
@@ -91,7 +97,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     if (
       this.busy() ||
       (mode === 'edit' && this.item.ownerId !== this.userId) ||
-      (mode === 'consume' && this.item.quantity === 0)
+      (mode === 'consume' && (this.item.kind === 'REUSABLE' || this.item.quantity === 0))
     )
       return;
     this.mode.set(mode);
@@ -127,7 +133,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   consume() {
-    if (this.busy()) return;
+    if (this.busy() || this.item.kind === 'REUSABLE') return;
     if (this.consumeForm.invalid) {
       this.consumeForm.markAllAsTouched();
       return;

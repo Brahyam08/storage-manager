@@ -174,11 +174,11 @@
             ><small>En esta búsqueda</small>
           </article>
           <article class="summary-card">
-            <span>Unidades guardadas</span><strong>{{ units() }}</strong
+            <span>Unidades registradas</span><strong>{{ units() }}</strong
             ><small>Sumando los objetos encontrados</small>
           </article>
           <article class="summary-card">
-            <span>Sin existencias</span><strong>{{ emptyCount() }}</strong
+            <span>Consumibles agotados</span><strong>{{ emptyCount() }}</strong
             ><small>Para tener en cuenta al reponer</small>
           </article>
         </section>
@@ -208,7 +208,9 @@
               <option value="all">Todos los objetos</option>
               <option value="private">Privados</option>
               <option value="shared">Compartidos</option>
-              <option value="empty">Sin existencias</option>
+              <option value="empty">Consumibles agotados</option>
+              <option value="consumable">Consumibles</option>
+              <option value="reusable">Reutilizables</option>
             </select>
           </div>
           @if (itemError()) {
@@ -246,7 +248,15 @@
                   </div>
                   <div class="item-quantity" [class.empty]="item.outOfStock">
                     <strong>{{ item.quantity }}</strong
-                    ><small>{{ item.outOfStock ? 'Sin existencias' : 'unidades' }}</small>
+                    ><small>{{
+                      item.kind === 'REUSABLE'
+                        ? item.quantity === 1
+                          ? 'objeto guardado'
+                          : 'objetos guardados'
+                        : item.outOfStock
+                          ? 'Sin existencias'
+                          : 'unidades consumibles'
+                    }}</small>
                   </div>
                   <span class="visibility-badge" [class.shared]="item.visibility === 'HOUSE_SHARED'"
                     ><i aria-hidden="true"></i

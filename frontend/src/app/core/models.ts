@@ -20,7 +20,10 @@ export interface StorageLocation {
   path: string;
 }
 
+export type ItemKind = 'CONSUMABLE' | 'REUSABLE';
+
 export interface InventoryItem {
+  kind: ItemKind;
   id: number;
   name: string;
   description: string | null;
@@ -40,6 +43,7 @@ export interface CreateLocation {
 }
 
 export interface CreateItem {
+  kind: ItemKind;
   name: string;
   description: string;
   category: string;

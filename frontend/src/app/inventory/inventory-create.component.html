@@ -84,6 +84,15 @@
           <form [formGroup]="itemForm" (ngSubmit)="createItem()">
             <fieldset class="creation-fields" [disabled]="busy() || loading() || !!locationError()">
               <div>
+                <label for="item-kind">Tipo de objeto</label
+                ><select id="item-kind" formControlName="kind">
+                  <option value="CONSUMABLE">Consumible: se gasta</option>
+                  <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
+                ><small class="field-hint"
+                  >Un tornillo es consumible. Un ratón o un taladro es reutilizable.</small
+                >
+              </div>
+              <div>
                 <label for="item-name">Nombre del objeto</label
                 ><input
                   id="item-name"
@@ -117,17 +126,25 @@
                 }
               </div>
               <div>
-                <label for="item-stock">Cantidad</label
+                <label for="item-stock">{{
+                  itemForm.controls.kind.value === 'REUSABLE' ? 'Número de objetos' : 'Cantidad'
+                }}</label
                 ><input
                   id="item-stock"
                   type="number"
                   formControlName="quantity"
-                  min="0"
+                  [min]="itemForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
                   max="2147483647"
                   step="1"
                 />
-                @if (itemForm.controls.quantity.touched && itemForm.controls.quantity.invalid) {
-                  <small class="field-error">Usa un número entero entre 0 y 2147483647.</small>
+                @if (
+                  itemForm.controls.quantity.touched &&
+                  (itemForm.controls.quantity.invalid || itemForm.hasError('reusableQuantity'))
+                ) {
+                  <small class="field-error"
+                    >Usa un número entero válido; los reutilizables necesitan al menos un
+                    objeto.</small
+                  >
                 }
               </div>
               <div>
@@ -136,7 +153,8 @@
                   <option value="PRIVATE">Privado: solo yo</option>
                   <option value="HOUSE_SHARED">Compartido con la casa</option></select
                 ><small class="field-hint"
-                  >Los miembros pueden consumir y mover los objetos compartidos.</small
+                  >Los miembros pueden mover los objetos compartidos y gastar los
+                  consumibles.</small
                 >
               </div>
               <div>
