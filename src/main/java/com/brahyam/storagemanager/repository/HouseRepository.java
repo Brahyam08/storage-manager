@@ -23,4 +23,7 @@ public interface HouseRepository extends JpaRepository<House, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select h from House h where h.id = :id and h.owner.id = :userId")
     Optional<House> findOwnedForUpdate(@Param("id") Long id, @Param("userId") Long userId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select h from House h where h.id = :id and (h.owner.id = :userId or exists (select m.id from HouseMember m where m.house = h and m.user.id = :userId))")
+    Optional<House> findAccessibleForUpdate(@Param("id") Long id, @Param("userId") Long userId);
 }

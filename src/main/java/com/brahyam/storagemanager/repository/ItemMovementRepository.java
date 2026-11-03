@@ -11,4 +11,5 @@ public interface ItemMovementRepository extends JpaRepository<ItemMovement, Long
 
     List<ItemMovement> findByItemId(Long itemId);
 
+    boolean existsByFromLocationIdOrToLocationId(Long fromLocationId, Long toLocationId);
 }

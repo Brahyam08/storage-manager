@@ -1,6 +1,7 @@
 package com.brahyam.storagemanager.service;
 
 import com.brahyam.storagemanager.entity.Item;
+import com.brahyam.storagemanager.entity.User;
 import com.brahyam.storagemanager.entity.ItemMovement;
 import com.brahyam.storagemanager.entity.Location;
 import com.brahyam.storagemanager.repository.ItemMovementRepository;
@@ -47,10 +48,10 @@ public class ItemService {
         itemRepository.deleteById(id);
     }
 
-    public Item move(Long itemId, Long toLocationId, Integer quantity) {
+    public Item move(Long itemId, Long toLocationId, Integer quantity, User user) {
         Item item = findById(itemId);
         Location fromLocation = item.getLocation();
-        Location toLocation = locationService.findById(toLocationId);
+        Location toLocation = locationService.findById(toLocationId, user);
 
         ItemMovement movement = new ItemMovement();
         movement.setItem(item);

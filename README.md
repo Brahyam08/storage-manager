@@ -103,18 +103,28 @@ Only the creator can generate or renew an invitation. Codes are returned once,
 are reusable until renewed, and are stored as SHA-256 hashes. Renewal invalidates
 the previous code without removing existing members. Joining again is harmless.
 
-Existing items and locations are still global; they are not yet isolated
-by house and do not yet support private objects. There is no mobile UI yet.
+Locations now belong to houses and support nesting. Existing item reads are
+still global and private objects are not implemented yet. There is no mobile UI yet.
 
 ### Locations (requires token)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/locations` | List all locations |
+| GET | `/api/locations?houseId=1` | List locations in an accessible house |
 | GET | `/api/locations/{id}` | Get location by ID |
 | POST | `/api/locations` | Create a location |
 | PUT | `/api/locations/{id}` | Update a location |
 | DELETE | `/api/locations/{id}` | Delete a location |
+
+Location creation and updates require `houseId` and `name`, with optional
+`description` and `parentId` (null for a root). Example:
+`{"houseId":1,"name":"Cajón 2","parentId":3}`.
+Responses include `id`, `name`, `description`, `houseId`, `parentId` and the full
+`path`, such as `Despacho → Cajonera → Cajón 2`. Creators and members may organize
+their house's locations. Cycles and changing a location's house are rejected;
+deleting locations with children, items or history returns `409`.
+Legacy locations without a house are preserved and excluded from location access.
+See [location contract](docs/house-locations.md).
 
 ### Items (requires token)
 

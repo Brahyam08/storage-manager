@@ -33,6 +33,12 @@ public class HouseService {
                         HttpStatus.NOT_FOUND, "Casa no encontrada"));
     }
 
+    @Transactional
+    public House lockForUpdate(Long id, User user) {
+        return houseRepository.findAccessibleForUpdate(id, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Casa no encontrada"));
+    }
+
     public List<House> findAll(User user) {
         return houseRepository.findAllAccessible(user.getId());
     }

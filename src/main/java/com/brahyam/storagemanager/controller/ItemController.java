@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.security.Principal;
+import com.brahyam.storagemanager.service.UserService;
 
 @RestController
 @RequestMapping("/api/items")
@@ -22,6 +24,7 @@ public class ItemController {
     private final ItemService itemService;
     private final ItemMovementService itemMovementService;
     private final LocationService locationService;
+    private final UserService users;
 
     @GetMapping
     public ResponseEntity<List<Item>> findAll(
@@ -37,8 +40,8 @@ public class ItemController {
     }
 
     @PostMapping
-    public ResponseEntity<Item> save(@Valid @RequestBody ItemRequest request) {
-        Location location = locationService.findById(request.getLocationId());
+    public ResponseEntity<Item> save(@Valid @RequestBody ItemRequest request, Principal principal) {
+        Location location = locationService.findById(request.getLocationId(), users.findByEmail(principal.getName()));
         Item item = new Item();
         item.setName(request.getName());
         item.setDescription(request.getDescription());
@@ -49,8 +52,8 @@ public class ItemController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Item> update(@PathVariable Long id, @Valid @RequestBody ItemRequest request) {
-        Location location = locationService.findById(request.getLocationId());
+    public ResponseEntity<Item> update(@PathVariable Long id, @Valid @RequestBody ItemRequest request, Principal principal) {
+        Location location = locationService.findById(request.getLocationId(), users.findByEmail(principal.getName()));
         Item item = new Item();
         item.setName(request.getName());
         item.setDescription(request.getDescription());
@@ -69,8 +72,8 @@ public class ItemController {
     @PatchMapping("/{id}/move")
     public ResponseEntity<Item> move(@PathVariable Long id,
                                      @RequestParam Long toLocationId,
-                                     @RequestParam Integer quantity) {
-        return ResponseEntity.ok(itemService.move(id, toLocationId, quantity));
+                                     @RequestParam Integer quantity, Principal principal) {
+        return ResponseEntity.ok(itemService.move(id, toLocationId, quantity, users.findByEmail(principal.getName())));
     }
 
     @GetMapping("/{id}/history")
