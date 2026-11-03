@@ -33,6 +33,10 @@ public class Item {
     @Column(length = 20)
     private ItemVisibility visibility = ItemVisibility.PRIVATE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'CONSUMABLE'")
+    private ItemKind kind = ItemKind.CONSUMABLE;
+
     public Item(Long id, String name, String description, String category, Integer quantity, Location location) {
         this.id = id;
         this.name = name;

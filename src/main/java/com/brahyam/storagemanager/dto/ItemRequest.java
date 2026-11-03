@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import jakarta.validation.constraints.Size;
 import com.brahyam.storagemanager.entity.ItemVisibility;
+import com.brahyam.storagemanager.entity.ItemKind;
 
 @Data
 public class ItemRequest {
@@ -28,5 +29,6 @@ public class ItemRequest {
     private Long locationId;
 
     private ItemVisibility visibility;
+    private ItemKind kind;
 
 }

@@ -43,6 +43,7 @@ public class ItemService {
         item.setOwner(user);
         item.setLocation(location);
         item.setVisibility(request.getVisibility() == null ? ItemVisibility.PRIVATE : request.getVisibility());
+        applyKind(item, request);
         applyDetails(item, request);
         return ItemResponse.from(items.save(item));
     }
@@ -54,6 +55,11 @@ public class ItemService {
         if (!item.getLocation().getId().equals(request.getLocationId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usa el movimiento para cambiar la ubicación");
         }
+        if (request.getKind() == ItemKind.REUSABLE && item.getKind() != ItemKind.REUSABLE
+                && consumptions.existsByItemId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con consumos registrados");
+        }
+        applyKind(item, request);
         applyDetails(item, request);
         if (request.getVisibility() != null) item.setVisibility(request.getVisibility());
         return ItemResponse.from(items.save(item));
@@ -96,6 +102,9 @@ public class ItemService {
     @Transactional
     public ItemResponse consume(Long id, Integer quantity, User user) {
         Item item = forUpdate(id, user);
+        if (item.getKind() == ItemKind.REUSABLE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Los objetos reutilizables no se consumen");
+        }
         if (quantity == null || quantity < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cantidad a consumir debe ser positiva");
         }
@@ -130,6 +139,14 @@ public class ItemService {
         if (!item.getOwner().getId().equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el propietario puede modificar o borrar el objeto");
         }
+    }
+
+    private void applyKind(Item item, ItemRequest request) {
+        ItemKind kind = request.getKind() == null ? item.getKind() : request.getKind();
+        if (kind == ItemKind.REUSABLE && request.getQuantity() < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un objeto reutilizable debe tener al menos una unidad");
+        }
+        item.setKind(kind);
     }
 
     private void applyDetails(Item item, ItemRequest request) {

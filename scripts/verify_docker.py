@@ -102,7 +102,7 @@ def verify():
         def preserved_legacy_data():
             count = query("SELECT count(*) FROM items i JOIN locations l ON l.id=i.location_id "
                           "WHERE i.id=1 AND i.name='Legacy screws' AND i.quantity=10 "
-                          "AND i.owner_id IS NULL AND i.visibility IS NULL AND l.house_id IS NULL;")
+                          "AND i.owner_id IS NULL AND i.visibility IS NULL AND i.kind='CONSUMABLE' AND l.house_id IS NULL;")
             check(count == "1", "Legacy inventory was lost or assigned automatically")
             check(query("SELECT count(*) FROM users WHERE id=1 AND username='legacy' "
                         "AND email='legacy@example.invalid' AND password='unused-fixture';") == "1",
@@ -191,6 +191,19 @@ def verify():
             api("GET", f"/api/items/{shared_id}/consumptions", outsider, expected=404)
             print("Privacy, shared stock, consumption and concurrent stock checks passed", flush=True)
 
+            _, reusable = api("POST", "/api/items", owner, {"name": "Reusable mouse", "quantity": 1,
+                    "locationId": places[0], "kind": "REUSABLE", "visibility": "HOUSE_SHARED"}, 201)
+            reusable_id = reusable["id"]
+            check(reusable["kind"] == "REUSABLE" and not reusable["outOfStock"], "Reusable classification missing")
+            api("POST", f"/api/items/{reusable_id}/consume", member, {"quantity": 1}, expected=409)
+            check(api("GET", f"/api/items/{reusable_id}/consumptions", owner)[1] == [], "Reusable consumption was recorded")
+            api("PUT", f"/api/items/{reusable_id}", owner, {"name": "Reusable mouse", "quantity": 0,
+                    "locationId": places[0]}, expected=400)
+            api("PUT", f"/api/items/{shared_id}", owner, {"name": "Consumed item", "quantity": 1,
+                    "locationId": places[1], "kind": "REUSABLE"}, expected=409)
+            check(api("GET", f"/api/items/{shared_id}", owner)[1]["quantity"] == 0, "Rejected conversion changed stock")
+            print("Reusable items reject consumption; consumed items preserve their type/history", flush=True)
+
             moving_id = create_item("Concurrent movement", quantity=2)
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
                 results = list(pool.map(lambda place: api("PATCH",
@@ -231,6 +244,7 @@ def verify():
                 _, login = api("POST", "/api/auth/login", body={"email": "owner@example.invalid", "password": password})
                 owner = login["token"]
                 _, saved = api("GET", f"/api/items/{shared_id}", owner)
+                check(api("GET", f"/api/items/{reusable_id}", owner)[1]["kind"] == "REUSABLE", "Reusable kind did not persist")
                 check(saved["quantity"] == 0 and saved["location"]["id"] == places[1], "Inventory did not persist")
                 check(api("GET", f"/api/items/{shared_id}/consumptions", owner)[1] == consumption_history, "Consumption history did not persist")
                 check(api("GET", f"/api/items/{moving_id}/history", owner)[1] == history, "Movement history did not persist")

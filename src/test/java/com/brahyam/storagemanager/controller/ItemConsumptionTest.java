@@ -64,6 +64,88 @@ class ItemConsumptionTest {
         outsiderToken = token(outsider);
     }
 
+
+    @Test
+    void shouldCreateReusableItemsAndRejectConsumptionWithoutChangingHistory() throws Exception {
+        item.setKind(ItemKind.REUSABLE);
+        item.setQuantity(1);
+        items.saveAndFlush(item);
+        mvc.perform(get("/api/items/{id}", item.getId()).header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.kind").value("REUSABLE"))
+                .andExpect(jsonPath("$.outOfStock").value(false));
+        consume(1, ownerToken, 409);
+        assertEquals(1, items.findById(item.getId()).orElseThrow().getQuantity());
+        assertEquals(0, consumptions.count());
+        mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Ratón\",\"quantity\":2,\"locationId\":" + source.getId() + "}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.kind").value("REUSABLE"));
+    }
+
+    @Test
+    void shouldNotInferKindFromQuantityOneAndDefaultOldRequestsToConsumable() throws Exception {
+        mvc.perform(post("/api/items").header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Último tornillo\",\"quantity\":1,\"locationId\":" + source.getId() + "}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.kind").value("CONSUMABLE"));
+        item.setQuantity(1);
+        items.saveAndFlush(item);
+        consume(1, ownerToken, 200);
+        mvc.perform(get("/api/items/{id}", item.getId()).header("Authorization", ownerToken))
+                .andExpect(jsonPath("$.kind").value("CONSUMABLE"))
+                .andExpect(jsonPath("$.outOfStock").value(true));
+    }
+
+    @Test
+    void shouldReclassifyExistingItemsWithoutConsumptionButPreserveRecordedConsumptionMeaning() throws Exception {
+        String request = "{\"name\":\"Ratón\",\"quantity\":1,\"kind\":\"REUSABLE\",\"locationId\":" + source.getId() + "}";
+        mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.kind").value("REUSABLE"));
+        item.setKind(ItemKind.CONSUMABLE);
+        item.setQuantity(10);
+        items.saveAndFlush(item);
+        consume(5, ownerToken, 200);
+        mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isConflict());
+        assertEquals(ItemKind.CONSUMABLE, items.findById(item.getId()).orElseThrow().getKind());
+        assertEquals(5, items.findById(item.getId()).orElseThrow().getQuantity());
+        assertEquals(1, consumptions.count());
+    }
+
+    @Test
+    void shouldValidateReusableQuantitiesAndKindOnCreate() throws Exception {
+        for (String kind : new String[]{"REUSABLE", "UNKNOWN"}) {
+            mvc.perform(post("/api/items").header("Authorization", ownerToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"name\":\"Ratón\",\"quantity\":0,\"kind\":\"" + kind + "\",\"locationId\":" + source.getId() + "}"))
+                    .andExpect(status().isBadRequest());
+        }
+        mvc.perform(post("/api/items").header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Ratón\",\"quantity\":1,\"kind\":\"REUSABLE\",\"locationId\":" + source.getId() + "}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.kind").value("REUSABLE"));
+    }
+
+    @Test
+    void shouldRejectZeroReusableAdjustmentAndKeepOtherMembersFromChangingKind() throws Exception {
+        item.setVisibility(ItemVisibility.HOUSE_SHARED);
+        item.setKind(ItemKind.REUSABLE);
+        items.saveAndFlush(item);
+        mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Ratón\",\"quantity\":0,\"locationId\":" + source.getId() + "}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", fellowToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Ratón\",\"quantity\":1,\"kind\":\"CONSUMABLE\",\"locationId\":" + source.getId() + "}"))
+                .andExpect(status().isForbidden());
+        consume(1, fellowToken, 409);
+        assertEquals(ItemKind.REUSABLE, items.findById(item.getId()).orElseThrow().getKind());
+        assertEquals(10, items.findById(item.getId()).orElseThrow().getQuantity());
+    }
+
     private String token(User user) { return "Bearer " + jwt.generateToken(user.getEmail()); }
 
     private void consume(int quantity, String token, int expected) throws Exception {
