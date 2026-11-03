@@ -84,6 +84,23 @@ This starts both the API and a PostgreSQL instance. No local database setup need
 | POST | `/api/auth/register` | Register a new user |
 | POST | `/api/auth/login` | Login and receive JWT token |
 
+### Houses (requires token)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/houses` | Create a house: `{"name":"Casa Valencia"}` |
+| GET | `/api/houses` | List houses owned by the authenticated user |
+| GET | `/api/houses/{id}` | Read an owned house |
+
+The owner is taken from the authenticated account, never from the request body.
+Creation returns `201`, a `Location` header and `{id, name, ownerId}`.
+Missing or blank names return `400`. Missing houses and houses owned by another
+user both return `404`, including for users with the global ADMIN role.
+
+This is the first house feature: invitations and membership are not implemented
+yet. Existing items and locations are still global; they are not yet isolated
+by house and do not yet support private objects. There is no mobile UI yet.
+
 ### Locations (requires token)
 
 | Method | Endpoint | Description |
