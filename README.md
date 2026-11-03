@@ -1,10 +1,11 @@
-# Storage Manager API
+# Storage Manager
 
 REST API for managing physical inventory across storage locations. Built to solve a real problem: tracking where items like drone parts, batteries, controllers, and other gear are stored across multiple drawers and compartments — so you never have to tear apart a room looking for something again.
 
 ## Tech Stack
 
 - **Java 21** + **Spring Boot 4.x**
+- **Angular 21** + TypeScript
 - **PostgreSQL 16**
 - **Spring Security** with JWT authentication
 - **Spring Data JPA** with Hibernate
@@ -23,6 +24,14 @@ REST API for managing physical inventory across storage locations. Built to solv
 - Centralized error handling for API responses
 - Input validation for location and item requests
 - Dockerized for easy deployment
+
+## Web interface
+
+The first Angular delivery supports registration/login, house creation/joining,
+owner invitations and read-only inventory with search and stock/visibility filters.
+Desktop and mobile layouts are included. Inventory editing, locations, consumption
+and history forms remain pending; those operations already exist in the API.
+See [frontend setup and checks](frontend/README.md).
 
 ## Getting Started
 
@@ -282,4 +291,4 @@ is not a complete security audit of the application, image or deployment.
 - Image attachments for items
 - Export inventory to CSV/PDF
 - OAuth2 login (Google)
-- Frontend client (React or React Native)
+- Complete Angular forms for inventory, locations, consumption and history

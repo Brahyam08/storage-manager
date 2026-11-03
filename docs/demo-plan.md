@@ -10,8 +10,9 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
 2. Ubicaciones por casa, jerarquía y ruta completa: implementadas y con tests H2.
 3. Objetos privados/compartidos y acceso por casa: implementados con pruebas de
    búsqueda, ID, edición, movimiento e historial; rollback y concurrencia en H2.
-4. Angular con TypeScript: registro/login, casas e invitaciones, ubicaciones,
-   inventario con búsqueda y formularios, movimiento e historial. Diseño móvil.
+4. Angular: registro/login, casas e invitaciones y consulta de inventario con
+   búsqueda, filtros y diseño móvil implementados. Pendientes formularios de
+   objetos/ubicaciones, consumo, movimiento e historial. Ver frontend/README.md.
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
    persistencia tras recrear contenedores. Pendientes demo completa, datos de
    presentación y despliegue. Registro/login, errores genéricos y cuotas básicas por dirección ya verificados.

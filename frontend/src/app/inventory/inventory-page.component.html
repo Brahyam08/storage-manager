@@ -1,0 +1,270 @@
+<div class="workspace">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/inventario"
+      ><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span
+      ><span>Storage<span class="brand-light">Manager</span></span></a
+    >
+    <p class="sidebar-label">TU ESPACIO</p>
+    <nav aria-label="Navegación principal">
+      <button type="button" [class.active]="!managingHouses()" (click)="managingHouses.set(false)">
+        <span aria-hidden="true">▦</span> Inventario
+      </button>
+      <button type="button" [class.active]="managingHouses()" (click)="managingHouses.set(true)">
+        <span aria-hidden="true">⌂</span> Casas e invitaciones
+      </button>
+    </nav>
+    <div class="sidebar-note">
+      <span class="small-square" aria-hidden="true"></span>
+      <p>Cada cosa,<br />en su sitio.</p>
+      <small>Un poco de orden cambia el día.</small>
+    </div>
+    <button class="logout" type="button" (click)="logout()">
+      Cerrar sesión <span aria-hidden="true">↗</span>
+    </button>
+  </aside>
+  <div class="workspace-body">
+    <header class="topbar">
+      <div class="house-selector">
+        <span aria-hidden="true">⌂</span><label class="sr-only" for="house">Casa seleccionada</label
+        ><select id="house" [formControl]="houseControl">
+          @if (!houses().length) {
+            <option [ngValue]="null">Tu primera casa</option>
+          }
+          @for (house of houses(); track house.id) {
+            <option [ngValue]="house.id">{{ house.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="user-summary">
+        <span class="user-avatar" aria-hidden="true">{{
+          auth.user()?.username?.charAt(0)?.toUpperCase()
+        }}</span
+        ><span>{{ auth.user()?.username }}</span>
+      </div>
+    </header>
+    <main class="main-content">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">{{ selectedHouse()?.name || 'UN LUGAR PARA EMPEZAR' }}</p>
+          <h1>
+            {{
+              managingHouses() || !houses().length ? 'Tus casas, tu gente.' : 'Todo, en su sitio.'
+            }}
+          </h1>
+          <p class="muted">
+            {{
+              managingHouses() || !houses().length
+                ? 'Crea un espacio o únete a una casa que ya existe.'
+                : 'Encuentra lo que buscas y dónde lo guardaste.'
+            }}
+          </p>
+        </div>
+        <span class="workspace-label">TU INVENTARIO PERSONAL</span>
+      </div>
+      @if (error()) {
+        <div class="error-banner" role="alert">
+          {{ error() }}
+          <button class="text-button" type="button" (click)="loadHouses()">Reintentar</button>
+        </div>
+      }
+      @if (loadingHouses()) {
+        <div class="loading-state" role="status">
+          <span class="spinner" aria-hidden="true"></span> Preparando tu espacio…
+        </div>
+      } @else if (managingHouses() || !houses().length) {
+        <div class="house-panels">
+          <section class="panel house-panel">
+            <span class="panel-symbol" aria-hidden="true">⌂</span>
+            <h2>Crea una casa</h2>
+            <p class="muted">Solo necesita un nombre. Las ubicaciones vienen después.</p>
+            <form [formGroup]="createForm" (ngSubmit)="createHouse()">
+              <label for="house-name">Nombre de la casa</label
+              ><input
+                id="house-name"
+                formControlName="name"
+                maxlength="255"
+                placeholder="Por ejemplo, Casa Valencia"
+              />
+              @if (createForm.controls.name.touched && createForm.invalid) {
+                <small class="field-error">Escribe un nombre para la casa.</small>
+              }
+              <button type="submit" class="button primary" [disabled]="houseBusy()">
+                Crear casa <span aria-hidden="true">↗</span>
+              </button>
+            </form>
+          </section>
+          <section class="panel house-panel">
+            <span class="panel-symbol warm" aria-hidden="true">+</span>
+            <h2>Ya tienes un sitio</h2>
+            <p class="muted">Usa el código que te ha compartido el creador de una casa.</p>
+            <form [formGroup]="joinForm" (ngSubmit)="joinHouse()">
+              <label for="invite-code">Código de invitación</label
+              ><input
+                id="invite-code"
+                formControlName="code"
+                maxlength="128"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Pega tu código aquí"
+              />
+              @if (joinForm.controls.code.touched && joinForm.invalid) {
+                <small class="field-error">Introduce un código de invitación.</small>
+              }
+              <button type="submit" class="button secondary" [disabled]="houseBusy()">
+                Unirme a la casa <span aria-hidden="true">↗</span>
+              </button>
+            </form>
+          </section>
+        </div>
+        @if (selectedHouse(); as house) {
+          <section class="panel current-house">
+            <div>
+              <p class="eyebrow">CASA SELECCIONADA</p>
+              <h2>{{ house.name }}</h2>
+              <p class="muted">
+                {{
+                  house.ownerId === auth.user()?.id
+                    ? 'Tú has creado esta casa.'
+                    : 'Formas parte de esta casa.'
+                }}
+              </p>
+            </div>
+            @if (house.ownerId === auth.user()?.id) {
+              <div class="invitation-controls">
+                <button
+                  type="button"
+                  class="button secondary"
+                  [disabled]="houseBusy()"
+                  (click)="renewInvitation()"
+                >
+                  Generar / renovar invitación</button
+                ><small class="field-hint">Un código nuevo sustituye al anterior.</small>
+              </div>
+            }
+            @if (invitationCode()) {
+              <div class="invitation-result">
+                <label for="new-invitation">Código para compartir</label
+                ><input
+                  id="new-invitation"
+                  #invitationInput
+                  [value]="invitationCode()"
+                  readonly
+                  (focus)="invitationInput.select()"
+                />
+                <p class="muted" role="status">{{ notice() }}</p>
+              </div>
+            }
+          </section>
+        }
+      } @else {
+        <section class="summary-grid" aria-label="Resumen del inventario mostrado">
+          <article class="summary-card">
+            <span>Objetos encontrados</span><strong>{{ visibleItems().length }}</strong
+            ><small>En esta búsqueda</small>
+          </article>
+          <article class="summary-card">
+            <span>Unidades guardadas</span><strong>{{ units() }}</strong
+            ><small>Sumando los objetos encontrados</small>
+          </article>
+          <article class="summary-card">
+            <span>Sin existencias</span><strong>{{ emptyCount() }}</strong
+            ><small>Para tener en cuenta al reponer</small>
+          </article>
+        </section>
+        <section class="inventory-section" aria-labelledby="inventory-title">
+          <div class="inventory-heading">
+            <h2 id="inventory-title">
+              Tu inventario <span class="count-badge">{{ visibleItems().length }}</span>
+            </h2>
+            <span class="muted">Solo ves los objetos a los que tienes acceso.</span>
+          </div>
+          <div class="inventory-toolbar">
+            <div class="search-field">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m16 16 5 5" /></svg
+              ><label class="sr-only" for="search">Buscar por nombre</label
+              ><input
+                id="search"
+                [formControl]="searchControl"
+                type="search"
+                placeholder="¿Qué estás buscando?"
+                autocomplete="off"
+              />
+            </div>
+            <label class="sr-only" for="item-filter">Filtrar objetos</label
+            ><select id="item-filter" [value]="filter()" (change)="setFilter($event)">
+              <option value="all">Todos los objetos</option>
+              <option value="private">Privados</option>
+              <option value="shared">Compartidos</option>
+              <option value="empty">Sin existencias</option>
+            </select>
+          </div>
+          @if (itemError()) {
+            <p class="error-banner" role="alert">{{ itemError() }}</p>
+          } @else if (loadingItems()) {
+            <div class="loading-state" role="status">
+              <span class="spinner" aria-hidden="true"></span> Buscando tus cosas…
+            </div>
+          } @else if (visibleItems().length) {
+            <div class="item-list-heading" aria-hidden="true">
+              <span>OBJETO</span><span>DÓNDE ESTÁ</span><span>UNIDADES</span
+              ><span>VISIBILIDAD</span>
+            </div>
+            <ul class="item-list">
+              @for (item of visibleItems(); track item.id) {
+                <li class="item-row">
+                  <div class="item-identity">
+                    <span class="item-symbol" aria-hidden="true">▧</span>
+                    <div>
+                      <h3>{{ item.name }}</h3>
+                      <span class="muted">{{ item.category || 'Sin categoría' }}</span>
+                    </div>
+                  </div>
+                  <div class="item-location">
+                    <span class="mobile-label">Dónde está</span>{{ item.location.path }}
+                  </div>
+                  <div class="item-quantity" [class.empty]="item.outOfStock">
+                    <strong>{{ item.quantity }}</strong
+                    ><small>{{ item.outOfStock ? 'Sin existencias' : 'unidades' }}</small>
+                  </div>
+                  <span class="visibility-badge" [class.shared]="item.visibility === 'HOUSE_SHARED'"
+                    ><i aria-hidden="true"></i
+                    >{{ item.visibility === 'PRIVATE' ? 'Privado' : 'Compartido' }}</span
+                  >
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="empty-state">
+              <span class="empty-symbol" aria-hidden="true">▧</span>
+              <h3>
+                {{
+                  searchControl.value || filter() !== 'all'
+                    ? 'No encontramos coincidencias.'
+                    : 'Un lugar para tus cosas.'
+                }}
+              </h3>
+              <p class="muted">
+                {{
+                  searchControl.value || filter() !== 'all'
+                    ? 'Prueba con otro nombre o cambia los filtros.'
+                    : 'Todavía no hay objetos visibles en esta casa.'
+                }}
+              </p>
+              @if (searchControl.value || filter() !== 'all') {
+                <button type="button" class="button secondary" (click)="resetSearch()">
+                  Limpiar búsqueda
+                </button>
+              }
+            </div>
+          }
+        </section>
+        <p class="inventory-footer">
+          <span aria-hidden="true">●</span> Los objetos privados solo son visibles para su
+          propietario.
+        </p>
+      }
+    </main>
+  </div>
+</div>
