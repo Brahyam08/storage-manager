@@ -14,7 +14,7 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
    inventario con búsqueda y formularios, movimiento e historial. Diseño móvil.
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
    persistencia tras recrear contenedores. Pendientes demo completa, datos de
-   presentación y revisión de errores/registro/login.
+   presentación y despliegue. Registro/login y errores genéricos ya verificados.
 6. README de portfolio, capturas, guion de demo y decisiones técnicas explicables.
 
 ## Distribución orientativa del tiempo

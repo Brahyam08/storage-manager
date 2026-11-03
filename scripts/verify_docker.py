@@ -129,6 +129,23 @@ def verify():
                         "email": name + "@example.invalid", "password": password}, expected=201)
                 _, login = api("POST", "/api/auth/login", body={"email": name + "@example.invalid", "password": password})
                 tokens[name] = login["token"]
+            api("POST", "/api/auth/register", body={}, expected=400)
+            for duplicate in [{"username": "owner", "email": "new@example.invalid", "password": password},
+                              {"username": "new", "email": " OWNER@EXAMPLE.INVALID ", "password": password}]:
+                _, error = api("POST", "/api/auth/register", body=duplicate, expected=409)
+                check(error == {"error": "No se puede registrar esa cuenta"}, "Duplicate registration exposed details")
+            wrong = api("POST", "/api/auth/login", body={"email": "owner@example.invalid", "password": "wrong-password"}, expected=401)[1]
+            missing = api("POST", "/api/auth/login", body={"email": "missing@example.invalid", "password": "wrong-password"}, expected=401)[1]
+            check(wrong == missing == {"error": "Credenciales incorrectas"}, "Login errors reveal account existence")
+            api("POST", "/api/auth/login", body={"email": "owner@example.invalid", "password": "é" * 36 + "a"}, expected=400)
+            _, canonical_login = api("POST", "/api/auth/login", body={"email": " OWNER@EXAMPLE.INVALID ", "password": password})
+            check(api("GET", "/api/users/me", canonical_login["token"])[1]["email"] == "owner@example.invalid", "Noncanonical login identity")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                registrations = list(pool.map(lambda _: api("POST", "/api/auth/register", body={
+                    "username": "racer", "email": "racer@example.invalid", "password": password}, expected=None)[0], range(2)))
+            check(sorted(registrations) == [201, 409], "Concurrent registration did not preserve uniqueness")
+            check(query("SELECT count(*) FROM users WHERE username='racer';") == "1", "Duplicate account persisted")
+            print("Authentication validation, generic errors and concurrent registration passed", flush=True)
             owner, member, outsider = (tokens[name] for name in ["owner", "member", "outsider"])
             _, house = api("POST", "/api/houses", owner, {"name": "Integration house"}, 201)
             _, invitation = api("POST", f"/api/houses/{house['id']}/invitation", owner)
@@ -187,8 +204,8 @@ def verify():
                 for method, path, body in [
                     ("POST", f"/api/items/{rollback_id}/consume", {"quantity": 1}),
                     ("PATCH", f"/api/items/{rollback_id}/move?toLocationId={places[1]}&quantity=4", None)]:
-                    code, _ = api(method, path, owner, body, expected=None)
-                    check(code >= 400, "Forced database failure was ignored")
+                    _, error = api(method, path, owner, body, expected=500)
+                    check(error == {"error": "Error interno del servidor"}, "Forced database failure exposed internal details")
                 _, saved = api("GET", f"/api/items/{rollback_id}", owner)
                 check(saved["quantity"] == 4 and saved["location"]["id"] == places[0], "Failed transaction changed stock/location")
                 check(api("GET", f"/api/items/{rollback_id}/consumptions", owner)[1] == [], "Consumption failed to roll back")

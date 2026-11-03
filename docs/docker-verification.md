@@ -35,12 +35,14 @@ Comprueba mediante HTTP contra la API construida con el Dockerfile:
 1. Actualización automática de un esquema antiguo simulado: users, locations,
    items e item_movements, con cuenta, ubicaciones, objeto e historial ficticios.
    Comprueba que se conservan y que el inventario antiguo no se asigna ni expone.
-2. Registro/login, creación de casa, invitación, membresía y ubicaciones.
+2. Registro/login validados, duplicados y registros concurrentes, errores de
+   credenciales genéricos, creación de casa, invitación, membresía y ubicaciones.
 3. Objetos privados y compartidos, búsqueda, consumo, actor de sesión, cantidades
    inválidas, stock cero e historial protegido frente a otras cuentas.
 4. Consumos concurrentes que no gastan dos veces las mismas unidades.
 5. Movimientos concurrentes que conservan una cadena de historial consistente.
-6. Rollback de consumo y movimiento cuando un trigger temporal de la base de
+6. Rollback de consumo y movimiento, con 500 genérico sin detalles SQL, cuando
+   un trigger temporal de la base de
    prueba fuerza el fallo al actualizar el objeto. Se retira después de la prueba.
 7. Tres ciclos de eliminación y recreación de los contenedores conservando el volumen:
    login, membresía, existencias e historiales deben sobrevivir sin cambios.
@@ -53,7 +55,7 @@ Las capas/imágenes de construcción pueden quedar en la caché de Docker.
 
 La última verificación pasó con PostgreSQL 16 en Docker Desktop, incluyendo
 concurrencia, rollback y tres ciclos consecutivos de recreación de contenedores. No se conectó a la base PostgreSQL real del
-usuario ni se modificaron sus registros. La suite Java previa conserva 75 tests H2
+usuario ni se modificaron sus registros. La suite Java conserva 88 tests H2
 aprobados; este script comprueba además el sistema real por HTTP, no sustituye esa
 suite ni ejecuta todas sus combinaciones de permisos.
 
@@ -61,8 +63,8 @@ La aplicación aún usa Hibernate ddl-auto=update. La prueba demuestra que la
 actualización del esquema simulado conserva sus datos; no es una migración
 versionada ni garantiza actualizar cualquier base existente. Antes de actualizar
 una base con datos reales hace falta copia de seguridad y revisión de ese esquema.
-Quedan pendientes migraciones controladas para producción, validación de registro/
-login, errores generales, análisis de dependencias y el frontend. No se ha validado
+Quedan pendientes migraciones controladas para producción, limitación de intentos,
+análisis de dependencias, despliegue remoto y el frontend. No se ha validado
 Swagger ni un despliegue remoto y todavía no se considera lista una demo pública.
 
 Una ejecución intermedia agotó la espera de arranque de la API tras recrear los

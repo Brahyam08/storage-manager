@@ -226,6 +226,13 @@ JSON error when authentication is missing or the token is invalid/expired.
 Public login remains available with an old invalid Bearer token. See
 [JWT authentication behavior](docs/authentication.md).
 
+Registration validates username/email and passwords (at least 8 characters, at most
+72 UTF-8 bytes). New emails are stored lowercase; login is case-insensitive and uses
+the account's actual email in its JWT. Passwords are never trimmed or truncated.
+Duplicate accounts return a generic `409`; wrong credentials return a generic `401`.
+Unexpected runtime failures return `500` without internal details. See the
+[authentication contract](docs/authentication.md).
+
 ## Project Structure
 
 ```
@@ -244,7 +251,7 @@ src/main/java/com/brahyam/storagemanager/
 - **Monolithic architecture** — the project scope doesn't justify the complexity of microservices. The layered structure (controller → service → repository) keeps the code organized and makes it straightforward to refactor into separate services if needed in the future.
 - **Single location per item** — items are assigned to one location at a time. Splitting quantities across multiple locations would add significant complexity without proportional benefit at this stage. Planned as a future enhancement.
 - **Movement history as a separate entity** — instead of just updating the item's location, every movement is recorded with origin, destination, quantity, and timestamp. This provides a complete audit trail.
-- **Explicit API DTOs** — validated request DTOs and dedicated house, location, item, movement and profile responses keep persistence relations out of the API. Registration currently returns a User with its password excluded using `@JsonIgnore`.
+- **Explicit API DTOs** — validated request DTOs and dedicated house, location, item, movement and profile responses keep persistence relations out of the API. Registration also returns a dedicated profile DTO without password or hash.
 
 ## Future Improvements
 
