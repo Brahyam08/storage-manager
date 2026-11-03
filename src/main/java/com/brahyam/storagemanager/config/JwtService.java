@@ -1,6 +1,8 @@
 package com.brahyam.storagemanager.config;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
@@ -44,17 +46,21 @@ public class JwtService {
         try {
             extractClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
     private Claims extractClaims(String token) {
-        return Jwts.parser()
+        Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+        if (claims.getExpiration() == null || claims.getSubject() == null || claims.getSubject().isBlank()) {
+            throw new MalformedJwtException("Faltan campos obligatorios del token");
+        }
+        return claims;
     }
 
 }

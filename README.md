@@ -188,6 +188,11 @@ POST /api/auth/login
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
+Protected endpoints return `401` with `WWW-Authenticate: Bearer` and a generic
+JSON error when authentication is missing or the token is invalid/expired.
+Public login remains available with an old invalid Bearer token. See
+[JWT authentication behavior](docs/authentication.md).
+
 ## Project Structure
 
 ```
