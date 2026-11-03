@@ -17,6 +17,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
+import { ItemUsePanelComponent } from './item-use-panel.component';
 import { reusableQuantity } from './item-kind.validator';
 import {
   InventoryItem,
@@ -28,7 +29,7 @@ import {
 
 @Component({
   selector: 'app-item-detail',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, ItemUsePanelComponent],
   templateUrl: './item-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -187,7 +188,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   openMove() {
-    if (this.busy() || this.item.quantity === 0) return;
+    if (this.busy() || this.item.quantity === 0 || this.item.inUseQuantity > 0) return;
     this.mode.set('move');
     this.moveForm.reset();
     this.destinations.set([]);
@@ -214,7 +215,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   move() {
-    if (this.busy() || this.item.quantity === 0) return;
+    if (this.busy() || this.item.quantity === 0 || this.item.inUseQuantity > 0) return;
     if (this.moveForm.invalid) {
       this.moveForm.markAllAsTouched();
       return;

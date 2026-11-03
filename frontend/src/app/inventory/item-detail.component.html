@@ -9,8 +9,8 @@
         {{
           item.kind === 'REUSABLE'
             ? item.quantity === 1
-              ? 'objeto guardado'
-              : 'objetos guardados'
+              ? 'objeto registrado'
+              : 'objetos registrados'
             : 'unidades'
         }}
         ·
@@ -44,7 +44,7 @@
     <button
       class="button secondary"
       type="button"
-      [disabled]="busy() || item.quantity === 0"
+      [disabled]="busy() || item.quantity === 0 || item.inUseQuantity > 0"
       (click)="openMove()"
     >
       Mover objeto
@@ -65,6 +65,14 @@
   @if (busy()) {
     <p role="status">Guardando o consultando…</p>
   }
+  @if (item.kind === 'REUSABLE') {
+    @if (item.inUseQuantity > 0) {
+      <p class="muted">
+        Devuelve los objetos en uso antes de trasladarlos o cambiar su tipo o visibilidad.
+      </p>
+    }
+    <app-item-use-panel [item]="item" [userId]="userId" (updated)="updated.emit($event)" />
+  }
   @if (mode() === 'edit' && item.ownerId === userId) {
     <form [formGroup]="editForm" (ngSubmit)="save()">
       <fieldset class="creation-fields" [disabled]="busy()">
@@ -74,7 +82,7 @@
             <option value="CONSUMABLE">Consumible: se gasta</option>
             <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
           ><small class="field-hint"
-            >Un objeto con consumos registrados no puede pasar a reutilizable.</small
+            >Un objeto con historial de consumos o de uso no puede cambiar de tipo.</small
           >
         </div>
         <div>

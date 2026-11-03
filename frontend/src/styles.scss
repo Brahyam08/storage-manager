@@ -1186,3 +1186,12 @@ input[readonly] {
     flex-grow: 1;
   }
 }
+
+.item-use-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.item-use-section .consumption-list .button {
+  justify-self: start;
+}

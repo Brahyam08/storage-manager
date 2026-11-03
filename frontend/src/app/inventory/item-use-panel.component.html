@@ -1,0 +1,80 @@
+<section class="item-use-section" aria-label="Uso y devoluciones">
+  <h3>Uso y devoluciones</h3>
+  <p class="muted">
+    Disponibles: {{ item.availableQuantity }} · En uso: {{ item.inUseQuantity }}. Retirar para usar
+    no reduce el total de objetos.
+  </p>
+  <p class="muted">
+    Cada devolución devuelve la retirada completa a su ubicación habitual: {{ item.location.path }}.
+  </p>
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+  @if (item.availableQuantity > 0) {
+    <form [formGroup]="form" (ngSubmit)="take()">
+      <fieldset class="creation-fields" [disabled]="busy() || committed()">
+        <div>
+          <label for="take-quantity">Objetos que retiras para usar</label
+          ><input
+            id="take-quantity"
+            formControlName="quantity"
+            type="number"
+            min="1"
+            [max]="item.availableQuantity"
+            step="1"
+          />
+          @if (form.controls.quantity.touched && form.invalid) {
+            <small class="field-error"
+              >Introduce un entero entre 1 y {{ item.availableQuantity }}.</small
+            >
+          }
+        </div>
+        <button class="button primary" type="submit">Retirar para usar</button>
+      </fieldset>
+    </form>
+  } @else {
+    <p class="muted">Todos los objetos están en uso.</p>
+  }
+  @if (busy()) {
+    <p role="status">Registrando la operación…</p>
+  }
+  @if (loading()) {
+    <p role="status">Cargando usos…</p>
+  }
+  @if (historyError()) {
+    <p class="error-banner" role="alert">
+      {{ historyError() }}
+      <button class="text-button" type="button" (click)="load()">Reintentar usos</button>
+    </p>
+  }
+  @if (!loading() && !historyError() && !uses().length) {
+    <p class="muted">Todavía no hay usos registrados.</p>
+  }
+  <ul class="consumption-list">
+    @for (use of uses(); track use.id) {
+      <li>
+        <strong
+          >{{ use.quantity }} {{ use.quantity === 1 ? 'objeto' : 'objetos' }} ·
+          {{ use.usedById === userId ? 'Tú' : 'Usuario #' + use.usedById }}</strong
+        ><span
+          >Retirada: {{ use.takenAt | date: 'dd/MM/yyyy HH:mm:ss' }} · {{ use.location.path }}</span
+        >
+        @if (use.returnedAt) {
+          <span>Devuelto: {{ use.returnedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
+        } @else {
+          <span>En uso</span>
+          @if (use.usedById === userId || item.ownerId === userId) {
+            <button
+              class="button secondary"
+              type="button"
+              [disabled]="busy() || committed()"
+              (click)="giveBack(use)"
+            >
+              Registrar devolución de {{ use.quantity }}
+            </button>
+          }
+        }
+      </li>
+    }
+  </ul>
+</section>

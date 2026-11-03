@@ -8,6 +8,7 @@ import {
   CreateItem,
   ItemConsumption,
   ItemMovement,
+  ItemUse,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +67,18 @@ export class InventoryApiService {
 
   movements(id: number) {
     return this.http.get<ItemMovement[]>(`/api/items/${id}/history`);
+  }
+
+  uses(id: number) {
+    return this.http.get<ItemUse[]>(`/api/items/${id}/uses`);
+  }
+
+  takeItem(id: number, quantity: number) {
+    return this.http.post<ItemUse>(`/api/items/${id}/uses`, { quantity });
+  }
+
+  returnItem(id: number, useId: number) {
+    return this.http.post<ItemUse>(`/api/items/${id}/uses/${useId}/return`, {});
   }
 
   items(houseId: number, search: string) {

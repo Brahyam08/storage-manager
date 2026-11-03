@@ -23,6 +23,8 @@ export interface StorageLocation {
 export type ItemKind = 'CONSUMABLE' | 'REUSABLE';
 
 export interface InventoryItem {
+  inUseQuantity: number;
+  availableQuantity: number;
   kind: ItemKind;
   id: number;
   name: string;
@@ -67,4 +69,13 @@ export interface ItemMovement {
   toLocation: StorageLocation;
   quantity: number;
   movedAt: string;
+}
+
+export interface ItemUse {
+  id: number;
+  quantity: number;
+  usedById: number;
+  takenAt: string;
+  returnedAt: string | null;
+  location: StorageLocation;
 }

@@ -15,7 +15,7 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
    y objetos con cantidad/visibilidad implementada. Edición por propietario, consumo
    e historial de consumos implementados. Tipos consumible/reutilizable explícitos,
    con consumo bloqueado para reutilizables. Movimiento completo e historial de
-   movimientos implementados. Pendientes uso/devolución, borrado de objetos y
+   movimientos y uso/devolución de reutilizables implementados. Pendientes borrado de objetos y
    edición/borrado de ubicaciones. Ver frontend/README.md.
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
    persistencia tras recrear contenedores. Pendientes demo completa, datos de

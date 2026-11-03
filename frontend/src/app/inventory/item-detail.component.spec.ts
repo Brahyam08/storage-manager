@@ -5,6 +5,8 @@ import { ItemDetailComponent } from './item-detail.component';
 import { InventoryItem } from '../core/models';
 
 const item: InventoryItem = {
+  inUseQuantity: 0,
+  availableQuantity: 10,
   kind: 'CONSUMABLE',
   id: 4,
   name: 'Tornillos',
@@ -155,8 +157,14 @@ describe('Item detail', () => {
     expect(fixture.nativeElement.textContent).toContain('Despacho → Cajón');
   });
   it('hides consumption actions for reusable objects and never sends a consume request', () => {
-    fixture.componentRef.setInput('item', { ...item, kind: 'REUSABLE', quantity: 1 });
+    fixture.componentRef.setInput('item', {
+      ...item,
+      kind: 'REUSABLE',
+      quantity: 1,
+      availableQuantity: 1,
+    });
     fixture.detectChanges();
+    http.expectOne('/api/items/4/uses').flush([]);
     const component = fixture.componentInstance;
     component.open('consume');
     component.consume();
@@ -164,7 +172,7 @@ describe('Item detail', () => {
     http.expectNone('/api/items/4/consume');
     expect(fixture.nativeElement.textContent).not.toContain('Registrar consumo');
     expect(fixture.nativeElement.textContent).not.toContain('Ver consumos');
-    expect(fixture.nativeElement.textContent).toContain('Reutilizable · 1 objeto guardado');
+    expect(fixture.nativeElement.textContent).toContain('Reutilizable · 1 objeto registrado');
     component.editForm.controls.quantity.setValue(0);
     component.save();
     expect(component.editForm.hasError('reusableQuantity')).toBe(true);
@@ -283,17 +291,15 @@ describe('Item detail', () => {
     expect(element.textContent).toContain(script);
     expect(element.querySelector('img, script, [onerror]')).toBeNull();
     fixture.componentInstance.loadMovements();
-    http
-      .expectOne('/api/items/4/history')
-      .flush([
-        {
-          id: 1,
-          quantity: 1,
-          movedAt: '2026-11-03T19:00:00',
-          fromLocation: { ...item.location, path: html },
-          toLocation: { ...item.location, id: 8, path: script },
-        },
-      ]);
+    http.expectOne('/api/items/4/history').flush([
+      {
+        id: 1,
+        quantity: 1,
+        movedAt: '2026-11-03T19:00:00',
+        fromLocation: { ...item.location, path: html },
+        toLocation: { ...item.location, id: 8, path: script },
+      },
+    ]);
     fixture.detectChanges();
     expect(element.querySelector('img, script, [onerror]')).toBeNull();
     expect(element.textContent).toContain('A: ' + script);

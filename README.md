@@ -33,7 +33,9 @@ owner invitations, nested location creation, and item creation with quantity and
 private/shared visibility and consumable/reusable type. Inventory supports search
 and stock/visibility/type filters. See [item behavior](docs/item-kinds.md).
 Desktop and mobile layouts include owner editing, consumption and consumption
-history, full-quantity movement within a house and movement history. Deletion
+history, full-quantity movement within a house and movement history. Reusable
+items support taking for use and returning, with availability and usage history.
+See [usage rules](docs/reusable-usage.md). Deletion
 and location-editing forms remain pending; those operations already exist in the API.
 See [frontend setup and checks](frontend/README.md).
 
@@ -173,6 +175,9 @@ See [location contract](docs/house-locations.md).
 | GET | `/api/items/{id}/history` | Get movement history |
 | POST | `/api/items/{id}/consume` | Consume units: `{"quantity":5}` |
 | GET | `/api/items/{id}/consumptions` | Get consumption history |
+| POST | `/api/items/{id}/uses` | Take reusable objects for use: `{"quantity":1}` |
+| GET | `/api/items/{id}/uses` | Get usage and return history |
+| POST | `/api/items/{id}/uses/{useId}/return` | Return a complete recorded withdrawal |
 
 **Available filters for** `GET /api/items`:
 
@@ -283,7 +288,7 @@ src/main/java/com/brahyam/storagemanager/
 ## Verification
 
 Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
-by Maven; no machine-specific agent path is required. The current suite has 108 tests,
+by Maven; no machine-specific agent path is required. The current suite has 116 tests,
 including OpenAPI schema and Swagger UI checks. Docker verification also checks
 the packaged documentation endpoints.
 

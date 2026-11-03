@@ -27,6 +27,7 @@ Angular 21 matches the installed Node version; consult the
 - Read inventory, search by name and filter private/shared/out-of-stock items.
 - Open item details, edit as owner, record consumption and view consumption history.
 - Move all units to another location in the same house and inspect movement history.
+- Take reusable items for use, return them, and inspect availability and usage history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 
 Deleting objects and editing/deleting locations still need frontend forms. Those operations are available through the API. There is no
@@ -54,14 +55,14 @@ npm run build
 npm audit
 ```
 
-33 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+38 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
 member, reload logout and mobile layout. Creation checks also covered nested locations,
 empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. Consumption checks used 10 → 5 → 0 units,
 verified persisted history, disabled consumption at zero, and owner editing. The unchanged backend separately has
-108 passing tests.
+116 passing tests.
 
 Targeted Angular CLI overrides use glob 14.0.3 and minimatch 11.0.4 for
 [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
@@ -84,8 +85,7 @@ Click an object's name to open its details. The owner can edit its details,
 visibility and current stock (an explicit adjustment). Editing retains the location; use **Mover objeto** to change it. Reusable objects have at least one exemplar and no consumption actions. A single
 screw can still be consumable; several mice can be reusable. Existing items retain
 their previous consumable behavior until explicitly reclassified by their owner.
-An item with recorded consumption cannot become reusable. Usage/return tracking
-is still pending. See [type rules](../docs/item-kinds.md).
+An item with recorded consumption cannot become reusable. Usage/return tracking is described in [the usage contract](../docs/reusable-usage.md). See [type rules](../docs/item-kinds.md).
 
 Use **Registrar consumo** for consumables when spending units:
 it records the amount and remaining stock in the API history. A member can consume
@@ -134,5 +134,13 @@ dates, including empty/loading/error states. Browser verification against isolat
 PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
 unchanged quantities, updated paths and both histories. Unit tests additionally
 cover member actions, forbidden destinations, zero stock, duplicate submit, stale
-stock and cancelled responses. Java code and dependencies are unchanged in this
-delivery; the backend suite now passes 108 tests, including security regressions.
+stock and cancelled responses. The backend suite now passes 116 tests, including usage and security regressions.
+
+
+## Reusable availability
+
+The reusable detail shows registered total, available objects and objects in use.
+Use **Retirar para usar** for a positive available quantity. The borrower or owner
+can register a full return from its history row. A second return is rejected.
+Movements are disabled while any objects are in use. API permissions remain
+mandatory. See [usage rules and verification](../docs/reusable-usage.md).
