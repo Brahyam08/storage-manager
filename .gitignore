@@ -35,3 +35,11 @@ build/
 # Local environment variables
 .env
 .DS_Store
+
+# Local session notes and security review
+/CONTINUITY.md
+/SECURITY-REVIEW.local.md
+
+# Local environment variants; retain the public template
+.env.*
+!.env.example

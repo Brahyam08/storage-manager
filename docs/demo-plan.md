@@ -1,0 +1,39 @@
+# Plan para una demo de portfolio
+
+Objetivo: completar el recorrido útil antes del 21 de noviembre de 2026,
+reservando margen para corregir problemas y ensayar la entrevista.
+No es una garantía de contratación. Las candidaturas pueden avanzar en paralelo.
+
+## Entregas pequeñas, por orden
+
+1. Casas, miembros e invitaciones: implementadas y con tests H2.
+2. Ubicaciones por casa, jerarquía y ruta completa: implementadas y con tests H2.
+3. Objetos privados por defecto y compartidos. Proteger búsqueda, ID, edición,
+   movimiento e historial; movimientos atómicos de la cantidad completa.
+4. Angular con TypeScript: registro/login, casas e invitaciones, ubicaciones,
+   inventario con búsqueda y formularios, movimiento e historial. Diseño móvil.
+5. Probar el recorrido completo con dos usuarios y PostgreSQL; Docker, datos de
+   demostración, instalación reproducible y revisión de errores de autenticación.
+6. README de portfolio, capturas, guion de demo y decisiones técnicas explicables.
+
+## Distribución orientativa del tiempo
+
+- 3–6 de noviembre: backend doméstico y permisos.
+- 7–12 de noviembre: recorrido Angular completo.
+- 13–16 de noviembre: integración, PostgreSQL/Docker y correcciones.
+- 17–20 de noviembre: documentación, demo, accesibilidad básica y ensayo.
+
+Quedan fuera de esta versión OAuth, planos, fotos, cantidades repartidas entre
+ubicaciones y permisos privados por persona. No publicar una demo con datos reales
+mientras el inventario siga siendo global. No hacer commit ni push automáticamente.
+
+Cada entrega termina con pruebas pertinentes y un diff revisable, conservando los
+cambios previos. Se prioriza código sencillo que el autor pueda explicar.
+
+## Práctica de mantenimiento acordada
+
+Tras terminar y desplegar una versión estable se prepararán ejercicios de fallos
+realistas en una rama separada. Cada ejercicio tendrá síntoma y comportamiento
+esperado; el usuario investigará y escribirá una prueba, con pistas progresivas si
+las necesita. No introducir fallos intencionales en la demo ni debilitar autenticación
+o privacidad. No se ha creado aún ninguna rama ni ejercicio.
