@@ -141,10 +141,11 @@
                   itemForm.controls.quantity.touched &&
                   (itemForm.controls.quantity.invalid || itemForm.hasError('reusableQuantity'))
                 ) {
-                  <small class="field-error"
-                    >Usa un número entero válido; los reutilizables necesitan al menos un
-                    objeto.</small
-                  >
+                  <small class="field-error">{{
+                    itemForm.controls.kind.value === 'REUSABLE'
+                      ? 'Introduce un número entero de objetos, al menos 1.'
+                      : 'Introduce una cantidad entera igual o mayor que 0.'
+                  }}</small>
                 }
               </div>
               <div>
