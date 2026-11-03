@@ -4,15 +4,20 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import jakarta.validation.constraints.Size;
+import com.brahyam.storagemanager.entity.ItemVisibility;
 
 @Data
 public class ItemRequest {
 
     @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 255)
     private String name;
 
+    @Size(max = 255)
     private String description;
 
+    @Size(max = 255)
     private String category;
 
     @NotNull(message = "La cantidad es obligatoria")
@@ -21,5 +26,7 @@ public class ItemRequest {
 
     @NotNull(message = "La ubicación es obligatoria")
     private Long locationId;
+
+    private ItemVisibility visibility;
 
 }

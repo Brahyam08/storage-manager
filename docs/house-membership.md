@@ -14,6 +14,6 @@ Como creador quiero compartir un código para que otra cuenta pueda unirse a mi 
 - La base de datos impide duplicar pares casa/usuario. La unión bloquea la invitación
   y la renovación bloquea la casa dentro de una transacción.
 
-Esta entrega no añade edición o expulsión de miembros, ni acceso al inventario por
-casa: ubicaciones y objetos siguen pendientes. Las pruebas de API verifican creación,
+Esta entrega no añade edición o expulsión de miembros. Las entregas posteriores
+`house-locations.md` e `item-privacy.md` protegen ubicaciones y objetos por casa. Las pruebas de API verifican creación,
 unión repetida, acceso como miembro, renovación, códigos inválidos y acceso anónimo.

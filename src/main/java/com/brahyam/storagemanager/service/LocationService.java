@@ -46,7 +46,7 @@ public class LocationService {
 
     @Transactional
     public LocationResponse update(Long id, LocationRequest request, User user) {
-        Location location = forUpdate(id, user);
+        Location location = lockForUpdate(id, user);
         if (!location.getHouse().getId().equals(request.getHouseId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede cambiar la casa de una ubicación");
         }
@@ -56,7 +56,7 @@ public class LocationService {
 
     @Transactional
     public void deleteById(Long id, User user) {
-        Location location = forUpdate(id, user);
+        Location location = lockForUpdate(id, user);
         if (locationRepository.existsByParentId(id) || items.existsByLocationId(id)
                 || movements.existsByFromLocationIdOrToLocationId(id, id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -65,7 +65,8 @@ public class LocationService {
         locationRepository.delete(location);
     }
 
-    private Location forUpdate(Long id, User user) {
+    @Transactional
+    public Location lockForUpdate(Long id, User user) {
         Long houseId = locationRepository.findHouseIdById(id).orElseThrow(this::notFound);
         houseService.lockForUpdate(houseId, user);
         return inHouse(id, houseId);

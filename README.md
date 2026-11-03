@@ -15,7 +15,7 @@ REST API for managing physical inventory across storage locations. Built to solv
 
 ## Features
 
-- Full CRUD for locations and items, with user queries and deletion
+- House-based locations and inventory with private/shared items and own-profile access
 - JWT-based authentication; public registrations receive the VIEWER role
 - Item movement tracking with full history — every time an item is moved between locations, the system records where it came from, where it went, the quantity moved, and the timestamp
 - Search and filtering — find items by name, category, or location
@@ -103,8 +103,8 @@ Only the creator can generate or renew an invitation. Codes are returned once,
 are reusable until renewed, and are stored as SHA-256 hashes. Renewal invalidates
 the previous code without removing existing members. Joining again is harmless.
 
-Locations now belong to houses and support nesting. Existing item reads are
-still global and private objects are not implemented yet. There is no mobile UI yet.
+Locations belong to houses and support nesting. Items are private by default or
+shared with their house. There is no mobile UI yet.
 
 ### Locations (requires token)
 
@@ -130,7 +130,7 @@ See [location contract](docs/house-locations.md).
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/items` | List all items (supports filters) |
+| GET | `/api/items` | List accessible items across own houses (supports filters) |
 | GET | `/api/items/{id}` | Get item by ID |
 | POST | `/api/items` | Create an item |
 | PUT | `/api/items/{id}` | Update an item |
@@ -143,8 +143,21 @@ See [location contract](docs/house-locations.md).
 - `?search=lipo` — search by name (case-insensitive)
 - `?category=Battery` — filter by category
 - `?locationId=1` — filter by location
+- `?houseId=1` — filter by an accessible house
 
-Filters can be combined: `?search=lipo&category=Battery`
+Filters can be combined: `?search=lipo&category=Battery`.
+
+Create items with `name`, `quantity`, `locationId` and optional `description`,
+`category`, `visibility` (`PRIVATE` by default or `HOUSE_SHARED`). The owner comes
+from the session. Owners can edit/delete; house members can read and move shared
+items. House creators and global ADMIN accounts cannot access others' private items.
+Privacy applies to lists, search, ID, changes, movement and history.
+
+Responses include `ownerId`, `visibility` and location with its full `path`.
+Moves require the entire quantity and a different location in the same house;
+location and history are saved atomically. PUT cannot change location. Deletion
+with movement history returns `409`. Legacy unassigned items remain stored and
+hidden. See [inventory privacy and movement contract](docs/item-privacy.md).
 
 ### Users (requires token)
 
@@ -211,11 +224,11 @@ src/main/java/com/brahyam/storagemanager/
 - **Monolithic architecture** — the project scope doesn't justify the complexity of microservices. The layered structure (controller → service → repository) keeps the code organized and makes it straightforward to refactor into separate services if needed in the future.
 - **Single location per item** — items are assigned to one location at a time. Splitting quantities across multiple locations would add significant complexity without proportional benefit at this stage. Planned as a future enhancement.
 - **Movement history as a separate entity** — instead of just updating the item's location, every movement is recorded with origin, destination, quantity, and timestamp. This provides a complete audit trail.
-- **DTOs for input, entities for output** — request bodies use dedicated DTOs with validation annotations, keeping the API contract separate from the database model. Passwords are excluded from responses using `@JsonIgnore`.
+- **Explicit API DTOs** — validated request DTOs and dedicated house, location, item, movement and profile responses keep persistence relations out of the API. Registration currently returns a User with its password excluded using `@JsonIgnore`.
 
 ## Future Improvements
 
-- Role-based endpoint restrictions (ADMIN vs VIEWER permissions)
+- Review account deletion lifecycle and additional administration requirements
 - Multi-location item support with quantity per location
 - Image attachments for items
 - Export inventory to CSV/PDF

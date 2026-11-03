@@ -8,8 +8,8 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
 
 1. Casas, miembros e invitaciones: implementadas y con tests H2.
 2. Ubicaciones por casa, jerarquía y ruta completa: implementadas y con tests H2.
-3. Objetos privados por defecto y compartidos. Proteger búsqueda, ID, edición,
-   movimiento e historial; movimientos atómicos de la cantidad completa.
+3. Objetos privados/compartidos y acceso por casa: implementados con pruebas de
+   búsqueda, ID, edición, movimiento e historial; rollback y concurrencia en H2.
 4. Angular con TypeScript: registro/login, casas e invitaciones, ubicaciones,
    inventario con búsqueda y formularios, movimiento e historial. Diseño móvil.
 5. Probar el recorrido completo con dos usuarios y PostgreSQL; Docker, datos de
@@ -24,8 +24,8 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
 - 17–20 de noviembre: documentación, demo, accesibilidad básica y ensayo.
 
 Quedan fuera de esta versión OAuth, planos, fotos, cantidades repartidas entre
-ubicaciones y permisos privados por persona. No publicar una demo con datos reales
-mientras el inventario siga siendo global. No hacer commit ni push automáticamente.
+ubicaciones y permisos privados por persona. Verificar PostgreSQL, autenticación, errores y despliegue antes de publicar
+una demo con datos reales. No hacer commit ni push automáticamente.
 
 Cada entrega termina con pruebas pertinentes y un diff revisable, conservando los
 cambios previos. Se prioriza código sencillo que el autor pueda explicar.

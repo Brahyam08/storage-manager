@@ -9,7 +9,8 @@ import java.util.List;
 @Repository
 public interface ItemMovementRepository extends JpaRepository<ItemMovement, Long> {
 
-    List<ItemMovement> findByItemId(Long itemId);
+    List<ItemMovement> findByItemIdOrderByMovedAtDescIdDesc(Long itemId);
+    boolean existsByItemId(Long itemId);
 
     boolean existsByFromLocationIdOrToLocationId(Long fromLocationId, Long toLocationId);
 }

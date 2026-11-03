@@ -1,6 +1,7 @@
 package com.brahyam.storagemanager.config;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,6 +18,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
         String message = ex.getReason() == null ? "Error en la petición" : ex.getReason();
         return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", message));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleUnreadableRequest(HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", "El cuerpo de la petición no es válido"));
     }
 
     @ExceptionHandler(RuntimeException.class)

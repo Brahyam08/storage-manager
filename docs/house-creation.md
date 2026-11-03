@@ -26,7 +26,8 @@ casas, para empezar a organizar mis objetos.
 ## Límites de esta entrega
 
 La membresía y las invitaciones se incorporan en `house-membership.md`. No se
-impone un límite de una casa por usuario. Los objetos y ubicaciones actuales
-siguen siendo globales; esta entrega no los hace privados ni los vincula a casas.
+impone un límite de una casa por usuario. Las entregas posteriores
+`house-locations.md` e `item-privacy.md` vinculan ubicaciones e inventario a casas
+y protegen la privacidad.
 La interfaz móvil también está pendiente. Las pruebas de API usan JWT, Spring
 Security y H2; todavía no verifican PostgreSQL ni Docker.

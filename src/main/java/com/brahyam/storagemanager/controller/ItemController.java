@@ -1,84 +1,60 @@
 package com.brahyam.storagemanager.controller;
 
-import com.brahyam.storagemanager.dto.ItemRequest;
-import com.brahyam.storagemanager.entity.Item;
-import com.brahyam.storagemanager.entity.Location;
-import com.brahyam.storagemanager.service.ItemMovementService;
-import com.brahyam.storagemanager.service.ItemService;
-import com.brahyam.storagemanager.service.LocationService;
+import com.brahyam.storagemanager.dto.*;
+import com.brahyam.storagemanager.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import java.net.URI;
 import java.security.Principal;
-import com.brahyam.storagemanager.service.UserService;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/items")
 @RequiredArgsConstructor
 public class ItemController {
-
-    private final ItemService itemService;
-    private final ItemMovementService itemMovementService;
-    private final LocationService locationService;
+    private final ItemService items;
+    private final ItemMovementService movements;
     private final UserService users;
 
     @GetMapping
-    public ResponseEntity<List<Item>> findAll(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) Long locationId) {
-        return ResponseEntity.ok(itemService.findWithFilters(search, category, locationId));
+    public List<ItemResponse> findAll(@RequestParam(required = false) Long houseId,
+            @RequestParam(required = false) String search, @RequestParam(required = false) String category,
+            @RequestParam(required = false) Long locationId, Principal principal) {
+        return items.findWithFilters(houseId, search, category, locationId, users.findByEmail(principal.getName()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Item> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(itemService.findById(id));
+    public ItemResponse findById(@PathVariable Long id, Principal principal) {
+        return items.findById(id, users.findByEmail(principal.getName()));
     }
 
     @PostMapping
-    public ResponseEntity<Item> save(@Valid @RequestBody ItemRequest request, Principal principal) {
-        Location location = locationService.findById(request.getLocationId(), users.findByEmail(principal.getName()));
-        Item item = new Item();
-        item.setName(request.getName());
-        item.setDescription(request.getDescription());
-        item.setCategory(request.getCategory());
-        item.setQuantity(request.getQuantity());
-        item.setLocation(location);
-        return ResponseEntity.status(HttpStatus.CREATED).body(itemService.save(item));
+    public ResponseEntity<ItemResponse> create(@Valid @RequestBody ItemRequest request, Principal principal) {
+        ItemResponse item = items.create(request, users.findByEmail(principal.getName()));
+        return ResponseEntity.created(URI.create("/api/items/" + item.id())).body(item);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Item> update(@PathVariable Long id, @Valid @RequestBody ItemRequest request, Principal principal) {
-        Location location = locationService.findById(request.getLocationId(), users.findByEmail(principal.getName()));
-        Item item = new Item();
-        item.setName(request.getName());
-        item.setDescription(request.getDescription());
-        item.setCategory(request.getCategory());
-        item.setQuantity(request.getQuantity());
-        item.setLocation(location);
-        return ResponseEntity.ok(itemService.update(id, item));
+    public ItemResponse update(@PathVariable Long id, @Valid @RequestBody ItemRequest request, Principal principal) {
+        return items.update(id, request, users.findByEmail(principal.getName()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        itemService.deleteById(id);
+    public ResponseEntity<Void> deleteById(@PathVariable Long id, Principal principal) {
+        items.deleteById(id, users.findByEmail(principal.getName()));
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/move")
-    public ResponseEntity<Item> move(@PathVariable Long id,
-                                     @RequestParam Long toLocationId,
-                                     @RequestParam Integer quantity, Principal principal) {
-        return ResponseEntity.ok(itemService.move(id, toLocationId, quantity, users.findByEmail(principal.getName())));
+    public ItemResponse move(@PathVariable Long id, @RequestParam Long toLocationId,
+                            @RequestParam Integer quantity, Principal principal) {
+        return items.move(id, toLocationId, quantity, users.findByEmail(principal.getName()));
     }
 
     @GetMapping("/{id}/history")
-    public ResponseEntity<?> getHistory(@PathVariable Long id) {
-        return ResponseEntity.ok(itemMovementService.findByItemId(id));
+    public List<ItemMovementResponse> history(@PathVariable Long id, Principal principal) {
+        return movements.findByItemId(id, users.findByEmail(principal.getName()));
     }
-
 }

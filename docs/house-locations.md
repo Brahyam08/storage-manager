@@ -34,10 +34,9 @@ asignación. No se atribuyen datos existentes automáticamente a una cuenta. Ant
 usar datos reales se necesita una asignación explícita, revisada y con copia de
 seguridad. No se ha ejecutado ninguna migración contra PostgreSQL del usuario.
 
-Los accesos a ubicaciones desde creación, edición y movimiento de objetos ya
-reciben al usuario autenticado. Las consultas globales de objetos, su privacidad,
-la atomicidad de movimientos y el historial protegido pertenecen a la siguiente
-entrega. Todavía no se puede afirmar que todo el inventario esté aislado por casa.
+La entrega posterior `item-privacy.md` protege los accesos al inventario y su
+historial, añade privacidad y movimientos atómicos. Crear objetos y modificar
+ubicaciones comparten el bloqueo de la casa. Queda pendiente verificar PostgreSQL.
 
 ## Verificación
 

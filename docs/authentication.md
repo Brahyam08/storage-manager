@@ -24,5 +24,5 @@ Trece pruebas HTTP con JWT real verifican estos casos, incluido login público y
 peticiones consecutivas. El secreto de fixtures es exclusivamente de tests; la
 aplicación requiere JWT_SECRET externo. La suite completa pasa 51 tests con H2.
 
-Pendientes de seguridad: privacidad/aislamiento del inventario, validación de
-registro/login y revisión de errores generales, dependencias y despliegue.
+Privacidad/aislamiento del inventario se incorpora en `item-privacy.md`. Pendientes:
+validación de registro/login, errores generales, dependencias y despliegue.

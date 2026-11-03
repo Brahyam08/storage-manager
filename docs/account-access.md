@@ -22,5 +22,6 @@ Las pruebas de API utilizan JWT real, Spring Security y H2. Verifican ambos role
 perfil propio, ocultación de cuentas ajenas, prohibición del listado y borrado,
 conservación de registros y peticiones sin sesión.
 
-Esta entrega no corrige los accesos globales del inventario ni el tratamiento de
-JWT inválidos; siguen pendientes y no se considera lista una demo pública.
+Las entregas posteriores `authentication.md` e `item-privacy.md` corrigen JWT
+inválidos y acceso al inventario. Siguen pendientes la integración PostgreSQL,
+validación de registro/login y otras comprobaciones antes de una demo pública.
