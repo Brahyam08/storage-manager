@@ -12,8 +12,9 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
    búsqueda, ID, edición, movimiento e historial; rollback y concurrencia en H2.
 4. Angular con TypeScript: registro/login, casas e invitaciones, ubicaciones,
    inventario con búsqueda y formularios, movimiento e historial. Diseño móvil.
-5. Probar el recorrido completo con dos usuarios y PostgreSQL; Docker, datos de
-   demostración, instalación reproducible y revisión de errores de autenticación.
+5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
+   persistencia tras recrear contenedores. Pendientes demo completa, datos de
+   presentación y revisión de errores/registro/login.
 6. README de portfolio, capturas, guion de demo y decisiones técnicas explicables.
 
 ## Distribución orientativa del tiempo
@@ -25,7 +26,7 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
 
 Quedan fuera de esta versión OAuth, planos, fotos, cantidades repartidas entre
 ubicaciones y permisos privados por persona. Verificar PostgreSQL, autenticación, errores y despliegue antes de publicar
-una demo con datos reales. No hacer commit ni push automáticamente.
+una demo con datos reales. Se permiten staging y commits revisados; el push queda a cargo del usuario.
 
 Cada entrega termina con pruebas pertinentes y un diff revisable, conservando los
 cambios previos. Se prioriza código sencillo que el autor pueda explicar.

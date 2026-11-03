@@ -1,0 +1,7 @@
+.git
+.idea
+.env*
+target
+CONTINUITY.md
+SECURITY-REVIEW.local.md
+*.log

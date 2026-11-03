@@ -68,7 +68,19 @@ cp .env.example .env
 docker compose up --build
 ```
 
-This starts both the API and a PostgreSQL instance. No local database setup needed.
+This starts both the API and a PostgreSQL instance, waiting for the database to
+be ready. Both ports are bound to localhost; override API_PORT/DB_PORT as needed.
+The storage-data volume keeps database contents across container recreation.
+
+To check the stack using an isolated disposable database and synthetic data:
+
+```bash
+python3 scripts/verify_docker.py
+```
+
+This verifies PostgreSQL schema updates, privacy, consumption, concurrent writes,
+rollback and persistence after container recreation without using your local .env
+or database. See [Docker/PostgreSQL verification](docs/docker-verification.md).
 
 ### Access the API
 

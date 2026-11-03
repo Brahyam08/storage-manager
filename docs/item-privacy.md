@@ -66,8 +66,9 @@ Dos tests sin transacción exterior comprueban rollback tras escritura forzada y
 movimientos HTTP concurrentes con una cadena de historial consistente. Suite total:
 65 tests sin fallos, errores ni omisiones, con H2 y agente Mockito.
 
-Pendientes: repetir integración/concurrencia en PostgreSQL, Docker, validación de
-registro/login, manejo general de errores, revisión de dependencias y frontend.
+La verificación posterior `docker-verification.md` comprueba integración/concurrencia,
+rollback y persistencia con PostgreSQL 16 y Docker. Pendientes: validación de
+registro/login, errores generales, dependencias y frontend.
 Esto no equivale a una auditoría de seguridad completa ni a una demo desplegada.
 
 ## Consumos

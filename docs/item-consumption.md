@@ -45,4 +45,5 @@ Ocho tests HTTP cubren 10→5, agotamiento, búsquedas, actor de sesión, cantid
 inválidas, privacidad, miembros, conservación del historial y peticiones anónimas.
 Dos pruebas sin transacción exterior fuerzan un fallo después de escribir y ejecutan
 dos consumos simultáneos sobre existencias insuficientes. Suite: 75 tests sin fallos,
-errores ni omisiones, con H2 y agente Mockito. PostgreSQL/Docker siguen pendientes.
+errores ni omisiones, con H2 y agente Mockito. La verificación HTTP posterior de PostgreSQL/Docker
+en `docker-verification.md` comprueba consumo, concurrencia, rollback y persistencia.
