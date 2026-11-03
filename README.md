@@ -30,8 +30,9 @@ REST API for managing physical inventory across storage locations. Built to solv
 The first Angular delivery supports registration/login, house creation/joining,
 owner invitations, nested location creation, and item creation with quantity and
 private/shared visibility. Inventory supports search and stock/visibility filters.
-Desktop and mobile layouts are included. Editing, consumption, movement and history
-forms remain pending; those operations already exist in the API.
+Desktop and mobile layouts include owner editing, consumption and consumption
+history. Movement/history and deletion forms remain pending; those operations
+already exist in the API.
 See [frontend setup and checks](frontend/README.md).
 
 ## Getting Started

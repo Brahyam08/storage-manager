@@ -21,6 +21,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
+import { ItemDetailComponent } from './item-detail.component';
 import { InventoryCreateComponent } from './inventory-create.component';
 import { Subject } from 'rxjs';
 import { AuthService } from '../core/auth.service';
@@ -32,7 +33,7 @@ type ItemFilter = 'all' | 'private' | 'shared' | 'empty';
 
 @Component({
   selector: 'app-inventory-page',
-  imports: [ReactiveFormsModule, RouterLink, InventoryCreateComponent],
+  imports: [ReactiveFormsModule, RouterLink, InventoryCreateComponent, ItemDetailComponent],
   templateUrl: './inventory-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -43,6 +44,7 @@ export class InventoryPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly refreshItems = new Subject<void>();
+  readonly selectedItem = signal<InventoryItem | null>(null);
   readonly houses = signal<House[]>([]);
   readonly items = signal<InventoryItem[]>([]);
   readonly loadingHouses = signal(true);
@@ -92,6 +94,7 @@ export class InventoryPageComponent {
       this.houseControl.valueChanges.pipe(
         startWith(null),
         tap(() => {
+          this.selectedItem.set(null);
           this.invitationCode.set('');
           this.notice.set('');
         }),
@@ -222,7 +225,15 @@ export class InventoryPageComponent {
       });
   }
 
+  itemUpdated(item: InventoryItem) {
+    this.items.update((items) =>
+      items.map((existing) => (existing.id === item.id ? item : existing)),
+    );
+    this.selectedItem.set(item);
+  }
+
   itemCreated() {
+    this.selectedItem.set(null);
     this.filter.set('all');
     this.searchControl.setValue('');
     this.refreshItems.next();

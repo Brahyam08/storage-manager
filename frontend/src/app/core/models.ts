@@ -47,3 +47,12 @@ export interface CreateItem {
   locationId: number;
   visibility: InventoryItem['visibility'];
 }
+
+export interface ItemConsumption {
+  id: number;
+  quantity: number;
+  remainingQuantity: number;
+  consumedById: number;
+  consumedAt: string;
+  location: StorageLocation;
+}

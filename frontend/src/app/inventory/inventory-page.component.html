@@ -160,6 +160,14 @@
         @if (selectedHouse(); as house) {
           <app-inventory-create [houseId]="house.id" (created)="itemCreated()" />
         }
+        @if (selectedItem(); as item) {
+          <app-item-detail
+            [item]="item"
+            [userId]="auth.user()!.id"
+            (updated)="itemUpdated($event)"
+            (closed)="selectedItem.set(null)"
+          />
+        }
         <section class="summary-grid" aria-label="Resumen del inventario mostrado">
           <article class="summary-card">
             <span>Objetos encontrados</span><strong>{{ visibleItems().length }}</strong
@@ -220,7 +228,16 @@
                   <div class="item-identity">
                     <span class="item-symbol" aria-hidden="true">▧</span>
                     <div>
-                      <h3>{{ item.name }}</h3>
+                      <h3>
+                        <button
+                          class="item-name-button"
+                          type="button"
+                          (click)="selectedItem.set(item)"
+                          [attr.aria-label]="'Ver detalle de ' + item.name"
+                        >
+                          {{ item.name }} <span aria-hidden="true">↗</span>
+                        </button>
+                      </h3>
                       <span class="muted">{{ item.category || 'Sin categoría' }}</span>
                     </div>
                   </div>

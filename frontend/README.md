@@ -24,9 +24,10 @@ Angular 21 matches the installed Node version; consult the
 - Create/join houses; renew invitations as the house owner.
 - Create nested locations and objects with quantity and private/shared visibility.
 - Read inventory, search by name and filter private/shared/out-of-stock items.
+- Open item details, edit as owner, record consumption and view consumption history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 
-Editing/deleting objects and locations, consumption, movement and histories still
+Deleting objects, editing/deleting locations, movement and movement history still
 need frontend forms. Those operations are available through the API. There is no
 bundled demo account.
 
@@ -52,12 +53,13 @@ npm run build
 npm audit
 ```
 
-18 tests cover creation, authentication, HTTP isolation, stale responses, password byte
+25 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
 member, reload logout and mobile layout. Creation checks also covered nested locations,
-empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. The unchanged backend separately has
+empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. Consumption checks used 10 → 5 → 0 units,
+verified persisted history, disabled consumption at zero, and owner editing. The unchanged backend separately has
 101 passing tests.
 
 Targeted Angular CLI overrides use glob 14.0.3 and minimatch 11.0.4 for
@@ -73,3 +75,20 @@ development dependencies on 2026-11-03; deployment security remains a separate c
 - `src/app/auth`: registration/login and password validation.
 - `src/app/inventory`: houses and inventory browser.
 - `src/styles.scss`: responsive shared styles.
+
+
+## Editing and consumption
+
+Click an object's name to open its details. The owner can edit its details,
+visibility and current stock (an explicit adjustment). Location is retained;
+movement will have its own action. Use **Registrar consumo** when spending units:
+it records the amount and remaining stock in the API history. A member can consume
+shared items; only the owner can edit them. UI controls supplement API permissions.
+
+The server response updates both the detail and inventory counters. Insufficient
+stock returns an error without changing local quantities; **Actualizar objeto**
+reloads current stock before retrying. Pending detail requests are cancelled on
+selection/house changes. Cancellation cannot undo an already accepted operation.
+Stock adjustments use the existing PUT contract without optimistic versioning;
+refresh before adjusting stock when several members may be using the same item.
+Consumption is the atomic backend operation for spending units.
