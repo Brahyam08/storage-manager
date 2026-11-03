@@ -39,6 +39,18 @@ export class InventoryApiService {
     return this.http.post<StorageLocation>('/api/locations', request);
   }
 
+  updateLocation(id: number, request: CreateLocation) {
+    return this.http.put<StorageLocation>(`/api/locations/${id}`, request);
+  }
+
+  deleteLocation(id: number) {
+    return this.http.delete<void>(`/api/locations/${id}`);
+  }
+
+  deleteItem(id: number) {
+    return this.http.delete<void>(`/api/items/${id}`);
+  }
+
   createItem(request: CreateItem) {
     return this.http.post<InventoryItem>('/api/items', request);
   }

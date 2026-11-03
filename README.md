@@ -35,8 +35,8 @@ and stock/visibility/type filters. See [item behavior](docs/item-kinds.md).
 Desktop and mobile layouts include owner editing, consumption and consumption
 history, full-quantity movement within a house and movement history. Reusable
 items support taking for use and returning, with availability and usage history.
-See [usage rules](docs/reusable-usage.md). Deletion
-and location-editing forms remain pending; those operations already exist in the API.
+See [usage rules](docs/reusable-usage.md). Owner-only deletion with confirmation and shared location editing/deletion are
+available, with history protections. See [management rules](docs/inventory-management.md).
 See [frontend setup and checks](frontend/README.md).
 
 ## Privacy and storage

@@ -13,17 +13,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
+import { LocationManagerComponent } from './location-manager.component';
 import { reusableQuantity } from './item-kind.validator';
 import { InventoryItem, StorageLocation, ItemKind } from '../core/models';
 
 @Component({
   selector: 'app-inventory-create',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LocationManagerComponent],
   templateUrl: './inventory-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryCreateComponent implements OnChanges {
   @Input({ required: true }) houseId!: number;
+  readonly locationsUpdated = output<void>();
   readonly created = output<void>();
   private readonly api = inject(InventoryApiService);
   private readonly fb = inject(FormBuilder);
@@ -35,7 +37,7 @@ export class InventoryCreateComponent implements OnChanges {
   readonly error = signal('');
   readonly locationError = signal('');
   readonly notice = signal('');
-  readonly mode = signal<'location' | 'item' | null>(null);
+  readonly mode = signal<'location' | 'item' | 'locations' | null>(null);
   private readonly nameValidators = [
     Validators.required,
     Validators.pattern(/\S/),
@@ -89,16 +91,31 @@ export class InventoryCreateComponent implements OnChanges {
         finalize(() => this.loading.set(false)),
       )
       .subscribe({
-        next: (locations) => this.locations.set(locations),
+        next: (locations) => {
+          this.locations.set(locations);
+          const selected = this.itemForm.controls.locationId.value;
+          if (selected !== null && !locations.some((location) => location.id === selected)) {
+            this.itemForm.controls.locationId.setValue(null);
+          }
+          const parent = this.locationForm.controls.parentId.value;
+          if (parent !== null && !locations.some((location) => location.id === parent)) {
+            this.locationForm.controls.parentId.setValue(null);
+          }
+        },
         error: (error) => this.locationError.set(apiError(error)),
       });
   }
 
-  open(mode: 'location' | 'item') {
+  open(mode: 'location' | 'item' | 'locations') {
     if (this.busy()) return;
     this.mode.set(mode);
     this.error.set('');
     this.notice.set('');
+  }
+
+  locationsChanged() {
+    this.loadLocations();
+    this.locationsUpdated.emit();
   }
 
   createLocation() {

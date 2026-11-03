@@ -1,5 +1,8 @@
 <section class="inventory-create" aria-label="Añadir al inventario">
   <div class="creation-actions">
+    <button class="button secondary" type="button" [disabled]="busy()" (click)="open('locations')">
+      Gestionar ubicaciones
+    </button>
     <button class="button secondary" type="button" [disabled]="busy()" (click)="open('location')">
       + Nueva ubicación
     </button>
@@ -13,10 +16,24 @@
   @if (mode()) {
     <section
       class="panel creation-panel"
-      [attr.aria-label]="mode() === 'location' ? 'Nueva ubicación' : 'Nuevo objeto'"
+      [attr.aria-label]="
+        mode() === 'locations'
+          ? 'Ubicaciones de la casa'
+          : mode() === 'location'
+            ? 'Nueva ubicación'
+            : 'Nuevo objeto'
+      "
     >
       <div class="inventory-heading">
-        <h2>{{ mode() === 'location' ? 'Un sitio para tus cosas.' : 'Guarda algo nuevo.' }}</h2>
+        <h2>
+          {{
+            mode() === 'locations'
+              ? 'Tus ubicaciones.'
+              : mode() === 'location'
+                ? 'Un sitio para tus cosas.'
+                : 'Guarda algo nuevo.'
+          }}
+        </h2>
         <button class="text-button" type="button" [disabled]="busy()" (click)="mode.set(null)">
           Cerrar formulario
         </button>
@@ -40,7 +57,9 @@
       @if (error()) {
         <p class="error-banner" role="alert">{{ error() }}</p>
       }
-      @if (mode() === 'location') {
+      @if (mode() === 'locations') {
+        <app-location-manager [houseId]="houseId" (changed)="locationsChanged()" />
+      } @else if (mode() === 'location') {
         <p class="muted">Crea una habitación, un mueble o un cajón dentro de otra ubicación.</p>
         <form [formGroup]="locationForm" (ngSubmit)="createLocation()">
           <fieldset class="creation-fields" [disabled]="busy() || loading() || !!locationError()">

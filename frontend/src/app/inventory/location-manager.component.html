@@ -1,0 +1,114 @@
+<section aria-label="Gestionar ubicaciones">
+  <p class="muted">
+    Los miembros de la casa pueden editar sus ubicaciones. Las rutas del inventario se actualizarán
+    al guardar.
+  </p>
+  @if (notice()) {
+    <p class="creation-notice" role="status">{{ notice() }}</p>
+  }
+  @if (loading()) {
+    <p role="status">Cargando ubicaciones…</p>
+  }
+  @if (loadError()) {
+    <p class="error-banner" role="alert">
+      {{ loadError() }}
+      <button class="text-button" type="button" (click)="load()">Reintentar lista</button>
+    </p>
+  }
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+  @if (editing(); as location) {
+    <h3 #actionTitle tabindex="-1">Editar {{ location.name }}</h3>
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <fieldset class="creation-fields" [disabled]="busy() || loading() || !!loadError()">
+        <div>
+          <label for="manage-location-name">Nombre de la ubicación</label
+          ><input id="manage-location-name" formControlName="name" maxlength="255" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <small class="field-error">Escribe un nombre de hasta 255 caracteres.</small>
+          }
+        </div>
+        <div>
+          <label for="manage-location-parent">Dentro de</label
+          ><select id="manage-location-parent" formControlName="parentId">
+            <option [ngValue]="null">Directamente en la casa</option>
+            @for (parent of parents(); track parent.id) {
+              <option [ngValue]="parent.id">{{ parent.path }}</option>
+            }
+          </select>
+        </div>
+        <div class="full-width">
+          <label for="manage-location-description">Descripción de la ubicación (opcional)</label
+          ><input id="manage-location-description" formControlName="description" maxlength="255" />
+        </div>
+        <button class="button primary" type="submit">Guardar ubicación</button
+        ><button class="text-button" type="button" (click)="editing.set(null)">
+          Cancelar edición
+        </button>
+      </fieldset>
+    </form>
+  }
+  @if (pendingDelete(); as location) {
+    <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de ubicación">
+      <h3 #actionTitle tabindex="-1">¿Eliminar {{ location.name }}?</h3>
+      <p>
+        Esta acción no se puede deshacer. Solo se eliminará si no contiene otras ubicaciones,
+        objetos ni historial.
+      </p>
+      <div class="detail-actions">
+        <button
+          class="button danger"
+          type="button"
+          [disabled]="busy() || loading()"
+          (click)="confirmDelete()"
+        >
+          Confirmar eliminación de ubicación</button
+        ><button
+          class="button secondary"
+          type="button"
+          [disabled]="busy()"
+          (click)="pendingDelete.set(null)"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  }
+  @if (!loading() && !loadError()) {
+    @if (!locations().length) {
+      <p class="muted">
+        Todavía no hay ubicaciones en esta casa. Crea la primera desde Nueva ubicación.
+      </p>
+    }
+    <ul class="consumption-list">
+      @for (location of locations(); track location.id) {
+        <li>
+          <strong>{{ location.path }}</strong>
+          @if (location.description) {
+            <span>{{ location.description }}</span>
+          }
+          <div class="detail-actions">
+            <button
+              class="button secondary"
+              type="button"
+              [disabled]="busy()"
+              (click)="edit(location)"
+              [attr.aria-label]="'Editar ubicación ' + location.path"
+            >
+              Editar</button
+            ><button
+              class="text-button danger-text"
+              type="button"
+              [disabled]="busy()"
+              (click)="askDelete(location)"
+              [attr.aria-label]="'Eliminar ubicación ' + location.path"
+            >
+              Eliminar
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

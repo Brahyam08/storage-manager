@@ -37,7 +37,11 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   @Input({ required: true }) item!: InventoryItem;
   @Input({ required: true }) userId!: number;
   @ViewChild('detailTitle') private title?: ElementRef<HTMLHeadingElement>;
+  @ViewChild('deleteTitle') set deleteTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
+    title?.nativeElement.focus();
+  }
   readonly updated = output<InventoryItem>();
+  readonly deleted = output<number>();
   readonly closed = output<void>();
   private readonly api = inject(InventoryApiService);
   private readonly fb = inject(FormBuilder);
@@ -45,7 +49,9 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   private readonly selectionChanged = new Subject<void>();
   readonly busy = signal(false);
   readonly error = signal('');
-  readonly mode = signal<'edit' | 'consume' | 'history' | 'move' | 'movements' | null>(null);
+  readonly mode = signal<'edit' | 'consume' | 'history' | 'move' | 'movements' | 'delete' | null>(
+    null,
+  );
   readonly history = signal<ItemConsumption[]>([]);
   readonly destinations = signal<StorageLocation[]>([]);
   readonly movementHistory = signal<ItemMovement[]>([]);
@@ -183,6 +189,29 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       )
       .subscribe({
         next: (item) => this.updated.emit(item),
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  askDelete() {
+    if (this.busy() || this.item.ownerId !== this.userId) return;
+    this.error.set('');
+    this.mode.set('delete');
+  }
+
+  deleteItem() {
+    if (this.busy() || this.mode() !== 'delete' || this.item.ownerId !== this.userId) return;
+    this.busy.set(true);
+    this.error.set('');
+    this.api
+      .deleteItem(this.item.id)
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: () => this.deleted.emit(this.item.id),
         error: (error) => this.error.set(apiError(error)),
       });
   }

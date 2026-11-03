@@ -27,6 +27,14 @@
       <button class="button secondary" type="button" [disabled]="busy()" (click)="open('edit')">
         Editar objeto
       </button>
+      <button
+        class="text-button danger-text"
+        type="button"
+        [disabled]="busy()"
+        (click)="askDelete()"
+      >
+        Eliminar objeto
+      </button>
     }
     @if (item.kind === 'CONSUMABLE') {
       <button
@@ -72,6 +80,27 @@
       </p>
     }
     <app-item-use-panel [item]="item" [userId]="userId" (updated)="updated.emit($event)" />
+  }
+  @if (mode() === 'delete') {
+    <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de objeto">
+      <h3 #deleteTitle tabindex="-1">¿Eliminar {{ item.name }}?</h3>
+      <p>
+        Esta acción no se puede deshacer. Los objetos con historial de movimientos, consumos o usos
+        se conservan y no se pueden eliminar.
+      </p>
+      <div class="detail-actions">
+        <button class="button danger" type="button" [disabled]="busy()" (click)="deleteItem()">
+          Confirmar eliminación de objeto</button
+        ><button
+          class="button secondary"
+          type="button"
+          [disabled]="busy()"
+          (click)="mode.set(null)"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
   }
   @if (mode() === 'edit' && item.ownerId === userId) {
     <form [formGroup]="editForm" (ngSubmit)="save()">

@@ -44,6 +44,7 @@ export class InventoryPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly refreshItems = new Subject<void>();
+  readonly inventoryNotice = signal('');
   readonly selectedItem = signal<InventoryItem | null>(null);
   readonly houses = signal<House[]>([]);
   readonly items = signal<InventoryItem[]>([]);
@@ -98,6 +99,7 @@ export class InventoryPageComponent {
       this.houseControl.valueChanges.pipe(
         startWith(null),
         tap(() => {
+          this.inventoryNotice.set('');
           this.selectedItem.set(null);
           this.invitationCode.set('');
           this.notice.set('');
@@ -229,6 +231,18 @@ export class InventoryPageComponent {
       });
   }
 
+  locationsChanged() {
+    this.inventoryNotice.set('');
+    this.selectedItem.set(null);
+    this.refreshItems.next();
+  }
+
+  itemDeleted(id: number) {
+    this.items.update((items) => items.filter((item) => item.id !== id));
+    this.selectedItem.set(null);
+    this.inventoryNotice.set('Objeto eliminado.');
+  }
+
   itemUpdated(item: InventoryItem) {
     this.items.update((items) =>
       items.map((existing) => (existing.id === item.id ? item : existing)),
@@ -237,6 +251,7 @@ export class InventoryPageComponent {
   }
 
   itemCreated() {
+    this.inventoryNotice.set('');
     this.selectedItem.set(null);
     this.filter.set('all');
     this.searchControl.setValue('');

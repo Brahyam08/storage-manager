@@ -1195,3 +1195,18 @@ input[readonly] {
 .item-use-section .consumption-list .button {
   justify-self: start;
 }
+
+.delete-confirmation {
+  margin-block: 24px;
+  padding: 20px;
+  border: 1px solid #e7bcb2;
+  border-radius: 10px;
+  background: #fff8f5;
+}
+.button.danger {
+  background: #963a2c;
+  color: white;
+}
+.danger-text {
+  color: #963a2c;
+}

@@ -28,10 +28,12 @@ Angular 21 matches the installed Node version; consult the
 - Open item details, edit as owner, record consumption and view consumption history.
 - Move all units to another location in the same house and inspect movement history.
 - Take reusable items for use, return them, and inspect availability and usage history.
+- Manage location names, descriptions and hierarchy; delete eligible locations.
+- Delete owned items with confirmation, preserving protected history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 
-Deleting objects and editing/deleting locations still need frontend forms. Those operations are available through the API. There is no
-bundled demo account.
+Deletion is permanent and restricted by server history checks; see
+[management rules](../docs/inventory-management.md). There is no bundled demo account.
 
 ## Session and privacy
 
@@ -55,7 +57,7 @@ npm run build
 npm audit
 ```
 
-38 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+47 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
@@ -144,3 +146,17 @@ Use **Retirar para usar** for a positive available quantity. The borrower or own
 can register a full return from its history row. A second return is rejected.
 Movements are disabled while any objects are in use. API permissions remain
 mandatory. See [usage rules and verification](../docs/reusable-usage.md).
+
+
+## Locations and deletion
+
+**Gestionar ubicaciones** edits names, descriptions and parents. It excludes self
+and descendants from the parent selector and refreshes inventory paths on success.
+All house members can manage locations under the current API policy. A location
+with children, inventory or history cannot be deleted. Only an item owner sees
+**Eliminar objeto**, and the API rejects deletion of any item with history.
+
+Both actions require explicit inline confirmation and support cancellation. A
+failed deletion preserves the visible record. Changing context cancels requests;
+an operation already accepted by the server may still complete. The current UI
+has no undo/archive; confirm only records you intend to remove permanently.

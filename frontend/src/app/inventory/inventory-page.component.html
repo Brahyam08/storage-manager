@@ -158,13 +158,21 @@
         }
       } @else {
         @if (selectedHouse(); as house) {
-          <app-inventory-create [houseId]="house.id" (created)="itemCreated()" />
+          <app-inventory-create
+            [houseId]="house.id"
+            (created)="itemCreated()"
+            (locationsUpdated)="locationsChanged()"
+          />
+        }
+        @if (inventoryNotice()) {
+          <p class="creation-notice" role="status">{{ inventoryNotice() }}</p>
         }
         @if (selectedItem(); as item) {
           <app-item-detail
             [item]="item"
             [userId]="auth.user()!.id"
             (updated)="itemUpdated($event)"
+            (deleted)="itemDeleted($event)"
             (closed)="selectedItem.set(null)"
           />
         }

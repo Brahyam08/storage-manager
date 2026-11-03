@@ -304,4 +304,58 @@ describe('Item detail', () => {
     expect(element.querySelector('img, script, [onerror]')).toBeNull();
     expect(element.textContent).toContain('A: ' + script);
   });
+  it('requires owner confirmation before deletion and emits only after success', () => {
+    const component = fixture.componentInstance;
+    const deleted = vi.fn();
+    component.deleted.subscribe(deleted);
+    component.deleteItem();
+    http.expectNone('/api/items/4');
+    component.askDelete();
+    component.mode.set(null);
+    component.deleteItem();
+    http.expectNone('/api/items/4');
+    component.askDelete();
+    component.deleteItem();
+    component.deleteItem();
+    const request = http.expectOne('/api/items/4');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    expect(deleted).toHaveBeenCalledExactlyOnceWith(4);
+  });
+
+  it('keeps an item with protected history when deletion is refused', () => {
+    const component = fixture.componentInstance;
+    const deleted = vi.fn();
+    component.deleted.subscribe(deleted);
+    component.askDelete();
+    component.deleteItem();
+    http
+      .expectOne('/api/items/4')
+      .flush({ error: 'El objeto tiene historial' }, { status: 409, statusText: 'Conflict' });
+    expect(component.error()).toContain('historial');
+    expect(component.item.id).toBe(4);
+    expect(deleted).not.toHaveBeenCalled();
+    expect(component.busy()).toBe(false);
+  });
+
+  it('does not offer or submit deletion for another owner', () => {
+    fixture.componentRef.setInput('userId', 8);
+    fixture.detectChanges();
+    fixture.componentInstance.askDelete();
+    fixture.componentInstance.deleteItem();
+    http.expectNone('/api/items/4');
+    expect(fixture.nativeElement.textContent).not.toContain('Eliminar objeto');
+  });
+
+  it('cancels a pending delete on selection changes', () => {
+    const component = fixture.componentInstance;
+    component.askDelete();
+    component.deleteItem();
+    const pending = http.expectOne('/api/items/4');
+    fixture.componentRef.setInput('item', { ...item, id: 5 });
+    fixture.detectChanges();
+    expect(pending.cancelled).toBe(true);
+    expect(component.mode()).toBeNull();
+    expect(component.busy()).toBe(false);
+  });
 });
