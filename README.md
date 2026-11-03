@@ -37,6 +37,15 @@ history, full-quantity movement within a house and movement history. Deletion
 and location-editing forms remain pending; those operations already exist in the API.
 See [frontend setup and checks](frontend/README.md).
 
+## Privacy and storage
+
+Private inventory is enforced by the API for other application users. The local
+Docker setup already stores data on this computer in PostgreSQL. Inventory fields
+are not encrypted by the application; server/database administrators and readable
+backups are outside that API privacy boundary. Shared house locations are visible
+to house members. See [security review and storage options](docs/security-and-storage.md)
+for the verified controls, limits and owner-only encryption considerations.
+
 ## Getting Started
 
 ### Prerequisites
@@ -274,7 +283,7 @@ src/main/java/com/brahyam/storagemanager/
 ## Verification
 
 Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
-by Maven; no machine-specific agent path is required. The current suite has 106 tests,
+by Maven; no machine-specific agent path is required. The current suite has 108 tests,
 including OpenAPI schema and Swagger UI checks. Docker verification also checks
 the packaged documentation endpoints.
 

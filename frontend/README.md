@@ -54,14 +54,14 @@ npm run build
 npm audit
 ```
 
-32 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+33 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
 member, reload logout and mobile layout. Creation checks also covered nested locations,
 empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. Consumption checks used 10 → 5 → 0 units,
 verified persisted history, disabled consumption at zero, and owner editing. The unchanged backend separately has
-106 passing tests.
+108 passing tests.
 
 Targeted Angular CLI overrides use glob 14.0.3 and minimatch 11.0.4 for
 [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
@@ -135,4 +135,4 @@ PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
 unchanged quantities, updated paths and both histories. Unit tests additionally
 cover member actions, forbidden destinations, zero stock, duplicate submit, stale
 stock and cancelled responses. Java code and dependencies are unchanged in this
-delivery; the backend suite previously passed 106 tests.
+delivery; the backend suite now passes 108 tests, including security regressions.

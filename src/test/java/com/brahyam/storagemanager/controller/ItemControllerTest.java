@@ -89,6 +89,37 @@ class ItemControllerTest {
                 .andExpect(status().is(expected));
     }
 
+
+    @Test
+    void shouldTreatSqlPayloadsAsBoundSearchValuesWithoutLeakingOtherOwners() throws Exception {
+        create("Private diamonds", source, null, fellowToken);
+        for (String payload : new String[]{"' OR 1=1 --", "'; DROP TABLE items; --"}) {
+            create(payload, source, null, ownerToken);
+            mvc.perform(get("/api/items").param("search", payload).header("Authorization", ownerToken))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].name").value(payload))
+                    .andExpect(jsonPath("$[0].ownerId").value(owner.getId()));
+            mvc.perform(get("/api/items").param("category", payload).header("Authorization", ownerToken))
+                    .andExpect(status().isOk()).andExpect(content().json("[]"));
+        }
+        mvc.perform(get("/api/items").param("houseId", "1 OR 1=1").header("Authorization", ownerToken))
+                .andExpect(status().isBadRequest());
+        assertEquals(3, items.count());
+        mvc.perform(get("/api/items").param("search", "%").header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void shouldPreventBrowserCachingForPrivateInventoryAndDeniedResponses() throws Exception {
+        long id = create("Private inventory", source, null, ownerToken);
+        for (String token : new String[]{ownerToken, creatorToken}) {
+            mvc.perform(get("/api/items/{id}", id).header("Authorization", token))
+                    .andExpect(status().is(token.equals(ownerToken) ? 200 : 404))
+                    .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                    .andExpect(header().string("X-Content-Type-Options", "nosniff"));
+        }
+    }
+
     @Test
     void shouldDefaultToPrivateUseSessionOwnerAndReturnFullLocationWithoutUserEntity() throws Exception {
         String request = body("  Ratón  ", source.getId(), null).replace("}", ",\"ownerId\":" + creator.getId() + "}");

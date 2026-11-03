@@ -268,4 +268,34 @@ describe('Item detail', () => {
     expect(pending.cancelled).toBe(true);
     expect(component.movementHistory()).toEqual([]);
   });
+  it('renders stored HTML payloads as text instead of executable elements', () => {
+    const html = '<img src=x onerror="alert(1)">';
+    const script = '<script>alert(2)</script>';
+    fixture.componentRef.setInput('item', {
+      ...item,
+      name: html,
+      description: script,
+      location: { ...item.location, path: html },
+    });
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.textContent).toContain(html);
+    expect(element.textContent).toContain(script);
+    expect(element.querySelector('img, script, [onerror]')).toBeNull();
+    fixture.componentInstance.loadMovements();
+    http
+      .expectOne('/api/items/4/history')
+      .flush([
+        {
+          id: 1,
+          quantity: 1,
+          movedAt: '2026-11-03T19:00:00',
+          fromLocation: { ...item.location, path: html },
+          toLocation: { ...item.location, id: 8, path: script },
+        },
+      ]);
+    fixture.detectChanges();
+    expect(element.querySelector('img, script, [onerror]')).toBeNull();
+    expect(element.textContent).toContain('A: ' + script);
+  });
 });
