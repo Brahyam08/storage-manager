@@ -120,6 +120,13 @@ def verify():
             url = base_url()
             wait_for_api()
             preserved_legacy_data()
+            _, schema = api("GET", "/v3/api-docs")
+            check(schema["components"]["securitySchemes"]["bearerAuth"]["scheme"] == "bearer", "Missing Bearer scheme")
+            check("/api/items/{id}/consume" in schema["paths"], "Consumption endpoint missing from OpenAPI")
+            check(schema["paths"]["/api/auth/login"]["post"]["security"] == [], "Public login incorrectly documented")
+            with urllib.request.urlopen(url + "/swagger-ui/index.html", timeout=30) as response:
+                check(response.status == 200 and b"Swagger UI" in response.read(), "Swagger UI unavailable")
+            print("OpenAPI schema, Bearer security and Swagger UI passed", flush=True)
             print("Schema update preserves legacy rows", flush=True)
 
             password = secrets.token_urlsafe(18)

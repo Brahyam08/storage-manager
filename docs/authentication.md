@@ -61,10 +61,11 @@ Ver `auth-rate-limits.md` para configuración, NAT/proxies y límites de una ins
 
 Trece pruebas HTTP cubren JWT; ocho de autenticación cubren registro/login, hash,
 roles, duplicados, normalización, correos antiguos, 72 bytes Unicode y errores.
-Cinco pruebas MVC comprueban el manejo de errores. Once pruebas adicionales cubren cuotas. Suite total: 99 tests H2 aprobados.
+Cinco pruebas MVC comprueban el manejo de errores. Once pruebas adicionales cubren cuotas. Suite total: 101 tests H2 aprobados.
 La verificación Docker/PostgreSQL añade validación, registros simultáneos, errores
 genéricos de credenciales y fallos de escritura, además de persistencia y concurrencia.
 
-JWT_SECRET es externo y el secreto de fixtures es solo de tests. Siguen pendientes
-revisión de dependencias, migraciones de producción y
+JWT_SECRET es externo y el secreto de fixtures es solo de tests. La consulta OSV
+del grafo Maven se documenta en `dependency-review.md`; siguen pendientes
+migraciones de producción y
 configuración de despliegue remoto. Esto no equivale a una auditoría completa.

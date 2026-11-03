@@ -15,6 +15,7 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
    persistencia tras recrear contenedores. Pendientes demo completa, datos de
    presentación y despliegue. Registro/login, errores genéricos y cuotas básicas por dirección ya verificados.
+   Dependencias Maven y recursos HTTP de Swagger revisados; ver dependency-review.md.
 6. README de portfolio, capturas, guion de demo y decisiones técnicas explicables.
 
 ## Distribución orientativa del tiempo

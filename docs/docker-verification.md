@@ -50,6 +50,8 @@ Comprueba mediante HTTP contra la API construida con el Dockerfile:
 8. Cuotas por defecto de login/registro, cabeceras de IP falsas y acceso con JWT
    que sigue permitido aunque se haya agotado login.
 
+9. OpenAPI con Bearer JWT y Swagger UI en la aplicación empaquetada.
+
 Al finalizar, incluso ante errores, ejecuta down --volumes solo sobre su proyecto
 aleatorio. Elimina sus contenedores, red y volumen; no toca los del entorno habitual.
 Las capas/imágenes de construcción pueden quedar en la caché de Docker.
@@ -58,7 +60,7 @@ Las capas/imágenes de construcción pueden quedar en la caché de Docker.
 
 La última verificación pasó con PostgreSQL 16 en Docker Desktop, incluyendo
 concurrencia, rollback y tres ciclos consecutivos de recreación de contenedores. No se conectó a la base PostgreSQL real del
-usuario ni se modificaron sus registros. La suite Java conserva 99 tests H2
+usuario ni se modificaron sus registros. La suite Java conserva 101 tests H2
 aprobados; este script comprueba además el sistema real por HTTP, no sustituye esa
 suite ni ejecuta todas sus combinaciones de permisos.
 
@@ -67,8 +69,9 @@ actualización del esquema simulado conserva sus datos; no es una migración
 versionada ni garantiza actualizar cualquier base existente. Antes de actualizar
 una base con datos reales hace falta copia de seguridad y revisión de ese esquema.
 Quedan pendientes migraciones controladas para producción y límites en el despliegue,
-análisis de dependencias, despliegue remoto y el frontend. No se ha validado
-Swagger ni un despliegue remoto y todavía no se considera lista una demo pública.
+revisión de imágenes/JDK, despliegue remoto y el frontend. La consulta OSV del grafo
+Maven se detalla en `dependency-review.md`. No se ha validado
+un navegador interactuando con Swagger ni un despliegue remoto y todavía no se considera lista una demo pública.
 
 Una ejecución intermedia agotó la espera de arranque de la API tras recrear los
 contenedores. No se capturaron logs de esa primera incidencia y no se identificó

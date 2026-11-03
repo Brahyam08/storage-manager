@@ -258,6 +258,23 @@ src/main/java/com/brahyam/storagemanager/
 - **Movement history as a separate entity** — instead of just updating the item's location, every movement is recorded with origin, destination, quantity, and timestamp. This provides a complete audit trail.
 - **Explicit API DTOs** — validated request DTOs and dedicated house, location, item, movement and profile responses keep persistence relations out of the API. Registration also returns a dedicated profile DTO without password or hash.
 
+## Verification
+
+Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
+by Maven; no machine-specific agent path is required. The current suite has 101 tests,
+including OpenAPI schema and Swagger UI checks. Docker verification also checks
+the packaged documentation endpoints.
+
+For a dated OSV check of the resolved runtime dependency graph:
+
+```bash
+mvn dependency:tree -Dscope=runtime -DoutputType=json -DoutputFile=target/dependencies.json
+python3 scripts/check_dependencies.py target/dependencies.json
+```
+
+See [dependency review and scope](docs/dependency-review.md). A clean catalog result
+is not a complete security audit of the application, image or deployment.
+
 ## Future Improvements
 
 - Review account deletion lifecycle and additional administration requirements

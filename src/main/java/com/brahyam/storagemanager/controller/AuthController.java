@@ -4,6 +4,7 @@ import com.brahyam.storagemanager.config.JwtService;
 import com.brahyam.storagemanager.dto.*;
 import com.brahyam.storagemanager.service.UserService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.charset.StandardCharsets;
 
 @RestController
+@SecurityRequirements
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {

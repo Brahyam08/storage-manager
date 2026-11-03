@@ -47,7 +47,7 @@ Cinco tests unitarios verifican caducidad y Retry-After sin dormir, independenci
 memoria acotada, concurrencia y configuración inválida. Seis tests HTTP cubren 429,
 registro válido e inválido, cabeceras falsas, context path y acceso JWT no afectado.
 El perfil general de tests aumenta las cuotas; los tests específicos usan límites
-de 2 en su propia base H2. Suite total: 99 tests sin fallos, errores ni omisiones.
+de 2 en su propia base H2. Suite total: 101 tests sin fallos, errores ni omisiones.
 
 scripts/verify_docker.py prueba también los límites por defecto con Tomcat real,
 PostgreSQL y Docker, incluidas cabeceras falsas y JWT válido tras agotar login.
