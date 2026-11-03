@@ -18,7 +18,13 @@ import { Subject, finalize, takeUntil } from 'rxjs';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { reusableQuantity } from './item-kind.validator';
-import { InventoryItem, ItemConsumption, ItemKind } from '../core/models';
+import {
+  InventoryItem,
+  ItemConsumption,
+  ItemKind,
+  StorageLocation,
+  ItemMovement,
+} from '../core/models';
 
 @Component({
   selector: 'app-item-detail',
@@ -38,8 +44,14 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   private readonly selectionChanged = new Subject<void>();
   readonly busy = signal(false);
   readonly error = signal('');
-  readonly mode = signal<'edit' | 'consume' | 'history' | null>(null);
+  readonly mode = signal<'edit' | 'consume' | 'history' | 'move' | 'movements' | null>(null);
   readonly history = signal<ItemConsumption[]>([]);
+  readonly destinations = signal<StorageLocation[]>([]);
+  readonly movementHistory = signal<ItemMovement[]>([]);
+  readonly movementsLoaded = signal(false);
+  readonly moveForm = this.fb.group({
+    toLocationId: this.fb.control<number | null>(null, Validators.required),
+  });
   readonly historyLoaded = signal(false);
   readonly editForm = this.fb.nonNullable.group(
     {
@@ -70,6 +82,10 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     this.mode.set(null);
     this.error.set('');
     this.history.set([]);
+    this.destinations.set([]);
+    this.movementHistory.set([]);
+    this.movementsLoaded.set(false);
+    this.moveForm.reset();
     this.historyLoaded.set(false);
     this.editForm.reset({
       kind: this.item.kind,
@@ -166,6 +182,83 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       )
       .subscribe({
         next: (item) => this.updated.emit(item),
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  openMove() {
+    if (this.busy() || this.item.quantity === 0) return;
+    this.mode.set('move');
+    this.moveForm.reset();
+    this.destinations.set([]);
+    this.error.set('');
+    this.busy.set(true);
+    this.api
+      .locations(this.item.location.houseId)
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (locations) =>
+          this.destinations.set(
+            locations.filter(
+              (location) =>
+                location.houseId === this.item.location.houseId &&
+                location.id !== this.item.location.id,
+            ),
+          ),
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  move() {
+    if (this.busy() || this.item.quantity === 0) return;
+    if (this.moveForm.invalid) {
+      this.moveForm.markAllAsTouched();
+      return;
+    }
+    const destination = this.moveForm.controls.toLocationId.value;
+    if (
+      destination === null ||
+      !this.destinations().some((location) => location.id === destination)
+    )
+      return;
+    this.busy.set(true);
+    this.error.set('');
+    this.api
+      .moveItem(this.item.id, destination, this.item.quantity)
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (item) => this.updated.emit(item),
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  loadMovements() {
+    if (this.busy()) return;
+    this.mode.set('movements');
+    this.movementHistory.set([]);
+    this.movementsLoaded.set(false);
+    this.error.set('');
+    this.busy.set(true);
+    this.api
+      .movements(this.item.id)
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (history) => {
+          this.movementHistory.set(history);
+          this.movementsLoaded.set(true);
+        },
         error: (error) => this.error.set(apiError(error)),
       });
   }

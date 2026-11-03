@@ -33,8 +33,8 @@ owner invitations, nested location creation, and item creation with quantity and
 private/shared visibility and consumable/reusable type. Inventory supports search
 and stock/visibility/type filters. See [item behavior](docs/item-kinds.md).
 Desktop and mobile layouts include owner editing, consumption and consumption
-history. Movement/history and deletion forms remain pending; those operations
-already exist in the API.
+history, full-quantity movement within a house and movement history. Deletion
+and location-editing forms remain pending; those operations already exist in the API.
 See [frontend setup and checks](frontend/README.md).
 
 ## Getting Started

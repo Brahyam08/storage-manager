@@ -41,6 +41,17 @@
         Ver consumos
       </button>
     }
+    <button
+      class="button secondary"
+      type="button"
+      [disabled]="busy() || item.quantity === 0"
+      (click)="openMove()"
+    >
+      Mover objeto
+    </button>
+    <button class="button secondary" type="button" [disabled]="busy()" (click)="loadMovements()">
+      Ver movimientos
+    </button>
     <button class="text-button" type="button" [disabled]="busy()" (click)="refresh()">
       Actualizar objeto
     </button>
@@ -145,6 +156,74 @@
         <button class="button primary" type="submit">Confirmar consumo</button>
       </fieldset>
     </form>
+  }
+  @if (mode() === 'move') {
+    <h3>Cambiar de sitio</h3>
+    <p class="muted">
+      Ubicación actual: {{ item.location.path }}. Se trasladará la cantidad completa ({{
+        item.quantity
+      }}
+      {{
+        item.kind === 'REUSABLE'
+          ? item.quantity === 1
+            ? 'objeto'
+            : 'objetos'
+          : item.quantity === 1
+            ? 'unidad'
+            : 'unidades'
+      }}) dentro de esta casa.
+    </p>
+    @if (destinations().length) {
+      <form [formGroup]="moveForm" (ngSubmit)="move()">
+        <fieldset class="creation-fields" [disabled]="busy()">
+          <div>
+            <label for="move-destination">Ubicación de destino</label
+            ><select id="move-destination" formControlName="toLocationId">
+              <option [ngValue]="null">Elige dónde guardarlo</option>
+              @for (location of destinations(); track location.id) {
+                <option [ngValue]="location.id">{{ location.path }}</option>
+              }
+            </select>
+            @if (moveForm.controls.toLocationId.touched && moveForm.invalid) {
+              <small class="field-error">Selecciona una ubicación de destino.</small>
+            }
+          </div>
+          <button class="button primary" type="submit">Confirmar traslado</button>
+        </fieldset>
+      </form>
+    } @else if (!busy() && !error()) {
+      <p class="muted">
+        No hay otra ubicación en esta casa. Crea una desde Nueva ubicación y vuelve a abrir Mover
+        objeto.
+      </p>
+    }
+  }
+  @if (mode() === 'movements' && movementsLoaded()) {
+    <h3>Historial de movimientos</h3>
+    @if (!movementHistory().length) {
+      <p class="muted">Todavía no hay movimientos registrados.</p>
+    }
+    <ul class="consumption-list">
+      @for (entry of movementHistory(); track entry.id) {
+        <li>
+          <strong>De: {{ entry.fromLocation.path }}</strong
+          ><span>A: {{ entry.toLocation.path }}</span
+          ><span
+            >{{ entry.quantity }}
+            {{
+              item.kind === 'REUSABLE'
+                ? entry.quantity === 1
+                  ? 'objeto'
+                  : 'objetos'
+                : entry.quantity === 1
+                  ? 'unidad'
+                  : 'unidades'
+            }}
+            · {{ entry.movedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span
+          >
+        </li>
+      }
+    </ul>
   }
   @if (mode() === 'history' && historyLoaded()) {
     <h3>Historial de consumos</h3>

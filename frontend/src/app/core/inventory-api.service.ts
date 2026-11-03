@@ -7,6 +7,7 @@ import {
   CreateLocation,
   CreateItem,
   ItemConsumption,
+  ItemMovement,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -55,6 +56,16 @@ export class InventoryApiService {
 
   consumptions(id: number) {
     return this.http.get<ItemConsumption[]>(`/api/items/${id}/consumptions`);
+  }
+
+  moveItem(id: number, toLocationId: number, quantity: number) {
+    return this.http.patch<InventoryItem>(`/api/items/${id}/move`, null, {
+      params: { toLocationId, quantity },
+    });
+  }
+
+  movements(id: number) {
+    return this.http.get<ItemMovement[]>(`/api/items/${id}/history`);
   }
 
   items(houseId: number, search: string) {

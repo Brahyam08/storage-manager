@@ -26,10 +26,10 @@ Angular 21 matches the installed Node version; consult the
   explicit consumable/reusable type.
 - Read inventory, search by name and filter private/shared/out-of-stock items.
 - Open item details, edit as owner, record consumption and view consumption history.
+- Move all units to another location in the same house and inspect movement history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 
-Deleting objects, editing/deleting locations, movement and movement history still
-need frontend forms. Those operations are available through the API. There is no
+Deleting objects and editing/deleting locations still need frontend forms. Those operations are available through the API. There is no
 bundled demo account.
 
 ## Session and privacy
@@ -54,14 +54,14 @@ npm run build
 npm audit
 ```
 
-27 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+32 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
 member, reload logout and mobile layout. Creation checks also covered nested locations,
 empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. Consumption checks used 10 → 5 → 0 units,
 verified persisted history, disabled consumption at zero, and owner editing. The unchanged backend separately has
-101 passing tests.
+106 passing tests.
 
 Targeted Angular CLI overrides use glob 14.0.3 and minimatch 11.0.4 for
 [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
@@ -81,8 +81,7 @@ development dependencies on 2026-11-03; deployment security remains a separate c
 ## Editing and consumption
 
 Click an object's name to open its details. The owner can edit its details,
-visibility and current stock (an explicit adjustment). Location is retained;
-movement will have its own action. Reusable objects have at least one exemplar and no consumption actions. A single
+visibility and current stock (an explicit adjustment). Editing retains the location; use **Mover objeto** to change it. Reusable objects have at least one exemplar and no consumption actions. A single
 screw can still be consumable; several mice can be reusable. Existing items retain
 their previous consumable behavior until explicitly reclassified by their owner.
 An item with recorded consumption cannot become reusable. Usage/return tracking
@@ -114,3 +113,26 @@ Verified in the preview browser: open menu, keyboard option navigation/confirmat
 pointer selection, location options and mobile-width layout without overflow.
 Production build passes. Native picker appearance remains platform-dependent in
 browsers without the enhancement; Safari and physical touch devices were not tested.
+
+
+## Movement
+
+**Mover objeto** loads destinations from the current house and excludes the current
+location. It sends the full current quantity, keeping one location per inventory
+entry. The server enforces house access, full quantity, privacy and movement history;
+shared items can be moved by house members. Zero-stock items cannot be moved under
+the current API contract. Create another location if no destination is available.
+
+After success, the inventory and detail use the server location. If stock changed,
+the API rejects the stale quantity; refresh the item before retrying. Destination
+selection remains available after errors. Pending destinations, movements and
+histories are cancelled when the selected item/house changes. Cancelling a request
+cannot undo a movement already accepted by the server.
+
+**Ver movimientos** shows full origin/destination paths, quantities and recorded
+dates, including empty/loading/error states. Browser verification against isolated
+PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
+unchanged quantities, updated paths and both histories. Unit tests additionally
+cover member actions, forbidden destinations, zero stock, duplicate submit, stale
+stock and cancelled responses. Java code and dependencies are unchanged in this
+delivery; the backend suite previously passed 106 tests.

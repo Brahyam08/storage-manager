@@ -170,4 +170,102 @@ describe('Item detail', () => {
     expect(component.editForm.hasError('reusableQuantity')).toBe(true);
     http.expectNone('/api/items/4');
   });
+  it('moves the full quantity for a member and excludes current or foreign-house destinations', () => {
+    fixture.componentRef.setInput('userId', 8);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.openMove();
+    const destination = { ...item.location, id: 8, name: 'Armario', path: 'Armario' };
+    http
+      .expectOne('/api/locations?houseId=1')
+      .flush([item.location, destination, { ...destination, id: 9, houseId: 2 }]);
+    expect(component.destinations()).toEqual([destination]);
+    component.moveForm.controls.toLocationId.setValue(8);
+    const updated = vi.fn();
+    component.updated.subscribe(updated);
+    component.move();
+    component.move();
+    const request = http.expectOne((request) => request.url === '/api/items/4/move');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.params.get('toLocationId')).toBe('8');
+    expect(request.request.params.get('quantity')).toBe('10');
+    request.flush({ ...item, location: destination });
+    expect(updated).toHaveBeenCalledExactlyOnceWith({ ...item, location: destination });
+  });
+
+  it('requires an allowed destination and never moves zero-stock items', () => {
+    const component = fixture.componentInstance;
+    component.openMove();
+    http.expectOne('/api/locations?houseId=1').flush([]);
+    component.move();
+    expect(component.moveForm.touched).toBe(true);
+    component.moveForm.controls.toLocationId.setValue(999);
+    component.move();
+    http.expectNone((request) => request.url.endsWith('/move'));
+    fixture.componentRef.setInput('item', { ...item, quantity: 0, outOfStock: true });
+    fixture.detectChanges();
+    component.openMove();
+    component.move();
+    http.expectNone('/api/locations?houseId=1');
+    expect(component.mode()).toBeNull();
+  });
+
+  it('cancels a pending movement when the selected item changes', () => {
+    const component = fixture.componentInstance;
+    component.openMove();
+    http.expectOne('/api/locations?houseId=1').flush([{ ...item.location, id: 8 }]);
+    component.moveForm.controls.toLocationId.setValue(8);
+    component.move();
+    const pending = http.expectOne((request) => request.url.endsWith('/move'));
+    fixture.componentRef.setInput('item', { ...item, id: 5 });
+    fixture.detectChanges();
+    expect(pending.cancelled).toBe(true);
+    expect(component.destinations()).toEqual([]);
+    expect(component.moveForm.controls.toLocationId.value).toBeNull();
+    expect(component.busy()).toBe(false);
+  });
+
+  it('retains the destination and original location when the server rejects stale stock', () => {
+    const component = fixture.componentInstance;
+    component.openMove();
+    http.expectOne('/api/locations?houseId=1').flush([{ ...item.location, id: 8 }]);
+    component.moveForm.controls.toLocationId.setValue(8);
+    const updated = vi.fn();
+    component.updated.subscribe(updated);
+    component.move();
+    http
+      .expectOne((request) => request.url.endsWith('/move'))
+      .flush(
+        { error: 'Se debe mover la cantidad completa del objeto' },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    expect(component.error()).toContain('cantidad completa');
+    expect(component.moveForm.controls.toLocationId.value).toBe(8);
+    expect(component.item.location.id).toBe(3);
+    expect(updated).not.toHaveBeenCalled();
+  });
+
+  it('renders movement paths and discards a pending history after selection changes', () => {
+    const component = fixture.componentInstance;
+    component.loadMovements();
+    http.expectOne('/api/items/4/history').flush([
+      {
+        id: 1,
+        quantity: 10,
+        movedAt: '2026-11-03T19:00:00',
+        fromLocation: item.location,
+        toLocation: { ...item.location, id: 8, path: 'Armario' },
+      },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('De: Despacho → Cajón');
+    expect(fixture.nativeElement.textContent).toContain('A: Armario');
+    expect(fixture.nativeElement.textContent).toContain('10 unidades');
+    component.loadMovements();
+    const pending = http.expectOne('/api/items/4/history');
+    fixture.componentRef.setInput('item', { ...item, id: 5 });
+    fixture.detectChanges();
+    expect(pending.cancelled).toBe(true);
+    expect(component.movementHistory()).toEqual([]);
+  });
 });

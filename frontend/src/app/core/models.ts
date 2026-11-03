@@ -60,3 +60,11 @@ export interface ItemConsumption {
   consumedAt: string;
   location: StorageLocation;
 }
+
+export interface ItemMovement {
+  id: number;
+  fromLocation: StorageLocation;
+  toLocation: StorageLocation;
+  quantity: number;
+  movedAt: string;
+}
