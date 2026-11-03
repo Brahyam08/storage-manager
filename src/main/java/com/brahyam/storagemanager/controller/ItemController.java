@@ -53,6 +53,17 @@ public class ItemController {
         return items.move(id, toLocationId, quantity, users.findByEmail(principal.getName()));
     }
 
+    @PostMapping("/{id}/consume")
+    public ItemResponse consume(@PathVariable Long id, @Valid @RequestBody ConsumeItemRequest request,
+                                Principal principal) {
+        return items.consume(id, request.quantity(), users.findByEmail(principal.getName()));
+    }
+
+    @GetMapping("/{id}/consumptions")
+    public List<ItemConsumptionResponse> consumptions(@PathVariable Long id, Principal principal) {
+        return items.consumptionHistory(id, users.findByEmail(principal.getName()));
+    }
+
     @GetMapping("/{id}/history")
     public List<ItemMovementResponse> history(@PathVariable Long id, Principal principal) {
         return movements.findByItemId(id, users.findByEmail(principal.getName()));

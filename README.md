@@ -137,6 +137,8 @@ See [location contract](docs/house-locations.md).
 | DELETE | `/api/items/{id}` | Delete an item |
 | PATCH | `/api/items/{id}/move` | Move item to another location |
 | GET | `/api/items/{id}/history` | Get movement history |
+| POST | `/api/items/{id}/consume` | Consume units: `{"quantity":5}` |
+| GET | `/api/items/{id}/consumptions` | Get consumption history |
 
 **Available filters for** `GET /api/items`:
 
@@ -156,8 +158,14 @@ Privacy applies to lists, search, ID, changes, movement and history.
 Responses include `ownerId`, `visibility` and location with its full `path`.
 Moves require the entire quantity and a different location in the same house;
 location and history are saved atomically. PUT cannot change location. Deletion
-with movement history returns `409`. Legacy unassigned items remain stored and
+with movement or consumption history returns `409`. Legacy unassigned items remain stored and
 hidden. See [inventory privacy and movement contract](docs/item-privacy.md).
+
+Consumption reduces stock without moving the item and records the session user,
+timestamp, quantity and remaining stock. Insufficient stock returns `409`.
+Zero-stock items remain searchable with `outOfStock: true`; quantity can be zero
+but never negative. Consumption history follows the same privacy rules as the item.
+See [consumption contract](docs/item-consumption.md).
 
 ### Users (requires token)
 

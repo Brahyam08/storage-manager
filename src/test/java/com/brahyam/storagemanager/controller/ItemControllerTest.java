@@ -247,7 +247,7 @@ class ItemControllerTest {
     @Test
     void shouldRejectInvalidInputAndInaccessibleLocationsOrFilters() throws Exception {
         for (String request : new String[]{"{}", body("   ", source.getId(), null),
-                body("Ratón", source.getId(), null).replace("\"quantity\":3", "\"quantity\":0"),
+                body("Ratón", source.getId(), null).replace("\"quantity\":3", "\"quantity\":-1"),
                 body("Ratón", source.getId(), "INVALID"), "{not-json"}) {
             mvc.perform(post("/api/items").header("Authorization", ownerToken)
                             .contentType(MediaType.APPLICATION_JSON).content(request)).andExpect(status().isBadRequest());

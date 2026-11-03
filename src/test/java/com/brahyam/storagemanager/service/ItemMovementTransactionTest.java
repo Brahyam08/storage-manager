@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:item-movement-transactions;MODE=PostgreSQL;DB_CLOSE_DELAY=-1")
@@ -35,6 +37,7 @@ class ItemMovementTransactionTest {
     @MockitoSpyBean private ItemRepository items;
     @Autowired private ItemMovementRepository movements;
     @Autowired private JwtService jwt;
+    @Autowired private ItemConsumptionRepository consumptions;
     private Long itemId;
     private Long sourceId;
     private Long firstTargetId;
@@ -69,6 +72,7 @@ class ItemMovementTransactionTest {
     void cleanUp() {
         reset(items);
         new TransactionTemplate(transactions).executeWithoutResult(tx -> {
+            consumptions.deleteAll();
             movements.deleteAll();
             items.deleteAll();
             locations.deleteAll();
@@ -119,6 +123,50 @@ class ItemMovementTransactionTest {
             assertEquals(history.get(1).getToLocation().getId(), history.get(0).getFromLocation().getId());
             assertEquals(history.get(0).getToLocation().getId(), items.findById(itemId).orElseThrow().getLocation().getId());
             assertTrue(history.stream().allMatch(movement -> movement.getQuantity() == 3));
+        });
+    }
+
+    @Test
+    void shouldRollBackStockAndConsumptionWhenSavingItemFails() throws Exception {
+        doAnswer(invocation -> {
+            assertEquals(1, consumptions.count());
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Fallo simulado");
+        }).when(items).save(any(Item.class));
+        mvc.perform(post("/api/items/{id}/consume", itemId).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":2}"))
+                .andExpect(status().isServiceUnavailable());
+        new TransactionTemplate(transactions).executeWithoutResult(tx -> {
+            assertEquals(3, items.findById(itemId).orElseThrow().getQuantity());
+            assertEquals(0, consumptions.count());
+        });
+    }
+
+    @Test
+    void shouldNotOverspendWhenTwoRequestsConsumeTheSameStock() throws Exception {
+        ExecutorService workers = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        Callable<Integer> consume = () -> {
+            ready.countDown();
+            if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("No se iniciaron los consumos");
+            return mvc.perform(post("/api/items/{id}/consume", itemId).header("Authorization", token)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":2}"))
+                    .andReturn().getResponse().getStatus();
+        };
+        try {
+            Future<Integer> first = workers.submit(consume);
+            Future<Integer> second = workers.submit(consume);
+            assertTrue(ready.await(5, TimeUnit.SECONDS));
+            start.countDown();
+            assertEquals(java.util.Set.of(200, 409), java.util.Set.of(
+                    first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS)));
+        } finally {
+            start.countDown();
+            workers.shutdownNow();
+        }
+        new TransactionTemplate(transactions).executeWithoutResult(tx -> {
+            assertEquals(1, items.findById(itemId).orElseThrow().getQuantity());
+            assertEquals(1, consumptions.count());
         });
     }
 

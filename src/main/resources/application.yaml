@@ -2,6 +2,10 @@ spring:
   application:
     name: storage-manager
 
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/storage_manager
     username: brahyam

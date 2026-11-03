@@ -20,7 +20,7 @@ ocultan tanto el objeto como sus movimientos anteriores a los demás miembros.
 
 ## Contrato
 
-- POST `/api/items`: name, quantity (mínimo 1), locationId; opcionales description,
+- POST `/api/items`: name, quantity (mínimo 0), locationId; opcionales description,
   category y visibility (PRIVATE/HOUSE_SHARED). Devuelve 201, Location y el objeto.
 - GET `/api/items`: objetos accesibles, ordenados por ID. Filtros combinables:
   houseId, search (nombre sin distinguir mayúsculas), category y locationId.
@@ -33,11 +33,11 @@ ocultan tanto el objeto como sus movimientos anteriores a los demás miembros.
   a una ubicación diferente de la misma casa. No reparte cantidades ni traslada
   entre casas. Peticiones inválidas no generan historial.
 - GET `/api/items/{id}/history`: movimientos accesibles, más recientes primero.
-- DELETE `/api/items/{id}`: solo propietario; 204 si no hay historial, 409 si lo hay.
+- DELETE `/api/items/{id}`: solo propietario; 204 si no hay historial, 409 si hay movimientos o consumos.
   Se conserva la auditoría; no se borra en cascada.
 
 Las respuestas de objeto contienen id, name, description, category, quantity,
-ownerId, visibility y location (con houseId, parentId y path completo). El historial
+ownerId, visibility, outOfStock y location (con houseId, parentId y path completo). El historial
 contiene id, fromLocation, toLocation, quantity y movedAt. Ninguna respuesta incluye
 entidades User ni referencias al objeto dentro de cada movimiento. JSON malformado
 y visibilidad desconocida reciben 400 genérico sin detalles del deserializador.
@@ -69,3 +69,9 @@ movimientos HTTP concurrentes con una cadena de historial consistente. Suite tot
 Pendientes: repetir integración/concurrencia en PostgreSQL, Docker, validación de
 registro/login, manejo general de errores, revisión de dependencias y frontend.
 Esto no equivale a una auditoría de seguridad completa ni a una demo desplegada.
+
+## Consumos
+
+La entrega `item-consumption.md` añade descuento de unidades sin movimiento y su
+historial protegido. Los miembros pueden consumir compartidos y el dueño sus
+privados. Cantidad cero conserva el objeto con outOfStock; no se mueve stock cero.

@@ -6,6 +6,7 @@ import com.brahyam.storagemanager.entity.User;
 import com.brahyam.storagemanager.dto.LocationRequest;
 import com.brahyam.storagemanager.dto.LocationResponse;
 import com.brahyam.storagemanager.repository.ItemRepository;
+import com.brahyam.storagemanager.repository.ItemConsumptionRepository;
 import com.brahyam.storagemanager.repository.ItemMovementRepository;
 import org.springframework.web.server.ResponseStatusException;
 import com.brahyam.storagemanager.repository.LocationRepository;
@@ -32,6 +33,8 @@ class LocationServiceTest {
     private ItemRepository items;
     @Mock
     private ItemMovementRepository movements;
+    @Mock
+    private ItemConsumptionRepository consumptions;
     private final User user = new User();
     private final House house = new House(5L, "Casa", user);
 

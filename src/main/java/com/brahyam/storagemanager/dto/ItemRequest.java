@@ -21,7 +21,7 @@ public class ItemRequest {
     private String category;
 
     @NotNull(message = "La cantidad es obligatoria")
-    @Min(value = 1, message = "La cantidad mínima es 1")
+    @Min(value = 0, message = "La cantidad no puede ser negativa")
     private Integer quantity;
 
     @NotNull(message = "La ubicación es obligatoria")

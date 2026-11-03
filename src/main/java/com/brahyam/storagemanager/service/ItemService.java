@@ -17,6 +17,7 @@ import java.util.List;
 public class ItemService {
     private final ItemRepository items;
     private final ItemMovementRepository movements;
+    private final ItemConsumptionRepository consumptions;
     private final LocationService locations;
     private final HouseService houses;
 
@@ -62,8 +63,8 @@ public class ItemService {
     public void deleteById(Long id, User user) {
         Item item = forUpdate(id, user);
         requireOwner(item, user);
-        if (movements.existsByItemId(id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "El objeto tiene historial de movimientos");
+        if (movements.existsByItemId(id) || consumptions.existsByItemId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El objeto tiene historial");
         }
         items.delete(item);
     }
@@ -90,6 +91,33 @@ public class ItemService {
         movements.save(movement);
         item.setLocation(destination);
         return ItemResponse.from(items.save(item));
+    }
+
+    @Transactional
+    public ItemResponse consume(Long id, Integer quantity, User user) {
+        Item item = forUpdate(id, user);
+        if (quantity == null || quantity < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cantidad a consumir debe ser positiva");
+        }
+        if (quantity > item.getQuantity()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No hay suficientes unidades");
+        }
+        item.setQuantity(item.getQuantity() - quantity);
+        ItemConsumption consumption = new ItemConsumption();
+        consumption.setItem(item);
+        consumption.setConsumedBy(user);
+        consumption.setLocation(item.getLocation());
+        consumption.setQuantity(quantity);
+        consumption.setRemainingQuantity(item.getQuantity());
+        consumption.setConsumedAt(LocalDateTime.now());
+        consumptions.save(consumption);
+        return ItemResponse.from(items.save(item));
+    }
+
+    public List<ItemConsumptionResponse> consumptionHistory(Long id, User user) {
+        requireAccessible(id, user);
+        return consumptions.findByItemIdOrderByConsumedAtDescIdDesc(id).stream()
+                .map(ItemConsumptionResponse::from).toList();
     }
 
     private Item forUpdate(Long id, User user) {
