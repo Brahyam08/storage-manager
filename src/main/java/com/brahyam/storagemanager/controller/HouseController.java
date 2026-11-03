@@ -1,6 +1,9 @@
 package com.brahyam.storagemanager.controller;
 
 import com.brahyam.storagemanager.dto.HouseRequest;
+import com.brahyam.storagemanager.dto.JoinHouseRequest;
+import com.brahyam.storagemanager.dto.HouseInvitationResponse;
+import com.brahyam.storagemanager.service.HouseMembershipService;
 import com.brahyam.storagemanager.dto.HouseResponse;
 import com.brahyam.storagemanager.entity.User;
 import com.brahyam.storagemanager.service.HouseService;
@@ -19,6 +22,7 @@ import java.util.List;
 public class HouseController {
     private final HouseService houseService;
     private final UserService userService;
+    private final HouseMembershipService memberships;
 
     @PostMapping
     public ResponseEntity<HouseResponse> create(@Valid @RequestBody HouseRequest request,
@@ -26,6 +30,18 @@ public class HouseController {
         User owner = userService.findByEmail(principal.getName());
         HouseResponse house = HouseResponse.from(houseService.create(request.name(), owner));
         return ResponseEntity.created(URI.create("/api/houses/" + house.id())).body(house);
+    }
+
+    @PostMapping("/{id}/invitation")
+    public HouseInvitationResponse renewInvitation(@PathVariable Long id, Principal principal) {
+        User user = userService.findByEmail(principal.getName());
+        return new HouseInvitationResponse(memberships.renewInvitation(id, user));
+    }
+
+    @PostMapping("/join")
+    public HouseResponse join(@Valid @RequestBody JoinHouseRequest request, Principal principal) {
+        User user = userService.findByEmail(principal.getName());
+        return HouseResponse.from(memberships.join(request.code(), user));
     }
 
     @GetMapping("/{id}")

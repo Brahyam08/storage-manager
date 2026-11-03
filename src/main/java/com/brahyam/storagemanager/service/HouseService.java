@@ -28,12 +28,12 @@ public class HouseService {
     }
 
     public House findById(Long id, User user) {
-        return houseRepository.findByIdAndOwnerId(id, user.getId())
+        return houseRepository.findAccessibleById(id, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Casa no encontrada"));
     }
 
     public List<House> findAll(User user) {
-        return houseRepository.findAllByOwnerIdOrderByIdAsc(user.getId());
+        return houseRepository.findAllAccessible(user.getId());
     }
 }

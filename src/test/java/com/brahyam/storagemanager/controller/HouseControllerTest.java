@@ -103,6 +103,61 @@ class HouseControllerTest {
     }
 
     @Test
+    void shouldJoinHouseAndKeepMembershipWhenInvitationIsRenewed() throws Exception {
+        House house = houses.saveAndFlush(new House(null, "Compartida", owner));
+        String code = invitationCode(house.getId());
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"code\":\"" + code + "\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(house.getId()));
+        }
+        mvc.perform(get("/api/houses/{id}", house.getId()).header("Authorization", otherToken))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/houses").header("Authorization", otherToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+        mvc.perform(post("/api/houses/{id}/invitation", house.getId()).header("Authorization", otherToken))
+                .andExpect(status().isNotFound());
+        String renewedCode = invitationCode(house.getId());
+        assertNotEquals(code, renewedCode);
+        mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + code + "\"}"))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/houses/{id}", house.getId()).header("Authorization", otherToken))
+                .andExpect(status().isOk());
+        String token = "Bearer " + jwtService.generateToken(
+                users.save(new User(null, "third", "third@example.com", "unused", Role.VIEWER)).getEmail());
+        mvc.perform(post("/api/houses/join").header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + renewedCode + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRejectInvalidInvitationsAndAnonymousMembershipRequests() throws Exception {
+        mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"invalid\"}"))
+                .andExpect(status().isNotFound());
+        mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"  \"}"))
+                .andExpect(status().isBadRequest());
+        House house = houses.saveAndFlush(new House(null, "Privada", owner));
+        mvc.perform(post("/api/houses/{id}/invitation", house.getId()).header("Authorization", otherToken))
+                .andExpect(status().isNotFound());
+        mvc.perform(post("/api/houses/{id}/invitation", house.getId()))
+                .andExpect(status().is4xxClientError());
+        mvc.perform(post("/api/houses/join").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"invalid\"}"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    private String invitationCode(Long houseId) throws Exception {
+        String body = mvc.perform(post("/api/houses/{id}/invitation", houseId)
+                        .header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        return com.jayway.jsonpath.JsonPath.read(body, "$.code");
+    }
+
+    @Test
     void shouldRejectAnonymousRequests() throws Exception {
         mvc.perform(post("/api/houses").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Casa\"}"))
