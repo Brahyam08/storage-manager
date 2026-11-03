@@ -71,8 +71,9 @@ def verify():
 
         url = ""
 
-        def api(method, path, token=None, body=None, expected=200):
+        def api(method, path, token=None, body=None, expected=200, extra_headers=None):
             headers = {"Content-Type": "application/json"}
+            headers.update(extra_headers or {})
             if token:
                 headers["Authorization"] = "Bearer " + token
             request = urllib.request.Request(url + path, method=method, headers=headers,
@@ -229,6 +230,17 @@ def verify():
                 api("GET", f"/api/houses/{house['id']}", member)
                 preserved_legacy_data()
                 print(f"Persistence/recreation cycle {cycle + 1}/3 passed", flush=True)
+            # The last fresh instance has used one login and no registration attempts.
+            for attempt in range(20):
+                api("POST", "/api/auth/login", body={"email": "owner@example.invalid", "password": "wrong-password"},
+                    expected=401 if attempt < 19 else 429)
+            _, limited = api("POST", "/api/auth/login", body={"email": "another@example.invalid", "password": "wrong-password"},
+                    expected=429, extra_headers={"X-Forwarded-For": "203.0.113.5", "Forwarded": "for=203.0.113.6"})
+            check(limited == {"error": "Demasiados intentos. Inténtalo de nuevo más tarde"}, "Unexpected rate-limit error")
+            api("GET", "/api/users/me", owner)
+            for attempt in range(11):
+                api("POST", "/api/auth/register", body={}, expected=400 if attempt < 10 else 429)
+            print("Authentication quotas, spoofed forwarding headers and unaffected JWT access passed", flush=True)
             print("PASS: accounts, memberships, inventory and history survive container recreation", flush=True)
         except Exception:
             print(command("ps", "--all", "--format", "json", capture=True), flush=True)

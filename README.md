@@ -233,6 +233,11 @@ Duplicate accounts return a generic `409`; wrong credentials return a generic `4
 Unexpected runtime failures return `500` without internal details. See the
 [authentication contract](docs/authentication.md).
 
+Login is limited to 20 requests/minute and registration to 10 requests/15 minutes,
+per connection address, with separate quotas. Exceeding a quota returns `429` and
+`Retry-After`. Forwarding headers from clients are not trusted. Counters are bounded,
+in-memory and reset on restart; see [rate limits and proxy considerations](docs/auth-rate-limits.md).
+
 ## Project Structure
 
 ```

@@ -10,6 +10,9 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 security:
+  auth-rate-limit:
+    login-limit: 10000
+    registration-limit: 10000
   jwt:
     secret: storage-manager-test-secret-key-which-is-long-enough
     expiration: 86400000

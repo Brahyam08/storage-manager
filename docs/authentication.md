@@ -50,14 +50,21 @@ ni revocación. Una cuenta autenticada sin permiso recibe 403.
 - Errores RuntimeException inesperados: 500 con «Error interno del servidor».
   Ya no se convierten indiscriminadamente en 404 ni se devuelve ex.getMessage().
 
+## Limitación de peticiones
+
+Login y registro tienen cuotas separadas por dirección: 20 por 60 segundos y 10
+por 900 segundos, respectivamente. Se devuelve 429 y Retry-After al agotarlas.
+Se cuentan peticiones correctas e inválidas. El inventario con JWT sigue disponible.
+Ver `auth-rate-limits.md` para configuración, NAT/proxies y límites de una instancia.
+
 ## Verificación y límites
 
 Trece pruebas HTTP cubren JWT; ocho de autenticación cubren registro/login, hash,
 roles, duplicados, normalización, correos antiguos, 72 bytes Unicode y errores.
-Cinco pruebas MVC comprueban el manejo de errores. Suite total: 88 tests H2 aprobados.
+Cinco pruebas MVC comprueban el manejo de errores. Once pruebas adicionales cubren cuotas. Suite total: 99 tests H2 aprobados.
 La verificación Docker/PostgreSQL añade validación, registros simultáneos, errores
 genéricos de credenciales y fallos de escritura, además de persistencia y concurrencia.
 
 JWT_SECRET es externo y el secreto de fixtures es solo de tests. Siguen pendientes
-limitación de intentos, revisión de dependencias, migraciones de producción y
+revisión de dependencias, migraciones de producción y
 configuración de despliegue remoto. Esto no equivale a una auditoría completa.

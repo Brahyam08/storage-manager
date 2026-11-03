@@ -47,6 +47,9 @@ Comprueba mediante HTTP contra la API construida con el Dockerfile:
 7. Tres ciclos de eliminación y recreación de los contenedores conservando el volumen:
    login, membresía, existencias e historiales deben sobrevivir sin cambios.
 
+8. Cuotas por defecto de login/registro, cabeceras de IP falsas y acceso con JWT
+   que sigue permitido aunque se haya agotado login.
+
 Al finalizar, incluso ante errores, ejecuta down --volumes solo sobre su proyecto
 aleatorio. Elimina sus contenedores, red y volumen; no toca los del entorno habitual.
 Las capas/imágenes de construcción pueden quedar en la caché de Docker.
@@ -55,7 +58,7 @@ Las capas/imágenes de construcción pueden quedar en la caché de Docker.
 
 La última verificación pasó con PostgreSQL 16 en Docker Desktop, incluyendo
 concurrencia, rollback y tres ciclos consecutivos de recreación de contenedores. No se conectó a la base PostgreSQL real del
-usuario ni se modificaron sus registros. La suite Java conserva 88 tests H2
+usuario ni se modificaron sus registros. La suite Java conserva 99 tests H2
 aprobados; este script comprueba además el sistema real por HTTP, no sustituye esa
 suite ni ejecuta todas sus combinaciones de permisos.
 
@@ -63,7 +66,7 @@ La aplicación aún usa Hibernate ddl-auto=update. La prueba demuestra que la
 actualización del esquema simulado conserva sus datos; no es una migración
 versionada ni garantiza actualizar cualquier base existente. Antes de actualizar
 una base con datos reales hace falta copia de seguridad y revisión de ese esquema.
-Quedan pendientes migraciones controladas para producción, limitación de intentos,
+Quedan pendientes migraciones controladas para producción y límites en el despliegue,
 análisis de dependencias, despliegue remoto y el frontend. No se ha validado
 Swagger ni un despliegue remoto y todavía no se considera lista una demo pública.
 

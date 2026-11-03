@@ -26,6 +26,7 @@ spring:
 
 server:
   port: 8080
+  forward-headers-strategy: none
 
 springdoc:
   swagger-ui:
@@ -34,6 +35,12 @@ springdoc:
     path: /v3/api-docs
 
 security:
+  auth-rate-limit:
+    login-limit: 20
+    login-window-seconds: 60
+    registration-limit: 10
+    registration-window-seconds: 900
+    max-buckets: 10000
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
