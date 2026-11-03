@@ -99,3 +99,18 @@ selection/house changes. Cancellation cannot undo an already accepted operation.
 Stock adjustments use the existing PUT contract without optimistic versioning;
 refresh before adjusting stock when several members may be using the same item.
 Consumption is the atomic backend operation for spending units.
+
+
+## Select controls
+
+Closed selects share the same arrow, border and spacing, including the house
+selector. On desktop browsers supporting `appearance: base-select`, the option
+menu also uses the app colors, selection state and rounded edges through a
+[CSS enhancement](https://developer.chrome.com/blog/a-customizable-select).
+Other browsers and touch devices retain their native option picker. Forced-color
+mode keeps the native control. No JavaScript selection component was introduced.
+
+Verified in the preview browser: open menu, keyboard option navigation/confirmation,
+pointer selection, location options and mobile-width layout without overflow.
+Production build passes. Native picker appearance remains platform-dependent in
+browsers without the enhancement; Safari and physical touch devices were not tested.

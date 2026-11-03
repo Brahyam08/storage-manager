@@ -103,6 +103,80 @@ select {
   color: var(--ink);
   padding: 12px 14px;
 }
+// Keep native keyboard and mobile selection while styling the closed control.
+select {
+  appearance: none;
+  min-width: 0;
+  padding-right: 42px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23245d46' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+select:disabled {
+  background-color: var(--paper);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+select option {
+  background-color: var(--white);
+  color: var(--ink);
+}
+// Enhance desktop option lists where supported; touch devices keep their native picker.
+@supports (appearance: base-select) {
+  @media (hover: hover) and (pointer: fine) {
+    select,
+    select::picker(select) {
+      appearance: base-select;
+    }
+    select::picker-icon {
+      display: none;
+    }
+    select::picker(select) {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 6px;
+      margin-block: 6px;
+      min-inline-size: anchor-size(width);
+      max-inline-size: calc(100vw - 24px);
+      max-block-size: min(320px, 60vh);
+      overflow: auto;
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: 0 10px 28px rgb(24 48 35 / 14%);
+    }
+    select option {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font: inherit;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+    select option:hover,
+    select option:focus-visible {
+      background: #f0f4ed;
+    }
+    select option:checked {
+      background: #e4eee7;
+      color: var(--green);
+      font-weight: 650;
+    }
+    select option::checkmark {
+      color: var(--green);
+    }
+  }
+}
+@media (forced-colors: active) {
+  select {
+    appearance: auto;
+    background-image: none;
+  }
+}
 input::placeholder {
   color: #7f8981;
   font-size: 0.86rem;
@@ -443,7 +517,7 @@ input[readonly] {
   min-height: 40px;
   border: 0;
   padding: 8px 28px 8px 0;
-  background: transparent;
+  background-color: transparent;
   font-size: 0.85rem;
   font-weight: 600;
 }
