@@ -6,7 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,23 +21,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User findById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    public User findOwnById(Long id, String authenticatedEmail) {
+        return userRepository.findByIdAndEmail(id, authenticatedEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
     }
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    }
-
-    public List<User> findAll() {
-        return userRepository.findAll();
-    }
-
-    public void deleteById(Long id) {
-        findById(id);
-        userRepository.deleteById(id);
     }
 
 }

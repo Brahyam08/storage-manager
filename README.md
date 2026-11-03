@@ -150,9 +150,14 @@ Filters can be combined: `?search=lipo&category=Battery`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/users` | List all users |
-| GET | `/api/users/{id}` | Get user by ID |
-| DELETE | `/api/users/{id}` | Delete a user |
+| GET | `/api/users/me` | Read the authenticated user's profile |
+| GET | `/api/users/{id}` | Read own profile by ID |
+
+Profiles expose only `id`, `username`, `email` and `role`. Another account and an
+unknown account both return `404`, including for global ADMIN accounts.
+Account listing and deletion are disabled (`403`). Account deletion will require
+an explicit lifecycle for owned houses, memberships and inventory before it can
+be enabled safely. See [account access](docs/account-access.md).
 
 ## Authentication Flow
 
