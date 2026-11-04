@@ -195,7 +195,14 @@
             <h2 id="inventory-title">
               Tu inventario <span class="count-badge">{{ visibleItems().length }}</span>
             </h2>
-            <span class="muted">Solo ves los objetos a los que tienes acceso.</span>
+            <button
+              class="button secondary"
+              type="button"
+              [disabled]="loadingItems()"
+              (click)="reloadItems()"
+            >
+              Actualizar inventario
+            </button>
           </div>
           <div class="inventory-toolbar">
             <div class="search-field">
@@ -222,7 +229,10 @@
             </select>
           </div>
           @if (itemError()) {
-            <p class="error-banner" role="alert">{{ itemError() }}</p>
+            <div class="error-banner" role="alert">
+              {{ itemError() }}
+              <button class="text-button" type="button" (click)="reloadItems()">Reintentar</button>
+            </div>
           } @else if (loadingItems()) {
             <div class="loading-state" role="status">
               <span class="spinner" aria-hidden="true"></span> Buscando tus cosas…

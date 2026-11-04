@@ -60,7 +60,7 @@ npm run build
 npm audit
 ```
 
-51 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+52 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another

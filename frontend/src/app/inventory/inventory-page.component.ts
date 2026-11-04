@@ -231,6 +231,13 @@ export class InventoryPageComponent {
       });
   }
 
+  reloadItems() {
+    if (this.loadingItems() || this.selectedId() === null) return;
+    this.inventoryNotice.set('');
+    this.selectedItem.set(null);
+    this.refreshItems.next();
+  }
+
   locationsChanged() {
     this.inventoryNotice.set('');
     this.selectedItem.set(null);

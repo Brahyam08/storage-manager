@@ -63,6 +63,27 @@ describe('House switching', () => {
     expect(fixture.componentInstance.items()).toEqual([]);
   });
 
+  it('retries a failed inventory load without resetting the selected filter', async () => {
+    const first = await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'));
+    first.flush({}, { status: 503, statusText: 'Unavailable' });
+    fixture.componentInstance.filter.set('private');
+    fixture.detectChanges();
+    const retry = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button) => (button as HTMLButtonElement).textContent?.trim() === 'Reintentar',
+    ) as HTMLButtonElement;
+    expect(retry).toBeDefined();
+    retry.click();
+    const request = http.expectOne((request) => request.url === '/api/items');
+    expect(request.request.params.get('houseId')).toBe('1');
+    fixture.componentInstance.reloadItems();
+    http.expectNone((request) => request.url === '/api/items');
+    request.flush([]);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.itemError()).toBe('');
+    expect(fixture.componentInstance.filter()).toBe('private');
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
+
   it('does not display an invitation returned for a previously selected house', async () => {
     (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
     fixture.componentInstance.renewInvitation();
