@@ -8,3 +8,5 @@ SECURITY-REVIEW.local.md
 frontend/node_modules
 frontend/dist
 frontend/.angular
+**/.env*
+frontend/.vscode

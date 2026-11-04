@@ -16,7 +16,7 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
    e historial de consumos implementados. Tipos consumible/reutilizable explícitos,
    con consumo bloqueado para reutilizables. Movimiento completo e historial de
    movimientos, uso/devolución de reutilizables, borrado de objetos y edición/borrado
-   de ubicaciones implementados. Pendiente revisión de demo integrada y despliegue. Ver frontend/README.md.
+   de ubicaciones implementados. Empaquetado web/API Docker implementado y verificado. Pendiente despliegue público. Ver frontend/README.md.
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
    persistencia tras recrear contenedores. Pendientes demo completa, datos de
    presentación y despliegue. Registro/login, errores genéricos y cuotas básicas por dirección ya verificados.

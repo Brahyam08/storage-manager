@@ -3,6 +3,7 @@
 import concurrent.futures
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import subprocess
@@ -10,6 +11,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from urllib.parse import urljoin, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -99,6 +101,34 @@ def verify():
                     time.sleep(1)
             raise AssertionError("API did not become ready: " + last_error)
 
+        def verify_web():
+            with urllib.request.urlopen(url + "/", timeout=30) as response:
+                index = response.read()
+                check("text/html" in response.headers.get("Content-Type", ""), "Web entry is not HTML")
+                check("no-store" in response.headers.get("Cache-Control", ""), "Web entry can be cached")
+            check(b"<app-root>" in index and b"Storage Manager" in index, "Angular application not packaged")
+            for path in ["/acceso", "/registro", "/inventario"]:
+                with urllib.request.urlopen(url + path, timeout=30) as response:
+                    check(response.status == 200 and response.read() == index, "Deep link did not load the application")
+            with urllib.request.urlopen(urllib.request.Request(url + "/inventario", method="HEAD"), timeout=30) as response:
+                check(response.status == 200 and response.read() == b"", "Public UI HEAD request failed")
+            assets = set(re.findall(r'(?:src|href)="([^"<>]+\.(?:js|css))"', index.decode()))
+            check(any(asset.endswith(".js") for asset in assets) and any(asset.endswith(".css") for asset in assets), "Missing Angular bundles")
+            for asset in assets:
+                check(not urlsplit(asset).scheme and not urlsplit(asset).netloc, "Unexpected external asset")
+                with urllib.request.urlopen(urljoin(url + "/", asset), timeout=30) as response:
+                    expected_type = "javascript" if asset.endswith(".js") else "text/css"
+                    check(expected_type in response.headers.get("Content-Type", ""), "Wrong bundle content type")
+                    check(len(response.read()) > 100, "Empty application bundle")
+            for path in ["/favicon.svg", "/3rdpartylicenses.txt"]:
+                with urllib.request.urlopen(url + path, timeout=30) as response:
+                    check(len(response.read()) > 0, "Missing application asset")
+            api("GET", "/api/items", expected=401)
+            api("GET", "/api/missing.js", expected=401)
+            api("GET", "/missing-bundle.js", expected=404)
+            check(command("exec", "-T", "app", "id", "-u", capture=True) == "10001", "Application runs as root")
+            print("Packaged Angular routes, assets, API isolation and non-root runtime passed", flush=True)
+
         def preserved_legacy_data():
             count = query("SELECT count(*) FROM items i JOIN locations l ON l.id=i.location_id "
                           "WHERE i.id=1 AND i.name='Legacy screws' AND i.quantity=10 "
@@ -120,6 +150,7 @@ def verify():
             url = base_url()
             wait_for_api()
             preserved_legacy_data()
+            verify_web()
             _, schema = api("GET", "/v3/api-docs")
             check(schema["components"]["securitySchemes"]["bearerAuth"]["scheme"] == "bearer", "Missing Bearer scheme")
             check("/api/items/{id}/consume" in schema["paths"], "Consumption endpoint missing from OpenAPI")
@@ -264,6 +295,7 @@ def verify():
                 command("up", "-d", "--wait")
                 url = base_url()
                 wait_for_api()
+                verify_web()
                 _, login = api("POST", "/api/auth/login", body={"email": "owner@example.invalid", "password": password})
                 owner = login["token"]
                 _, saved = api("GET", f"/api/items/{shared_id}", owner)

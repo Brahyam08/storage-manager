@@ -92,8 +92,11 @@ cp .env.example .env
 docker compose up --build
 ```
 
-This starts both the API and a PostgreSQL instance, waiting for the database to
-be ready. Both ports are bound to localhost; override API_PORT/DB_PORT as needed.
+This builds Angular into the Java application and starts it with PostgreSQL,
+waiting for the database to be ready. Open http://localhost:8080 for the web app;
+Swagger is at http://localhost:8080/swagger-ui/index.html. No separate Node server
+is needed to run this image. Both ports are bound to localhost; override
+API_PORT/DB_PORT as needed. See [packaging and routing](docs/docker-web.md).
 The storage-data volume keeps database contents across container recreation.
 
 To check the stack using an isolated disposable database and synthetic data:
@@ -102,7 +105,7 @@ To check the stack using an isolated disposable database and synthetic data:
 python3 scripts/verify_docker.py
 ```
 
-This verifies PostgreSQL schema updates, privacy, consumption, concurrent writes,
+This verifies the packaged web, routes/assets, non-root runtime, PostgreSQL schema updates, privacy, consumption, concurrent writes,
 rollback and persistence after container recreation without using your local .env
 or database. See [Docker/PostgreSQL verification](docs/docker-verification.md).
 
@@ -288,7 +291,7 @@ src/main/java/com/brahyam/storagemanager/
 ## Verification
 
 Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
-by Maven; no machine-specific agent path is required. The current suite has 116 tests,
+by Maven; no machine-specific agent path is required. The current suite has 119 tests,
 including OpenAPI schema and Swagger UI checks. Docker verification also checks
 the packaged documentation endpoints.
 
