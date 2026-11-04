@@ -103,7 +103,7 @@ public class ItemService {
     public ItemResponse move(Long id, Long toLocationId, Integer quantity, User user) {
         Item item = forUpdate(id, user);
         if (uses.activeQuantity(id) > 0) throw new ResponseStatusException(HttpStatus.CONFLICT, "Devuelve los objetos en uso antes de trasladarlos");
-        if (quantity == null || quantity < 1 || !quantity.equals(item.getQuantity())) {
+        if (quantity == null || quantity < 0 || !quantity.equals(item.getQuantity())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Se debe mover la cantidad completa del objeto");
         }
         Location destination = locations.findActiveById(toLocationId, user);

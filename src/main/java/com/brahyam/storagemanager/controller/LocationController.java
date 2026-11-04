@@ -15,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LocationController {
     private final LocationService locations;
+    private final LocationContentsService contents;
     private final UserService users;
 
     @GetMapping
@@ -37,6 +38,17 @@ public class LocationController {
     public LocationResponse update(@PathVariable Long id, @Valid @RequestBody LocationRequest request,
                                    Principal principal) {
         return locations.update(id, request, users.findByEmail(principal.getName()));
+    }
+
+    @GetMapping("/{id}/contents")
+    public List<ItemResponse> contents(@PathVariable Long id, Principal principal) {
+        return contents.preview(id, users.findByEmail(principal.getName()));
+    }
+
+    @PostMapping("/{id}/move-contents")
+    public List<ItemResponse> moveContents(@PathVariable Long id, @Valid @RequestBody MoveLocationContentsRequest request,
+                                          Principal principal) {
+        return contents.move(id, request, users.findByEmail(principal.getName()));
     }
 
     @PatchMapping("/{id}/archive")

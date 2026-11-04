@@ -443,6 +443,41 @@ def verify():
             check(query(f"SELECT count(*) FROM item_uses WHERE item_id={returned_id};") == "0", "Returned history remains after archived-item deletion")
             print("Permanent deletion preserves other objects, rolls back history on failure and respects active uses", flush=True)
 
+            bulk_places = []
+            for name in ["Bulk source", "Bulk target"]:
+                bulk_places.append(api("POST", "/api/locations", owner,
+                    {"name": name, "houseId": house["id"]}, 201)[1]["id"])
+            bulk_ids = []
+            for name, quantity in [("Bulk stocked", 3), ("Bulk empty", 0)]:
+                bulk_ids.append(api("POST", "/api/items", owner,
+                    {"name": name, "quantity": quantity, "locationId": bulk_places[0],
+                     "visibility": "HOUSE_SHARED"}, 201)[1]["id"])
+            bulk_path = f"/api/locations/{bulk_places[0]}/move-contents"
+            bulk_snapshot = [{"id": bulk_ids[0], "quantity": 3}, {"id": bulk_ids[1], "quantity": 0}]
+            bulk_body = {"toLocationId": bulk_places[1], "items": bulk_snapshot}
+            api("GET", f"/api/locations/{bulk_places[0]}/contents", outsider, expected=404)
+            api("POST", bulk_path, member, {**bulk_body, "items": bulk_snapshot[:1]}, expected=409)
+            query("CREATE FUNCTION verification_reject_bulk() RETURNS trigger LANGUAGE plpgsql AS $$ "
+                  f"BEGIN IF NEW.id = {bulk_ids[1]} THEN RAISE EXCEPTION 'verification failure'; END IF; RETURN NEW; END; $$; "
+                  "CREATE TRIGGER verification_reject_bulk BEFORE UPDATE ON items "
+                  "FOR EACH ROW EXECUTE FUNCTION verification_reject_bulk();")
+            try:
+                api("POST", bulk_path, member, bulk_body, expected=500)
+                for item_id in bulk_ids:
+                    check(api("GET", f"/api/items/{item_id}", owner)[1]["location"]["id"] == bulk_places[0],
+                          "Failed bulk transfer left an item moved")
+                    check(api("GET", f"/api/items/{item_id}/history", owner)[1] == [],
+                          "Failed bulk transfer left movement history")
+            finally:
+                query("DROP TRIGGER verification_reject_bulk ON items; DROP FUNCTION verification_reject_bulk();")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(lambda _: api("POST", bulk_path, member, bulk_body, expected=None)[0], range(2)))
+            check(sorted(results) == [200, 409], "Concurrent bulk transfer was duplicated")
+            for item_id in bulk_ids:
+                check(api("GET", f"/api/items/{item_id}", owner)[1]["location"]["id"] == bulk_places[1], "Bulk destination incorrect")
+                check(len(api("GET", f"/api/items/{item_id}/history", owner)[1]) == 1, "Bulk history duplicated")
+            print("Bulk transfer: stale snapshot, zero stock, atomic rollback and concurrent confirmation passed", flush=True)
+
             for cycle in range(3):
                 print("Removing containers and recreating them with the same test volume", flush=True)
                 command("down")
@@ -467,6 +502,9 @@ def verify():
                 check(api("GET", f"/api/items/{retired_id}", owner)[1]["archived"], "Archived item status did not persist")
                 check(api("GET", f"/api/locations/{retired_place_id}", owner)[1]["archived"], "Archived location status did not persist")
                 check(api("GET", f"/api/items/{retired_id}/consumptions", owner)[1] == retired_history, "Archived history did not persist")
+                for item_id in bulk_ids:
+                    check(api("GET", f"/api/items/{item_id}", owner)[1]["location"]["id"] == bulk_places[1], "Bulk destination did not persist")
+                    check(len(api("GET", f"/api/items/{item_id}/history", owner)[1]) == 1, "Bulk history did not persist")
                 preserved_legacy_data()
                 print(f"Persistence/recreation cycle {cycle + 1}/3 passed", flush=True)
             # The last fresh instance has used one login and no registration attempts.
