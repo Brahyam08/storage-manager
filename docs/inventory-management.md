@@ -25,6 +25,16 @@ por el servidor. Después de una edición aceptada se cierra el editor antes de
 recargar la lista: un fallo de lectura no permite repetir el guardado por accidente.
 Las selecciones de ubicaciones que ya no existen se vacían en los formularios.
 
+## Reorganizar un cajón con contenido
+
+Si sigue siendo el mismo cajón, editar su nombre o ubicación padre conserva sus
+objetos y sububicaciones; no es necesario borrarlo. Si el cajón desaparece, hoy
+se puede mover cada objeto a otro destino. El borrado sigue bloqueado si quedan
+sububicaciones o referencias históricas, aunque ya no haya objetos.
+
+Trasladar todo el contenido y archivar la ubicación es una mejora pendiente;
+no está implementada y no debe confundirse con el borrado actual.
+
 ## Comprobaciones
 
 47 tests Angular y build de producción pasan. Las pruebas cubren confirmación y
