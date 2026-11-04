@@ -151,7 +151,7 @@ def verify():
         def preserved_legacy_data():
             count = query("SELECT count(*) FROM items i JOIN locations l ON l.id=i.location_id "
                           "WHERE i.id=1 AND i.name='Legacy screws' AND i.quantity=10 "
-                          "AND i.owner_id IS NULL AND i.visibility IS NULL AND i.kind='CONSUMABLE' AND i.individual=false AND l.house_id IS NULL;")
+                          "AND i.owner_id IS NULL AND i.visibility IS NULL AND i.kind='CONSUMABLE' AND i.individual=false AND i.archived=false AND l.house_id IS NULL AND l.archived=false;")
             check(count == "1", "Legacy inventory was lost or assigned automatically")
             check(query("SELECT count(*) FROM users WHERE id=1 AND username='legacy' "
                         "AND email='legacy@example.invalid' AND password='unused-fixture';") == "1",
@@ -327,6 +327,50 @@ def verify():
             check(moved_item["location"]["id"] == history[0]["toLocation"]["id"], "Location/history mismatch")
             print("Concurrent PostgreSQL movements preserve their history chain", flush=True)
 
+            _, retired_place = api("POST", "/api/locations", owner, {"name": "Retired drawer", "houseId": house["id"]}, 201)
+            retired_place_id = retired_place["id"]
+            _, retired = api("POST", "/api/items", owner, {"name": "Retired fixture", "quantity": 2,
+                    "locationId": retired_place_id}, 201)
+            retired_id = retired["id"]
+            api("POST", f"/api/items/{retired_id}/consume", owner, {"quantity": 1})
+            api("PATCH", f"/api/items/{retired_id}/archive", member, expected=404)
+            api("PATCH", f"/api/items/{retired_id}/archive", owner)
+            check(retired_id not in [item["id"] for item in api("GET", "/api/items", owner)[1]], "Archived item remains in active inventory")
+            check(retired_id in [item["id"] for item in api("GET", "/api/items?includeArchived=true", owner)[1]], "Archived item cannot be inspected")
+            api("POST", f"/api/items/{retired_id}/restocks", owner, {"quantity": 1}, expected=409)
+            api("PATCH", f"/api/locations/{retired_place_id}/archive", member)
+            api("PATCH", f"/api/items/{retired_id}/restore", owner, expected=409)
+            api("PATCH", f"/api/locations/{retired_place_id}/restore", member)
+            api("PATCH", f"/api/items/{retired_id}/restore", owner)
+            api("PATCH", f"/api/items/{retired_id}/archive", owner)
+            api("PATCH", f"/api/locations/{retired_place_id}/archive", member)
+            check(retired_place_id not in [place["id"] for place in api("GET", f"/api/locations?houseId={house['id']}", owner)[1]], "Archived location remains a destination")
+            _, retired_history = api("GET", f"/api/items/{retired_id}/consumptions", owner)
+            check(len(retired_history) == 1 and retired_history[0]["location"]["archived"], "Historical location or consumption lost")
+            api("POST", "/api/items", owner, {"name": "Rejected destination", "quantity": 1, "locationId": retired_place_id}, expected=409)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                take_future = pool.submit(api, "POST", f"/api/items/{single_id}/uses", owner, {"quantity": 1}, None)
+                archive_future = pool.submit(api, "PATCH", f"/api/items/{single_id}/archive", owner, None, None)
+                taken, archived = take_future.result(), archive_future.result()
+            if taken[0] == 201:
+                check(archived[0] == 409, "Object archived while in use")
+                api("POST", f"/api/items/{single_id}/uses/{taken[1]['id']}/return", owner, {})
+            else:
+                check(taken[0] == 409 and archived[0] == 200, "Unexpected archive/use concurrency result")
+                api("PATCH", f"/api/items/{single_id}/restore", owner)
+            _, race_place = api("POST", "/api/locations", owner, {"name": "Archive race", "houseId": house["id"]}, 201)
+            race_place_id = race_place["id"]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                create_future = pool.submit(api, "POST", "/api/items", owner,
+                        {"name": "Race item", "quantity": 1, "locationId": race_place_id}, None)
+                archive_future = pool.submit(api, "PATCH", f"/api/locations/{race_place_id}/archive", member, None, None)
+                created, archived = create_future.result(), archive_future.result()
+            check((created[0], archived[0]) in [(201, 409), (409, 200)], "Creation/archive did not serialize")
+            race_archived = api("GET", f"/api/locations/{race_place_id}", owner)[1]["archived"]
+            race_items = api("GET", f"/api/items?locationId={race_place_id}", owner)[1]
+            check((race_archived and race_items == []) or (not race_archived and len(race_items) == 1), "Active item placed in archived location")
+            print("Archive/restore preserves history, privacy and concurrent location/use invariants", flush=True)
+
             rollback_id = create_item("Rollback fixture", quantity=4)
             query("CREATE FUNCTION verification_reject_update() RETURNS trigger LANGUAGE plpgsql AS $$ "
                   f"BEGIN IF NEW.id = {rollback_id} THEN RAISE EXCEPTION 'verification failure'; END IF; RETURN NEW; END; $$; "
@@ -335,12 +379,13 @@ def verify():
             try:
                 for method, path, body in [
                     ("POST", f"/api/items/{rollback_id}/consume", {"quantity": 1}),
+                    ("PATCH", f"/api/items/{rollback_id}/archive", None),
                     ("POST", f"/api/items/{rollback_id}/restocks", {"quantity": 1}),
                     ("PATCH", f"/api/items/{rollback_id}/move?toLocationId={places[1]}&quantity=4", None)]:
                     _, error = api(method, path, owner, body, expected=500)
                     check(error == {"error": "Error interno del servidor"}, "Forced database failure exposed internal details")
                 _, saved = api("GET", f"/api/items/{rollback_id}", owner)
-                check(saved["quantity"] == 4 and saved["location"]["id"] == places[0], "Failed transaction changed stock/location")
+                check(saved["quantity"] == 4 and saved["location"]["id"] == places[0] and not saved["archived"], "Failed transaction changed stock/location/archive status")
                 check(api("GET", f"/api/items/{rollback_id}/consumptions", owner)[1] == [], "Consumption failed to roll back")
                 check(api("GET", f"/api/items/{rollback_id}/restocks", owner)[1] == [], "Restock failed to roll back")
                 check(api("GET", f"/api/items/{rollback_id}/history", owner)[1] == [], "Movement failed to roll back")
@@ -369,6 +414,9 @@ def verify():
                 check(api("GET", f"/api/items/{restock_id}/restocks", owner)[1] == restock_history, "Restock history did not persist")
                 check(api("GET", f"/api/items/{moving_id}/history", owner)[1] == history, "Movement history did not persist")
                 api("GET", f"/api/houses/{house['id']}", member)
+                check(api("GET", f"/api/items/{retired_id}", owner)[1]["archived"], "Archived item status did not persist")
+                check(api("GET", f"/api/locations/{retired_place_id}", owner)[1]["archived"], "Archived location status did not persist")
+                check(api("GET", f"/api/items/{retired_id}/consumptions", owner)[1] == retired_history, "Archived history did not persist")
                 preserved_legacy_data()
                 print(f"Persistence/recreation cycle {cycle + 1}/3 passed", flush=True)
             # The last fresh instance has used one login and no registration attempts.

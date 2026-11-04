@@ -22,8 +22,8 @@ public class ItemController {
     @GetMapping
     public List<ItemResponse> findAll(@RequestParam(required = false) Long houseId,
             @RequestParam(required = false) String search, @RequestParam(required = false) String category,
-            @RequestParam(required = false) Long locationId, Principal principal) {
-        return items.findWithFilters(houseId, search, category, locationId, users.findByEmail(principal.getName()));
+            @RequestParam(required = false) Long locationId, @RequestParam(defaultValue = "false") boolean includeArchived, Principal principal) {
+        return items.findWithFilters(houseId, search, category, locationId, includeArchived, users.findByEmail(principal.getName()));
     }
 
     @GetMapping("/{id}")
@@ -40,6 +40,16 @@ public class ItemController {
     @PutMapping("/{id}")
     public ItemResponse update(@PathVariable Long id, @Valid @RequestBody ItemRequest request, Principal principal) {
         return items.update(id, request, users.findByEmail(principal.getName()));
+    }
+
+    @PatchMapping("/{id}/archive")
+    public ItemResponse archive(@PathVariable Long id, Principal principal) {
+        return items.archive(id, users.findByEmail(principal.getName()));
+    }
+
+    @PatchMapping("/{id}/restore")
+    public ItemResponse restore(@PathVariable Long id, Principal principal) {
+        return items.restore(id, users.findByEmail(principal.getName()));
     }
 
     @DeleteMapping("/{id}")

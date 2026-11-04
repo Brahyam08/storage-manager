@@ -89,10 +89,10 @@ public class LocationService {
     @Transactional
     public LocationResponse archive(Long id, User user) {
         Location location = lockedLocation(id, user);
-        if (!location.isArchived() && (items.existsByLocationId(id)
+        if (!location.isArchived() && (items.existsByLocationIdAndArchivedFalse(id)
                 || locationRepository.existsByParentIdAndArchivedFalse(id))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Traslada los objetos y archiva o reorganiza las ubicaciones interiores antes de archivar");
+                    "Traslada o archiva los objetos y archiva o reorganiza las ubicaciones interiores antes de archivar");
         }
         location.setArchived(true);
         return LocationResponse.from(locationRepository.save(location));

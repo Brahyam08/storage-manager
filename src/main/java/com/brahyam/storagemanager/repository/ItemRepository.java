@@ -26,4 +26,5 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
             @Param("search") String search, @Param("category") String category, @Param("locationId") Long locationId);
 
     boolean existsByLocationId(Long locationId);
+    boolean existsByLocationIdAndArchivedFalse(Long locationId);
 }

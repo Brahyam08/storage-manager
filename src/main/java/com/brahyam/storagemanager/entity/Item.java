@@ -40,6 +40,9 @@ public class Item {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean individual = false;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean archived = false;
+
     public Item(Long id, String name, String description, String category, Integer quantity, Location location) {
         this.id = id;
         this.name = name;

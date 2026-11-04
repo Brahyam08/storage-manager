@@ -33,10 +33,14 @@ public class ItemService {
     }
 
     public List<ItemResponse> findWithFilters(Long houseId, String search, String category, Long locationId, User user) {
+        return findWithFilters(houseId, search, category, locationId, false, user);
+    }
+
+    public List<ItemResponse> findWithFilters(Long houseId, String search, String category, Long locationId, boolean includeArchived, User user) {
         if (houseId != null) houses.findById(houseId, user);
         if (locationId != null) locations.findById(locationId, user);
         return items.findAccessibleWithFilters(user.getId(), houseId, search, category, locationId).stream()
-                .map(this::response).toList();
+                .filter(item -> includeArchived || !item.isArchived()).map(this::response).toList();
     }
 
     @Transactional
@@ -178,6 +182,34 @@ public class ItemService {
     }
 
     Item forUpdate(Long id, User user) {
+        Item item = lockAccessible(id, user);
+        if (item.isArchived()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El objeto está archivado. Restáuralo antes de modificarlo o usarlo");
+        }
+        return item;
+    }
+
+    @Transactional
+    public ItemResponse archive(Long id, User user) {
+        Item item = lockAccessible(id, user);
+        requireOwner(item, user);
+        if (uses.activeQuantity(id) > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Devuelve los objetos en uso antes de archivar");
+        }
+        item.setArchived(true);
+        return response(items.save(item));
+    }
+
+    @Transactional
+    public ItemResponse restore(Long id, User user) {
+        Item item = lockAccessible(id, user);
+        requireOwner(item, user);
+        locations.findActiveById(item.getLocation().getId(), user);
+        item.setArchived(false);
+        return response(items.save(item));
+    }
+
+    private Item lockAccessible(Long id, User user) {
         Long houseId = items.findAccessibleHouseId(id, user.getId()).orElseThrow(this::notFound);
         houses.lockForUpdate(houseId, user);
         return requireAccessible(id, user);
