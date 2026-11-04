@@ -7,6 +7,7 @@ import {
   CreateLocation,
   CreateItem,
   ItemConsumption,
+  ItemRestock,
   ItemMovement,
   ItemUse,
 } from './models';
@@ -65,6 +66,14 @@ export class InventoryApiService {
 
   consumeItem(id: number, quantity: number) {
     return this.http.post<InventoryItem>(`/api/items/${id}/consume`, { quantity });
+  }
+
+  restockItem(id: number, quantity: number) {
+    return this.http.post<InventoryItem>(`/api/items/${id}/restocks`, { quantity });
+  }
+
+  restocks(id: number) {
+    return this.http.get<ItemRestock[]>(`/api/items/${id}/restocks`);
   }
 
   consumptions(id: number) {

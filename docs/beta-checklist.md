@@ -17,7 +17,7 @@ beta hasta comprobar acceso privado, persistencia y recuperación de errores.
 | Safari iPhone real y teclado | Pendiente de prueba en dispositivo; no equivale a viewport reducido. |
 | Chrome Android real y teclado | Pendiente. |
 
-57 tests Angular y compilación de producción correctos en esta pasada.
+63 tests Angular y compilación de producción correctos en esta pasada.
 No se ha repetido la suite Java: no hay cambios de backend.
 
 ## Navegación de perfil y objetos — 4 de noviembre de 2026
@@ -25,7 +25,7 @@ No se ha repetido la suite Java: no hay cambios de backend.
 Comprobado con fixtures Docker: pulsar la ubicación dentro de una tarjeta abre
 su página, recargar conserva el objeto y la sesión, y el enlace de vuelta conserva
 el filtro privado. El avatar abre perfil con nombre/correo propios; viewport390
-sin desbordamiento horizontal. Perfil solo de consulta. 122 tests Java y57 Angular
+sin desbordamiento horizontal. Perfil solo de consulta. 131 tests Java y63 Angular
 pasan; las rutas nuevas no abren endpoints de inventario anónimos.
 
 ## Jerarquía del detalle
@@ -41,6 +41,7 @@ y viewport390 sin desbordamiento horizontal; pruebas de Safari real pendientes.
 - Primera casa vacía, unirse por invitación, código inválido y renovación.
 - Crear y editar ubicaciones anidadas; nombres largos y caracteres especiales.
 - Crear/editar objetos privados y compartidos; búsquedas sin resultados y agotados.
+- Reponer unidades desde agotado, comprobar vista previa e historial; consumo simultáneo en otra sesión.
 - Consumir parte del stock, retirar/devolver un reutilizable y consultar historiales.
 - Mover objetos y comprobar las restricciones cuando hay unidades en uso.
 - Confirmaciones de eliminación: cancelar en la UI; borrado definitivo solo en fixtures.

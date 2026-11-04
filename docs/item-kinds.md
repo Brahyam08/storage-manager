@@ -36,3 +36,7 @@ Antes de actualizar datos importantes, conservar una copia de PostgreSQL. Sigue
 pendiente adoptar migraciones versionadas para producción; esta entrega no las
 sustituye. La cantidad editable sigue siendo un ajuste explícito mediante PUT sin
 versionado optimista; el consumo usa la operación atómica específica.
+
+Una reposición registrada impide cambiar de tipo para mantener el significado
+del historial. Añadir unidades no modifica el tipo ni libera objetos en uso; ver
+[reposiciones](item-restocks.md).

@@ -1310,3 +1310,15 @@ input[readonly] {
   padding-top: 24px;
   border-top: 1px solid var(--line);
 }
+
+.quantity-stepper {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.quantity-stepper .button {
+  min-width: 46px;
+  padding-inline: 12px;
+  align-self: center;
+}

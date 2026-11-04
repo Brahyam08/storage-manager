@@ -10,7 +10,7 @@ vuelve a validar casa, existencia y ausencia de ciclos; la lista del navegador n
 es una autorización. Las ubicaciones continúan siendo compartidas por la casa.
 
 El propietario de un objeto puede abrir **Eliminar objeto**. La API conserva los
-objetos con historial de movimientos, consumos o usos y devuelve409 al intentar
+objetos con historial de movimientos, consumos, reposiciones o usos y devuelve409 al intentar
 eliminarlos. El borrado disponible es permanente; esta entrega no añade archivo,
 papelera ni borrado del historial. No se deben borrar datos para ocultar conflictos.
 

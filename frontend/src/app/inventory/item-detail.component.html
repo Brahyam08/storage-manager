@@ -51,6 +51,16 @@
           Registrar consumo
         </button>
       }
+      @if (item.ownerId === userId) {
+        <button
+          class="button secondary"
+          type="button"
+          [disabled]="busy() || item.quantity === 2147483647"
+          (click)="open('restock')"
+        >
+          Añadir unidades
+        </button>
+      }
       <button
         class="button secondary"
         type="button"
@@ -67,6 +77,9 @@
           Ver consumos
         </button>
       }
+      <button class="button secondary" type="button" [disabled]="busy()" (click)="loadRestocks()">
+        Ver reposiciones
+      </button>
     </div>
   </div>
   @if (error()) {
@@ -113,8 +126,8 @@
     <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de objeto">
       <h3 #deleteTitle tabindex="-1">¿Eliminar {{ item.name }}?</h3>
       <p>
-        Esta acción no se puede deshacer. Los objetos con historial de movimientos, consumos o usos
-        se conservan y no se pueden eliminar.
+        Esta acción no se puede deshacer. Los objetos con historial de movimientos, consumos,
+        reposiciones o usos se conservan y no se pueden eliminar.
       </p>
       <div class="detail-actions">
         <button class="button danger" type="button" [disabled]="busy()" (click)="deleteItem()">
@@ -132,6 +145,84 @@
   }
   @if (mode() && mode() !== 'delete') {
     <div class="item-action-content">
+      @if (mode() === 'restock' && item.ownerId === userId) {
+        <h3>Añadir unidades</h3>
+        <form [formGroup]="restockForm" (ngSubmit)="restock()">
+          <fieldset class="creation-fields" [disabled]="busy()">
+            <div>
+              <label for="restock-quantity">Unidades que añades</label>
+              <div class="quantity-stepper">
+                <button
+                  class="button secondary"
+                  type="button"
+                  aria-label="Añadir una unidad menos"
+                  [disabled]="restockForm.controls.quantity.value <= 1"
+                  (click)="stepRestock(-1)"
+                >
+                  −
+                </button>
+                <input
+                  id="restock-quantity"
+                  type="number"
+                  formControlName="quantity"
+                  min="1"
+                  [max]="2147483647 - item.quantity"
+                  step="1"
+                />
+                <button
+                  class="button secondary"
+                  type="button"
+                  aria-label="Añadir una unidad más"
+                  [disabled]="restockTotal === null || restockTotal === 2147483647"
+                  (click)="stepRestock(1)"
+                >
+                  +
+                </button>
+              </div>
+              @if (restockForm.controls.quantity.touched && restockForm.invalid) {
+                <small class="field-error"
+                  >Introduce un entero positivo que no supere la capacidad disponible.</small
+                >
+              }
+              @if (restockTotal !== null) {
+                <p class="field-hint" role="status">
+                  Tienes {{ item.quantity }} + añades {{ restockForm.controls.quantity.value }} →
+                  quedarán {{ restockTotal }}.
+                </p>
+              }
+              <small class="field-hint"
+                >La reposición quedará registrada. Se sumará a las existencias actuales.</small
+              >
+            </div>
+            <button class="button primary" type="submit" [disabled]="restockForm.invalid">
+              Confirmar reposición
+            </button>
+          </fieldset>
+        </form>
+      }
+      @if (mode() === 'restocks' && restocksLoaded()) {
+        <h3>Historial de reposiciones</h3>
+        @if (!restocks().length) {
+          <p class="muted">Todavía no hay reposiciones registradas.</p>
+        }
+        <ul class="consumption-list">
+          @for (entry of restocks(); track entry.id) {
+            <li>
+              <strong
+                >+{{ entry.quantity }} unidades · Total tras reponer:
+                {{ entry.resultingQuantity }}</strong
+              >
+              <span
+                >{{ entry.restockedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
+                {{
+                  entry.restockedById === userId ? 'Tú' : 'Usuario #' + entry.restockedById
+                }}</span
+              >
+              <span>{{ entry.location.path }}</span>
+            </li>
+          }
+        </ul>
+      }
       @if (mode() === 'edit' && item.ownerId === userId) {
         <form [formGroup]="editForm" (ngSubmit)="save()">
           <fieldset class="creation-fields" [disabled]="busy()">
@@ -141,7 +232,8 @@
                 <option value="CONSUMABLE">Consumible: se gasta</option>
                 <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
               ><small class="field-hint"
-                >Un objeto con historial de consumos o de uso no puede cambiar de tipo.</small
+                >Un objeto con historial de consumos, reposiciones o uso no puede cambiar de
+                tipo.</small
               >
             </div>
             <div>

@@ -45,6 +45,109 @@ describe('Item detail', () => {
     http.verify();
   });
 
+  it('previews added units and submits only the increment once', () => {
+    const component = fixture.componentInstance;
+    const updated = vi.fn();
+    component.updated.subscribe(updated);
+    component.open('restock');
+    component.restockForm.controls.quantity.setValue(5);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tienes 10 + añades 5 → quedarán 15');
+    component.restock();
+    component.restock();
+    const request = http.expectOne('/api/items/4/restocks');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ quantity: 5 });
+    // Another session may have consumed units since the preview.
+    request.flush({ ...item, quantity: 14, availableQuantity: 14 });
+    expect(updated).toHaveBeenCalledWith(expect.objectContaining({ quantity: 14 }));
+    expect(component.mode()).toBeNull();
+    component.restock();
+    http.expectNone('/api/items/4/restocks');
+  });
+
+  it('rejects invalid additions and overflowing previews without a request', () => {
+    const component = fixture.componentInstance;
+    component.open('restock');
+    for (const quantity of [0, -1, 1.5, 2147483647]) {
+      component.restockForm.controls.quantity.setValue(quantity);
+      expect(component.restockTotal).toBeNull();
+      component.restock();
+    }
+    http.expectNone('/api/items/4/restocks');
+  });
+
+  it('allows replenishing an exhausted consumable and stepping the amount', () => {
+    fixture.componentRef.setInput('item', {
+      ...item,
+      quantity: 0,
+      availableQuantity: 0,
+      outOfStock: true,
+    });
+    fixture.detectChanges();
+    const button = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button) => (button as HTMLButtonElement).textContent?.trim() === 'Añadir unidades',
+    ) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    button.click();
+    const component = fixture.componentInstance;
+    component.stepRestock(-1);
+    expect(component.restockForm.controls.quantity.value).toBe(1);
+    component.stepRestock(1);
+    expect(component.restockTotal).toBe(2);
+    component.restock();
+    http.expectOne('/api/items/4/restocks').flush({ ...item, quantity: 2, availableQuantity: 2 });
+  });
+
+  it('does not offer or submit restocking for another owner', () => {
+    fixture.componentRef.setInput('userId', 8);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.open('restock');
+    expect(component.mode()).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Añadir unidades');
+    component.restock();
+    http.expectNone('/api/items/4/restocks');
+  });
+
+  it('keeps the addition visible after a conflict and loads restock history separately', () => {
+    const component = fixture.componentInstance;
+    component.open('restock');
+    component.restockForm.controls.quantity.setValue(5);
+    component.restock();
+    http
+      .expectOne('/api/items/4/restocks')
+      .flush({ error: 'Añade menos unidades' }, { status: 409, statusText: 'Conflict' });
+    expect(component.restockForm.controls.quantity.value).toBe(5);
+    expect(component.error()).toContain('Añade menos unidades');
+    expect(component.busy()).toBe(false);
+    component.loadRestocks();
+    http.expectOne('/api/items/4/restocks').flush([
+      {
+        id: 1,
+        quantity: 5,
+        resultingQuantity: 15,
+        restockedById: 7,
+        restockedAt: '2026-11-04T12:00:00Z',
+        location: item.location,
+      },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Historial de reposiciones');
+    expect(fixture.nativeElement.textContent).toContain('Total tras reponer: 15');
+  });
+
+  it('cancels restock history when selecting a different item', () => {
+    const component = fixture.componentInstance;
+    component.loadRestocks();
+    const oldRequest = http.expectOne('/api/items/4/restocks');
+    fixture.componentRef.setInput('item', { ...item, id: 5 });
+    fixture.detectChanges();
+    expect(oldRequest.cancelled).toBe(true);
+    expect(component.restocks()).toEqual([]);
+    expect(component.mode()).toBeNull();
+  });
+
   it('consumes five of ten once and uses the server remaining quantity', () => {
     const component = fixture.componentInstance;
     const updated = vi.fn();

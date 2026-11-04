@@ -79,3 +79,12 @@ export interface ItemUse {
   returnedAt: string | null;
   location: StorageLocation;
 }
+
+export interface ItemRestock {
+  id: number;
+  quantity: number;
+  resultingQuantity: number;
+  restockedById: number;
+  restockedAt: string;
+  location: StorageLocation;
+}

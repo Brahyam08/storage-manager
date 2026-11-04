@@ -22,6 +22,7 @@ import { reusableQuantity } from './item-kind.validator';
 import {
   InventoryItem,
   ItemConsumption,
+  ItemRestock,
   ItemKind,
   StorageLocation,
   ItemMovement,
@@ -48,10 +49,13 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   private readonly selectionChanged = new Subject<void>();
   readonly busy = signal(false);
   readonly error = signal('');
-  readonly mode = signal<'edit' | 'consume' | 'history' | 'move' | 'movements' | 'delete' | null>(
-    null,
-  );
+  readonly mode = signal<
+    'edit' | 'consume' | 'restock' | 'restocks' | 'history' | 'move' | 'movements' | 'delete' | null
+  >(null);
   readonly history = signal<ItemConsumption[]>([]);
+  readonly restocks = signal<ItemRestock[]>([]);
+  readonly restocksLoaded = signal(false);
+  readonly restockForm = this.fb.nonNullable.group({ quantity: [1] });
   readonly destinations = signal<StorageLocation[]>([]);
   readonly movementHistory = signal<ItemMovement[]>([]);
   readonly movementsLoaded = signal(false);
@@ -88,6 +92,8 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     this.mode.set(null);
     this.error.set('');
     this.history.set([]);
+    this.restocks.set([]);
+    this.restocksLoaded.set(false);
     this.destinations.set([]);
     this.movementHistory.set([]);
     this.movementsLoaded.set(false);
@@ -108,6 +114,13 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       Validators.pattern(/^\d+$/),
     ]);
     this.consumeForm.reset({ quantity: 1 });
+    this.restockForm.controls.quantity.setValidators([
+      Validators.required,
+      Validators.min(1),
+      Validators.max(2147483647 - this.item.quantity),
+      Validators.pattern(/^\d+$/),
+    ]);
+    this.restockForm.reset({ quantity: 1 });
     this.title?.nativeElement.focus();
   }
 
@@ -115,10 +128,10 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     this.title?.nativeElement.focus();
   }
 
-  open(mode: 'edit' | 'consume') {
+  open(mode: 'edit' | 'consume' | 'restock') {
     if (
       this.busy() ||
-      (mode === 'edit' && this.item.ownerId !== this.userId) ||
+      ((mode === 'edit' || mode === 'restock') && this.item.ownerId !== this.userId) ||
       (mode === 'consume' && (this.item.kind === 'REUSABLE' || this.item.quantity === 0))
     )
       return;
@@ -171,6 +184,69 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       )
       .subscribe({
         next: (item) => this.updated.emit(item),
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  get restockTotal(): number | null {
+    return this.restockForm.valid
+      ? this.item.quantity + this.restockForm.controls.quantity.value
+      : null;
+  }
+
+  stepRestock(delta: number) {
+    if (this.busy()) return;
+    const current = this.restockForm.controls.quantity.value;
+    const next = Number.isInteger(current) ? current + delta : 1;
+    if (next >= 1 && next <= 2147483647 - this.item.quantity) {
+      this.restockForm.controls.quantity.setValue(next);
+    }
+  }
+
+  restock() {
+    if (this.busy() || this.mode() !== 'restock' || this.item.ownerId !== this.userId) return;
+    if (this.restockForm.invalid) {
+      this.restockForm.markAllAsTouched();
+      return;
+    }
+    this.busy.set(true);
+    this.error.set('');
+    this.api
+      .restockItem(this.item.id, this.restockForm.controls.quantity.value)
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (item) => {
+          this.mode.set(null);
+          this.restockForm.reset({ quantity: 1 });
+          this.updated.emit(item);
+        },
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  loadRestocks() {
+    if (this.busy()) return;
+    this.mode.set('restocks');
+    this.restocks.set([]);
+    this.restocksLoaded.set(false);
+    this.error.set('');
+    this.busy.set(true);
+    this.api
+      .restocks(this.item.id)
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (history) => {
+          this.restocks.set(history);
+          this.restocksLoaded.set(true);
+        },
         error: (error) => this.error.set(apiError(error)),
       });
   }

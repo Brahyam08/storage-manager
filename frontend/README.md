@@ -60,7 +60,7 @@ npm run build
 npm audit
 ```
 
-57 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+63 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
@@ -139,7 +139,7 @@ dates, including empty/loading/error states. Browser verification against isolat
 PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
 unchanged quantities, updated paths and both histories. Unit tests additionally
 cover member actions, forbidden destinations, zero stock, duplicate submit, stale
-stock and cancelled responses. The backend suite now passes 122 tests, including usage and security regressions.
+stock and cancelled responses. The backend suite now passes 131 tests, including usage and security regressions.
 
 
 ## Reusable availability
@@ -172,3 +172,6 @@ link to `/objetos/:id`, including its location and quantity; it supports keyboar
 navigation and opening in a new tab. The detail has its own page and can reload
 directly. Its return link preserves house, search and filter. The API continues
 to validate item ownership/membership; a URL is not a grant of access.
+
+Owners can replenish units directly from item details with a preview and a separate
+restock history; see [restock rules](../docs/item-restocks.md).

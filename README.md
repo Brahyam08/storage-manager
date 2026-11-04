@@ -34,6 +34,7 @@ flowchart LR
 
 ## Features
 
+- Direct unit replenishment with a preview and private/shared restock history
 - Explicit consumable/reusable types: reusable objects cannot be consumed
 - House-based locations and inventory with private/shared items and own-profile access
 - JWT-based authentication; public registrations receive the VIEWER role
