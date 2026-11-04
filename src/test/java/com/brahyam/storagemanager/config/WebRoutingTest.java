@@ -17,7 +17,7 @@ class WebRoutingTest {
 
     @Test
     void shouldServeOnlyKnownClientRoutesWithoutExposingInventory() throws Exception {
-        for (String path : new String[]{"/", "/acceso", "/registro", "/inventario"}) {
+        for (String path : new String[]{"/", "/acceso", "/registro", "/inventario", "/perfil", "/objetos/4"}) {
             mvc.perform(get(path)).andExpect(status().isOk())
                     .andExpect(forwardedUrl("/index.html"))
                     .andExpect(header().string("X-Content-Type-Options", "nosniff"));
@@ -29,7 +29,7 @@ class WebRoutingTest {
 
     @Test
     void shouldNotForwardUnknownApiPathsOrAssetLookalikesToTheApp() throws Exception {
-        for (String path : new String[]{"/api/unknown", "/api/missing.js", "/api/items/missing.css", "/api/users"}) {
+        for (String path : new String[]{"/api/unknown", "/api/missing.js", "/api/items/missing.css", "/api/users", "/objetos/missing.js", "/objetos/4/history"}) {
             mvc.perform(get(path)).andExpect(status().isUnauthorized());
         }
         mvc.perform(get("/missing-bundle.js")).andExpect(status().isNotFound());

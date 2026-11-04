@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class WebController {
     // Only UI routes receive the SPA shell. API and missing asset routes keep their own responses.
-    @GetMapping({"/", "/acceso", "/registro", "/inventario"})
+    @GetMapping({"/", "/acceso", "/registro", "/inventario", "/perfil", "/objetos/{id:[0-9]+}"})
     public String application() {
         return "forward:/index.html";
     }
