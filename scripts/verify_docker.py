@@ -151,7 +151,7 @@ def verify():
         def preserved_legacy_data():
             count = query("SELECT count(*) FROM items i JOIN locations l ON l.id=i.location_id "
                           "WHERE i.id=1 AND i.name='Legacy screws' AND i.quantity=10 "
-                          "AND i.owner_id IS NULL AND i.visibility IS NULL AND i.kind='CONSUMABLE' AND l.house_id IS NULL;")
+                          "AND i.owner_id IS NULL AND i.visibility IS NULL AND i.kind='CONSUMABLE' AND i.individual=false AND l.house_id IS NULL;")
             check(count == "1", "Legacy inventory was lost or assigned automatically")
             check(query("SELECT count(*) FROM users WHERE id=1 AND username='legacy' "
                         "AND email='legacy@example.invalid' AND password='unused-fixture';") == "1",
@@ -265,6 +265,18 @@ def verify():
             api("GET", f"/api/items/{restock_id}/restocks", outsider, expected=404)
             print("Concurrent restocks and consumption preserve stock and private history", flush=True)
 
+            _, single = api("POST", "/api/items", owner, {"name": "Individual keyboard", "quantity": 1,
+                    "locationId": places[0], "kind": "REUSABLE", "individual": True}, 201)
+            single_id = single["id"]
+            check(single["individual"] and single["quantity"] == 1, "Individual mode missing")
+            api("POST", f"/api/items/{single_id}/restocks", owner, {"quantity": 1}, expected=409)
+            _, single_use = api("POST", f"/api/items/{single_id}/uses", owner, {"quantity": 1}, expected=201)
+            api("POST", f"/api/items/{single_id}/uses", owner, {"quantity": 1}, expected=409)
+            api("PUT", f"/api/items/{single_id}", owner, {"name": "Individual keyboard", "quantity": 2,
+                    "locationId": places[0], "individual": True}, expected=400)
+            api("POST", f"/api/items/{single_id}/uses/{single_use['id']}/return", owner, {})
+            print("Individual reusable use/return and quantity restrictions passed", flush=True)
+
             _, reusable = api("POST", "/api/items", owner, {"name": "Reusable mouse", "quantity": 1,
                     "locationId": places[0], "kind": "REUSABLE", "visibility": "HOUSE_SHARED"}, 201)
             reusable_id = reusable["id"]
@@ -347,6 +359,9 @@ def verify():
                 owner = login["token"]
                 _, saved = api("GET", f"/api/items/{shared_id}", owner)
                 check(api("GET", f"/api/items/{reusable_id}", owner)[1]["kind"] == "REUSABLE", "Reusable kind did not persist")
+                persisted_single = api("GET", f"/api/items/{single_id}", owner)[1]
+                check(persisted_single["individual"] and persisted_single["quantity"] == 1 and persisted_single["availableQuantity"] == 1,
+                      "Individual mode or return did not persist")
                 check(api("GET", f"/api/items/{reusable_id}/uses", owner)[1] == use_history, "Use history did not persist")
                 check(saved["quantity"] == 0 and saved["location"]["id"] == places[1], "Inventory did not persist")
                 check(api("GET", f"/api/items/{shared_id}/consumptions", owner)[1] == consumption_history, "Consumption history did not persist")

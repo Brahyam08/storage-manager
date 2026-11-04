@@ -37,6 +37,9 @@ public class Item {
     @Column(nullable = false, columnDefinition = "varchar(20) default 'CONSUMABLE'")
     private ItemKind kind = ItemKind.CONSUMABLE;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean individual = false;
+
     public Item(Long id, String name, String description, String category, Integer quantity, Location location) {
         this.id = id;
         this.name = name;

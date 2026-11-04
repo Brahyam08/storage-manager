@@ -30,5 +30,6 @@ public class ItemRequest {
 
     private ItemVisibility visibility;
     private ItemKind kind;
+    private Boolean individual;
 
 }

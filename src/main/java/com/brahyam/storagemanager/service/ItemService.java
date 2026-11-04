@@ -143,6 +143,9 @@ public class ItemService {
     public ItemResponse restock(Long id, Integer quantity, User user) {
         Item item = forUpdate(id, user);
         requireOwner(item, user);
+        if (item.isIndividual()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Es un objeto individual. Registra otra pieza como un objeto distinto");
+        }
         if (quantity == null || quantity < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Añade al menos una unidad");
         }
@@ -195,6 +198,20 @@ public class ItemService {
         if (kind == ItemKind.REUSABLE && request.getQuantity() < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un objeto reutilizable debe tener al menos una unidad");
         }
+        boolean individual = request.getIndividual() == null ? item.isIndividual() : request.getIndividual();
+        if (kind != ItemKind.REUSABLE) {
+            if (Boolean.TRUE.equals(request.getIndividual())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solo los reutilizables pueden ser individuales");
+            }
+            individual = false;
+        }
+        if (individual && request.getQuantity() != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un objeto individual representa una sola pieza");
+        }
+        if (individual && !item.isIndividual() && item.getId() != null && item.getQuantity() != 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El grupo debe tener una sola pieza antes de marcarlo como individual");
+        }
+        item.setIndividual(individual);
         item.setKind(kind);
     }
 
