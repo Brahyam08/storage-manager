@@ -1,9 +1,21 @@
 <section aria-label="Gestionar ubicaciones">
   <p class="muted">
     Los miembros de la casa pueden editar sus ubicaciones. Las rutas del inventario se actualizarán
-    al guardar. Para conservar los objetos de un cajón, usa Editar: puedes cambiar su nombre
-    o elegir otra ubicación en «Dentro de» sin eliminarlo.
+    al guardar. Para conservar los objetos de un cajón, usa Editar: puedes cambiar su nombre o
+    elegir otra ubicación en «Dentro de» sin eliminarlo.
   </p>
+  <p class="muted">
+    Si un cajón ya no se utiliza, traslada sus objetos y archívalo. Conservarás su historial y
+    podrás restaurarlo.
+  </p>
+  <label class="location-archive-toggle"
+    ><input
+      type="checkbox"
+      [checked]="showArchived()"
+      (change)="showArchived.set(!showArchived())"
+    />
+    Mostrar archivadas</label
+  >
   @if (notice()) {
     <p class="creation-notice" role="status">{{ notice() }}</p>
   }
@@ -77,36 +89,56 @@
     </div>
   }
   @if (!loading() && !loadError()) {
-    @if (!locations().length) {
+    @if (!visibleLocations().length) {
       <p class="muted">
-        Todavía no hay ubicaciones en esta casa. Crea la primera desde Nueva ubicación.
+        {{
+          locations().length
+            ? 'No hay ubicaciones activas. Marca Mostrar archivadas para consultar o restaurar las anteriores.'
+            : 'Todavía no hay ubicaciones en esta casa. Crea la primera desde Nueva ubicación.'
+        }}
       </p>
     }
     <ul class="consumption-list">
-      @for (location of locations(); track location.id) {
+      @for (location of visibleLocations(); track location.id) {
         <li>
           <strong>{{ location.path }}</strong>
           @if (location.description) {
             <span>{{ location.description }}</span>
           }
+          @if (location.archived) {
+            <span class="muted">Archivada</span>
+          }
           <div class="detail-actions">
             <button
               class="button secondary"
               type="button"
-              [disabled]="busy()"
-              (click)="edit(location)"
-              [attr.aria-label]="'Editar ubicación ' + location.path"
+              [disabled]="busy() || loading()"
+              (click)="toggleArchive(location)"
+              [attr.aria-label]="
+                (location.archived ? 'Restaurar ubicación ' : 'Archivar ubicación ') + location.path
+              "
             >
-              Editar</button
-            ><button
-              class="text-button danger-text"
-              type="button"
-              [disabled]="busy()"
-              (click)="askDelete(location)"
-              [attr.aria-label]="'Eliminar ubicación ' + location.path"
-            >
-              Eliminar
+              {{ location.archived ? 'Restaurar' : 'Archivar' }}
             </button>
+            @if (!location.archived) {
+              <button
+                class="button secondary"
+                type="button"
+                [disabled]="busy()"
+                (click)="edit(location)"
+                [attr.aria-label]="'Editar ubicación ' + location.path"
+              >
+                Editar</button
+              ><button
+                class="button secondary danger-outline"
+                type="button"
+                [disabled]="busy()"
+                (click)="askDelete(location)"
+                [attr.aria-label]="'Eliminar ubicación ' + location.path"
+              >
+                Eliminar
+              </button>
+            }
           </div>
         </li>
       }

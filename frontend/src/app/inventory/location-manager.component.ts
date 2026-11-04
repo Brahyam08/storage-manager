@@ -35,6 +35,10 @@ export class LocationManagerComponent implements OnChanges {
   private readonly destroyRef = inject(DestroyRef);
   private readonly houseChanged = new Subject<void>();
   readonly locations = signal<StorageLocation[]>([]);
+  readonly showArchived = signal(false);
+  readonly visibleLocations = computed(() =>
+    this.locations().filter((location) => this.showArchived() || !location.archived),
+  );
   readonly editing = signal<StorageLocation | null>(null);
   readonly pendingDelete = signal<StorageLocation | null>(null);
   readonly loading = signal(false);
@@ -53,6 +57,7 @@ export class LocationManagerComponent implements OnChanges {
   });
   readonly parents = computed(() =>
     this.locations().filter((candidate) => {
+      if (candidate.archived) return false;
       const editing = this.editing();
       if (!editing) return true;
       const visited = new Set<number>();
@@ -70,6 +75,7 @@ export class LocationManagerComponent implements OnChanges {
   ngOnChanges() {
     this.houseChanged.next();
     this.locations.set([]);
+    this.showArchived.set(false);
     this.editing.set(null);
     this.pendingDelete.set(null);
     this.form.reset();
@@ -83,7 +89,7 @@ export class LocationManagerComponent implements OnChanges {
     this.loading.set(true);
     this.loadError.set('');
     this.api
-      .locations(this.houseId)
+      .locations(this.houseId, true)
       .pipe(
         takeUntil(this.houseChanged),
         takeUntilDestroyed(this.destroyRef),
@@ -98,6 +104,7 @@ export class LocationManagerComponent implements OnChanges {
 
   edit(location: StorageLocation) {
     if (
+      location.archived ||
       this.busy() ||
       this.loading() ||
       this.loadError() ||
@@ -152,6 +159,7 @@ export class LocationManagerComponent implements OnChanges {
 
   askDelete(location: StorageLocation) {
     if (
+      location.archived ||
       this.busy() ||
       this.loading() ||
       this.loadError() ||
@@ -162,6 +170,41 @@ export class LocationManagerComponent implements OnChanges {
     this.notice.set('');
     this.editing.set(null);
     this.pendingDelete.set(location);
+  }
+
+  toggleArchive(location: StorageLocation) {
+    if (
+      this.busy() ||
+      this.loading() ||
+      this.loadError() ||
+      !this.locations().some((entry) => entry.id === location.id)
+    )
+      return;
+    this.busy.set(true);
+    this.error.set('');
+    this.editing.set(null);
+    this.pendingDelete.set(null);
+    const request = location.archived
+      ? this.api.restoreLocation(location.id)
+      : this.api.archiveLocation(location.id);
+    request
+      .pipe(
+        takeUntil(this.houseChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.notice.set(
+            location.archived
+              ? 'Ubicación restaurada.'
+              : 'Ubicación archivada. Puedes restaurarla desde Mostrar archivadas.',
+          );
+          this.changed.emit();
+          this.load();
+        },
+        error: (error) => this.error.set(apiError(error)),
+      });
   }
 
   confirmDelete() {

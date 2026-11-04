@@ -34,11 +34,71 @@ describe('Location management', () => {
     fixture = TestBed.createComponent(LocationManagerComponent);
     fixture.componentRef.setInput('houseId', 1);
     fixture.detectChanges();
-    http.expectOne('/api/locations?houseId=1').flush(locations);
+    http.expectOne('/api/locations?houseId=1&includeArchived=true').flush(locations);
   });
   afterEach(() => {
     fixture.destroy();
     http.verify();
+  });
+
+  it('archives an empty location once and hides it until archived locations are requested', () => {
+    const component = fixture.componentInstance;
+    const changed = vi.fn();
+    component.changed.subscribe(changed);
+    component.toggleArchive(locations[3]);
+    component.toggleArchive(locations[3]);
+    const request = http.expectOne('/api/locations/4/archive');
+    expect(request.request.method).toBe('PATCH');
+    request.flush({ ...locations[3], archived: true });
+    http
+      .expectOne('/api/locations?houseId=1&includeArchived=true')
+      .flush(locations.map((location) => ({ ...location, archived: location.id === 4 })));
+    expect(changed).toHaveBeenCalledOnce();
+    expect(component.visibleLocations().map((location) => location.id)).toEqual([1, 2, 3]);
+    component.showArchived.set(true);
+    expect(component.visibleLocations()).toHaveLength(4);
+    expect(component.parents().some((location) => location.id === 4)).toBe(false);
+  });
+
+  it('restores an archived location without allowing editing or deleting it first', () => {
+    const component = fixture.componentInstance;
+    const archived = { ...locations[3], archived: true };
+    component.locations.set([archived]);
+    component.edit(archived);
+    component.askDelete(archived);
+    expect(component.editing()).toBeNull();
+    expect(component.pendingDelete()).toBeNull();
+    component.toggleArchive(archived);
+    http.expectOne('/api/locations/4/restore').flush({ ...archived, archived: false });
+    http.expectOne('/api/locations?houseId=1&includeArchived=true').flush([locations[3]]);
+    expect(component.visibleLocations()).toHaveLength(1);
+    expect(component.notice()).toContain('restaurada');
+  });
+
+  it('keeps an occupied location visible when archiving is rejected', () => {
+    const component = fixture.componentInstance;
+    const changed = vi.fn();
+    component.changed.subscribe(changed);
+    component.toggleArchive(locations[3]);
+    http
+      .expectOne('/api/locations/4/archive')
+      .flush({ error: 'Traslada los objetos primero' }, { status: 409, statusText: 'Conflict' });
+    expect(component.error()).toContain('Traslada los objetos');
+    expect(component.visibleLocations()).toHaveLength(4);
+    expect(component.busy()).toBe(false);
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('cancels archive updates when switching houses', () => {
+    const component = fixture.componentInstance;
+    component.toggleArchive(locations[3]);
+    const previous = http.expectOne('/api/locations/4/archive');
+    fixture.componentRef.setInput('houseId', 2);
+    fixture.detectChanges();
+    expect(previous.cancelled).toBe(true);
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
+    expect(component.notice()).toBe('');
+    expect(component.locations()).toEqual([]);
   });
 
   it('excludes self and descendants as possible parents', () => {
@@ -66,7 +126,7 @@ describe('Location management', () => {
       houseId: 1,
     });
     request.flush({ ...locations[0], name: 'Estudio', path: 'Estudio' });
-    http.expectOne('/api/locations?houseId=1').flush([
+    http.expectOne('/api/locations?houseId=1&includeArchived=true').flush([
       { ...locations[0], name: 'Estudio', path: 'Estudio' },
       { ...locations[1], path: 'Estudio → Cajonera' },
     ]);
@@ -89,7 +149,7 @@ describe('Location management', () => {
     const request = http.expectOne('/api/locations/4');
     expect(request.request.method).toBe('DELETE');
     request.flush(null);
-    http.expectOne('/api/locations?houseId=1').flush(locations.slice(0, 3));
+    http.expectOne('/api/locations?houseId=1&includeArchived=true').flush(locations.slice(0, 3));
     expect(component.locations()).toHaveLength(3);
     expect(component.pendingDelete()).toBeNull();
   });
@@ -119,6 +179,6 @@ describe('Location management', () => {
     expect(pending.cancelled).toBe(true);
     expect(component.editing()).toBeNull();
     expect(component.locations()).toEqual([]);
-    http.expectOne('/api/locations?houseId=2').flush([]);
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
   });
 });

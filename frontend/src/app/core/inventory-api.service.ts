@@ -32,8 +32,10 @@ export class InventoryApiService {
     return this.http.post<{ code: string }>(`/api/houses/${houseId}/invitation`, {});
   }
 
-  locations(houseId: number) {
-    return this.http.get<StorageLocation[]>('/api/locations', { params: { houseId } });
+  locations(houseId: number, includeArchived = false) {
+    return this.http.get<StorageLocation[]>('/api/locations', {
+      params: { houseId, ...(includeArchived ? { includeArchived: true } : {}) },
+    });
   }
 
   createLocation(request: CreateLocation) {
@@ -42,6 +44,14 @@ export class InventoryApiService {
 
   updateLocation(id: number, request: CreateLocation) {
     return this.http.put<StorageLocation>(`/api/locations/${id}`, request);
+  }
+
+  archiveLocation(id: number) {
+    return this.http.patch<StorageLocation>(`/api/locations/${id}/archive`, null);
+  }
+
+  restoreLocation(id: number) {
+    return this.http.patch<StorageLocation>(`/api/locations/${id}/restore`, null);
   }
 
   deleteLocation(id: number) {
