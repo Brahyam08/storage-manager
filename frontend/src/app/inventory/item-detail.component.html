@@ -77,7 +77,7 @@
         <button
           class="button secondary"
           type="button"
-          [disabled]="busy() || item.quantity === 0 || item.inUseQuantity > 0"
+          [disabled]="busy() || item.inUseQuantity > 0"
           (click)="openMove()"
         >
           Mover objeto

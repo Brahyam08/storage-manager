@@ -350,7 +350,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
 
   openMove() {
     if (this.item.archived) return;
-    if (this.busy() || this.item.quantity === 0 || this.item.inUseQuantity > 0) return;
+    if (this.busy() || this.item.inUseQuantity > 0) return;
     this.mode.set('move');
     this.moveForm.reset();
     this.destinations.set([]);
@@ -378,7 +378,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
 
   move() {
     if (this.item.archived) return;
-    if (this.busy() || this.item.quantity === 0 || this.item.inUseQuantity > 0) return;
+    if (this.busy() || this.item.inUseQuantity > 0) return;
     if (this.moveForm.invalid) {
       this.moveForm.markAllAsTouched();
       return;

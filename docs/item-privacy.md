@@ -33,8 +33,9 @@ ocultan tanto el objeto como sus movimientos anteriores a los demás miembros.
   a una ubicación diferente de la misma casa. No reparte cantidades ni traslada
   entre casas. Peticiones inválidas no generan historial.
 - GET `/api/items/{id}/history`: movimientos accesibles, más recientes primero.
-- DELETE `/api/items/{id}`: solo propietario; 204 si no hay historial, 409 si hay movimientos o consumos.
-  Se conserva la auditoría; no se borra en cascada.
+- DELETE `/api/items/{id}`: solo propietario; permite activos y archivados con historial.
+  Borra el objeto y todos sus historiales en una transacción. Si hay piezas en uso
+  devuelve409; deben devolverse antes. [Contrato de borrado](item-deletion.md).
 
 Las respuestas de objeto contienen id, name, description, category, quantity,
 ownerId, visibility, outOfStock y location (con houseId, parentId y path completo). El historial
@@ -75,4 +76,5 @@ Esto no equivale a una auditoría de seguridad completa ni a una demo desplegada
 
 La entrega `item-consumption.md` añade descuento de unidades sin movimiento y su
 historial protegido. Los miembros pueden consumir compartidos y el dueño sus
-privados. Cantidad cero conserva el objeto con outOfStock; no se mueve stock cero.
+privados. Cantidad cero conserva el objeto con outOfStock; puede trasladarse su
+registro con cantidad0 sin crear unidades nuevas.

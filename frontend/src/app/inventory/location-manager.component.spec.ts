@@ -41,6 +41,57 @@ describe('Location management', () => {
     http.verify();
   });
 
+  it('previews contents and submits one exact snapshot without duplicate writes', () => {
+    const component = fixture.componentInstance;
+    const changed = vi.fn();
+    component.changed.subscribe(changed);
+    component.startTransfer(locations[0]);
+    http.expectOne('/api/locations/1/contents').flush([{ id: 10, name: 'Tornillos', quantity: 4 }]);
+    component.transferForm.controls.toLocationId.setValue(4);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tornillos');
+    component.confirmTransfer();
+    component.confirmTransfer();
+    const request = http.expectOne('/api/locations/1/move-contents');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ toLocationId: 4, items: [{ id: 10, quantity: 4 }] });
+    request.flush([{ id: 10 }]);
+    expect(component.transferring()).toBeNull();
+    expect(changed).toHaveBeenCalledOnce();
+  });
+
+  it('requires refreshing a stale summary and excludes archived destinations', () => {
+    const component = fixture.componentInstance;
+    component.locations.set([...locations, { ...locations[3], id: 9, archived: true }]);
+    component.startTransfer(locations[0]);
+    http.expectOne('/api/locations/1/contents').flush([{ id: 10, quantity: 4 }]);
+    expect(component.destinations().map((location) => location.id)).toEqual([2, 3, 4]);
+    component.transferForm.controls.toLocationId.setValue(4);
+    component.confirmTransfer();
+    http
+      .expectOne('/api/locations/1/move-contents')
+      .flush({ error: 'El contenido ha cambiado' }, { status: 409, statusText: 'Conflict' });
+    component.confirmTransfer();
+    http.expectNone('/api/locations/1/move-contents');
+    expect(component.transferReady()).toBe(false);
+    component.refreshTransfer();
+    http.expectOne('/api/locations/1/contents').flush([]);
+    component.confirmTransfer();
+    http.expectNone('/api/locations/1/move-contents');
+  });
+
+  it('cancels previews when changing houses and clears their contents', () => {
+    const component = fixture.componentInstance;
+    component.startTransfer(locations[0]);
+    const request = http.expectOne('/api/locations/1/contents');
+    fixture.componentRef.setInput('houseId', 2);
+    fixture.detectChanges();
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
+    expect(request.cancelled).toBe(true);
+    expect(component.transferring()).toBeNull();
+    expect(component.transferReady()).toBe(false);
+  });
+
   it('archives an empty location once and hides it until archived locations are requested', () => {
     const component = fixture.componentInstance;
     const changed = vi.fn();

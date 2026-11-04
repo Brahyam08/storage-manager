@@ -15,7 +15,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { InventoryApiService } from '../core/inventory-api.service';
-import { StorageLocation } from '../core/models';
+import { InventoryItem, StorageLocation } from '../core/models';
 import { apiError } from '../core/api-error';
 
 @Component({
@@ -38,6 +38,17 @@ export class LocationManagerComponent implements OnChanges {
   readonly showArchived = signal(false);
   readonly visibleLocations = computed(() =>
     this.locations().filter((location) => this.showArchived() || !location.archived),
+  );
+  readonly transferring = signal<StorageLocation | null>(null);
+  readonly transferItems = signal<InventoryItem[]>([]);
+  readonly transferReady = signal(false);
+  readonly transferForm = this.fb.group({
+    toLocationId: this.fb.control<number | null>(null, Validators.required),
+  });
+  readonly destinations = computed(() =>
+    this.locations().filter(
+      (location) => !location.archived && location.id !== this.transferring()?.id,
+    ),
   );
   readonly editing = signal<StorageLocation | null>(null);
   readonly pendingDelete = signal<StorageLocation | null>(null);
@@ -76,6 +87,10 @@ export class LocationManagerComponent implements OnChanges {
     this.houseChanged.next();
     this.locations.set([]);
     this.showArchived.set(false);
+    this.transferItems.set([]);
+    this.transferForm.reset();
+    this.transferring.set(null);
+    this.transferReady.set(false);
     this.editing.set(null);
     this.pendingDelete.set(null);
     this.form.reset();
@@ -114,6 +129,7 @@ export class LocationManagerComponent implements OnChanges {
     this.error.set('');
     this.notice.set('');
     this.pendingDelete.set(null);
+    this.transferring.set(null);
     this.editing.set(location);
     this.form.reset({
       name: location.name,
@@ -168,6 +184,8 @@ export class LocationManagerComponent implements OnChanges {
       return;
     this.error.set('');
     this.notice.set('');
+    this.transferring.set(null);
+    this.transferReady.set(false);
     this.editing.set(null);
     this.pendingDelete.set(location);
   }
@@ -182,6 +200,8 @@ export class LocationManagerComponent implements OnChanges {
       return;
     this.busy.set(true);
     this.error.set('');
+    this.transferring.set(null);
+    this.transferReady.set(false);
     this.editing.set(null);
     this.pendingDelete.set(null);
     const request = location.archived
@@ -204,6 +224,83 @@ export class LocationManagerComponent implements OnChanges {
           this.load();
         },
         error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  startTransfer(location: StorageLocation) {
+    if (
+      location.archived ||
+      this.busy() ||
+      this.loading() ||
+      this.loadError() ||
+      !this.locations().some((entry) => entry.id === location.id)
+    )
+      return;
+    this.editing.set(null);
+    this.pendingDelete.set(null);
+    this.notice.set('');
+    this.transferring.set(location);
+    this.transferForm.reset();
+    this.refreshTransfer();
+  }
+
+  refreshTransfer() {
+    const source = this.transferring();
+    if (!source || this.busy()) return;
+    this.busy.set(true);
+    this.transferReady.set(false);
+    this.transferItems.set([]);
+    this.error.set('');
+    this.api
+      .locationContents(source.id)
+      .pipe(
+        takeUntil(this.houseChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (items) => {
+          this.transferItems.set(items);
+          this.transferReady.set(true);
+        },
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
+  confirmTransfer() {
+    const source = this.transferring();
+    const destination = this.destinations().find(
+      (location) => location.id === this.transferForm.getRawValue().toLocationId,
+    );
+    if (
+      !source ||
+      !destination ||
+      this.busy() ||
+      !this.transferReady() ||
+      !this.transferItems().length
+    )
+      return;
+    this.busy.set(true);
+    this.error.set('');
+    const snapshot = this.transferItems().map(({ id, quantity }) => ({ id, quantity }));
+    this.api
+      .moveLocationContents(source.id, destination.id, snapshot)
+      .pipe(
+        takeUntil(this.houseChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (items) => {
+          this.transferring.set(null);
+          this.transferReady.set(false);
+          this.notice.set(`${items.length} registros trasladados a ${destination.path}.`);
+          this.changed.emit();
+        },
+        error: (error) => {
+          this.transferReady.set(false);
+          this.error.set(apiError(error));
+        },
       });
   }
 

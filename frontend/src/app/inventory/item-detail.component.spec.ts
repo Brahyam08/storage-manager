@@ -420,7 +420,7 @@ describe('Item detail', () => {
     expect(updated).toHaveBeenCalledExactlyOnceWith({ ...item, location: destination });
   });
 
-  it('requires an allowed destination and never moves zero-stock items', () => {
+  it('requires an allowed destination and allows relocating zero-stock records', () => {
     const component = fixture.componentInstance;
     component.openMove();
     http.expectOne('/api/locations?houseId=1').flush([]);
@@ -433,8 +433,12 @@ describe('Item detail', () => {
     fixture.detectChanges();
     component.openMove();
     component.move();
-    http.expectNone('/api/locations?houseId=1');
-    expect(component.mode()).toBeNull();
+    http.expectOne('/api/locations?houseId=1').flush([{ ...item.location, id: 8 }]);
+    component.moveForm.controls.toLocationId.setValue(8);
+    component.move();
+    const request = http.expectOne((request) => request.url === '/api/items/4/move');
+    expect(request.request.params.get('quantity')).toBe('0');
+    request.flush({ ...item, quantity: 0, location: { ...item.location, id: 8 } });
   });
 
   it('cancels a pending movement when the selected item changes', () => {

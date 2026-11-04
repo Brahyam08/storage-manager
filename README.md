@@ -175,6 +175,8 @@ shared with their house. There is no mobile UI yet.
 | GET | `/api/locations?houseId=1` | List locations in an accessible house |
 | GET | `/api/locations/{id}` | Get location by ID |
 | POST | `/api/locations` | Create a location |
+| GET | `/api/locations/{id}/contents` | Preview direct active contents |
+| POST | `/api/locations/{id}/move-contents` | Move direct active contents atomically |
 | PUT | `/api/locations/{id}` | Update a location |
 | DELETE | `/api/locations/{id}` | Delete a location |
 
@@ -186,7 +188,8 @@ Responses include `id`, `name`, `description`, `houseId`, `parentId` and the ful
 their house's locations. Cycles and changing a location's house are rejected;
 deleting locations with children, items or history returns `409`.
 Legacy locations without a house are preserved and excluded from location access.
-See [location contract](docs/house-locations.md).
+See [location contract](docs/house-locations.md) and
+[bulk content transfers](docs/location-contents.md).
 
 ### Items (requires token)
 
@@ -222,8 +225,10 @@ Privacy applies to lists, search, ID, changes, movement and history.
 
 Responses include `ownerId`, `visibility` and location with its full `path`.
 Moves require the entire quantity and a different location in the same house;
-location and history are saved atomically. PUT cannot change location. Deletion
-with movement or consumption history returns `409`. Legacy unassigned items remain stored and
+location and history are saved atomically, including zero-stock records. PUT cannot
+change location. Owners can permanently delete active or archived items together
+with their history; active uses must be returned first. See [deletion rules](docs/item-deletion.md).
+Legacy unassigned items remain stored and
 hidden. See [inventory privacy and movement contract](docs/item-privacy.md).
 
 Consumption reduces stock without moving the item and records the session user,

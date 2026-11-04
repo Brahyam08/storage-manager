@@ -29,27 +29,22 @@ Las selecciones de ubicaciones que ya no existen se vacían en los formularios.
 ## Reorganizar un cajón con contenido
 
 Si sigue siendo el mismo cajón, editar su nombre o ubicación padre conserva sus
-objetos y sububicaciones; no es necesario borrarlo. Si el cajón desaparece, hoy
-se puede mover cada objeto a otro destino. El borrado sigue bloqueado si quedan
+objetos y sububicaciones; no es necesario borrarlo. Si el cajón desaparece, usa
+**Trasladar objetos** para llevar sus objetos activos directos a otro destino y
+archiva después el cajón. El traslado no incluye sububicaciones ni archivados;
+[contrato y permisos](location-contents.md). El borrado sigue bloqueado si quedan
 sububicaciones o referencias históricas, aunque ya no haya objetos.
 
-Archivar/restaurar objetos y ubicaciones ya permite retirarlos del uso habitual
-conservando sus historiales. Trasladar todo el contenido en una sola operación
-sigue pendiente; no se mueve ni archiva contenido en cascada automáticamente.
+Archivar/restaurar permite conservar los historiales. Ninguna operación mueve ni
+archiva contenido en cascada automáticamente.
 
 ## Comprobaciones
 
-47 tests Angular y build de producción pasan. Las pruebas cubren confirmación y
-cancelación, propiedad, conflicto de historial, destinos jerárquicos permitidos,
-actualización de rutas y cambio de contexto durante peticiones. El backend no ha
-cambiado; su última suite verificada contiene116 tests.
-
-En PostgreSQL aislado se comprobaron borrado de objeto sin historial y ubicación
-vacía (204 y posterior404), rechazo de ubicación ocupada, objeto con consumo y
-ciclo jerárquico. En navegador se verificaron confirmación/cancelación sin borrado,
-renombrado propagado a objetos y cambio de ubicación padre desde móvil; sin
-desbordamiento horizontal ni errores de consola. Los borrados reales de fixtures
-se comprobaron por API; las confirmaciones visuales se cancelaron.
+Las suites Java y Angular cubren confirmación y cancelación, propiedad, privacidad,
+destinos jerárquicos permitidos, actualización de rutas y cambios de contexto.
+El verificador PostgreSQL aislado comprueba restricciones de borrado de ubicaciones,
+traslados atómicos, concurrencia y persistencia. Los objetos se pueden eliminar con
+historial según las [reglas actuales](item-deletion.md).
 
 Los servicios y datos del usuario se conservan. Esta entrega no modifica cifrado,
 almacenamiento, permisos del servidor ni los límites de privacidad documentados.

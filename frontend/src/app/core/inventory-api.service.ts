@@ -38,6 +38,21 @@ export class InventoryApiService {
     });
   }
 
+  locationContents(id: number) {
+    return this.http.get<InventoryItem[]>(`/api/locations/${id}/contents`);
+  }
+
+  moveLocationContents(
+    id: number,
+    toLocationId: number,
+    items: { id: number; quantity: number }[],
+  ) {
+    return this.http.post<InventoryItem[]>(`/api/locations/${id}/move-contents`, {
+      toLocationId,
+      items,
+    });
+  }
+
   createLocation(request: CreateLocation) {
     return this.http.post<StorageLocation>('/api/locations', request);
   }

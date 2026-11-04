@@ -5,8 +5,8 @@
     elegir otra ubicación en «Dentro de» sin eliminarlo.
   </p>
   <p class="muted">
-    Si un cajón ya no se utiliza, traslada o archiva sus objetos y archívalo. Conservarás su historial y
-    podrás restaurarlo.
+    Si un cajón ya no se utiliza, traslada o archiva sus objetos y archívalo. Conservarás su
+    historial y podrás restaurarlo.
   </p>
   <label class="archive-toggle"
     ><input
@@ -61,6 +61,72 @@
         </button>
       </fieldset>
     </form>
+  }
+  @if (transferring(); as source) {
+    <section class="transfer-panel" aria-label="Trasladar contenido">
+      <h3 #actionTitle tabindex="-1">Trasladar objetos de {{ source.path }}</h3>
+      <p>
+        Se trasladan todos los objetos activos guardados directamente aquí. Las sububicaciones y los
+        archivados permanecen en su sitio. Cada objeto conservará su historial.
+      </p>
+      @if (transferReady()) {
+        @if (!transferItems().length) {
+          <p>No hay objetos activos para trasladar.</p>
+        } @else {
+          <ul class="consumption-list">
+            @for (item of transferItems(); track item.id) {
+              <li>
+                <strong>{{ item.name }}</strong
+                ><span
+                  >{{ item.quantity }}
+                  {{
+                    item.individual
+                      ? 'objeto individual'
+                      : item.quantity === 1
+                        ? 'unidad'
+                        : 'unidades'
+                  }}</span
+                >
+              </li>
+            }
+          </ul>
+          <form [formGroup]="transferForm" (ngSubmit)="confirmTransfer()">
+            <fieldset class="creation-fields" [disabled]="busy()">
+              <div class="full-width">
+                <label for="transfer-destination">Ubicación de destino</label>
+                <select id="transfer-destination" formControlName="toLocationId">
+                  <option [ngValue]="null">Elige una ubicación</option>
+                  @for (location of destinations(); track location.id) {
+                    <option [ngValue]="location.id">{{ location.path }}</option>
+                  }
+                </select>
+              </div>
+              <button class="button primary" type="submit" [disabled]="transferForm.invalid">
+                Confirmar traslado
+              </button>
+            </fieldset>
+          </form>
+        }
+      }
+      <div class="detail-actions">
+        <button
+          class="button secondary"
+          type="button"
+          [disabled]="busy()"
+          (click)="refreshTransfer()"
+        >
+          Actualizar resumen
+        </button>
+        <button
+          class="button secondary"
+          type="button"
+          [disabled]="busy()"
+          (click)="transferring.set(null)"
+        >
+          Cancelar traslado
+        </button>
+      </div>
+    </section>
   }
   @if (pendingDelete(); as location) {
     <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de ubicación">
@@ -121,6 +187,15 @@
               {{ location.archived ? 'Restaurar' : 'Archivar' }}
             </button>
             @if (!location.archived) {
+              <button
+                class="button secondary"
+                type="button"
+                [disabled]="busy()"
+                (click)="startTransfer(location)"
+                [attr.aria-label]="'Trasladar objetos de ' + location.path"
+              >
+                Trasladar objetos
+              </button>
               <button
                 class="button secondary"
                 type="button"
