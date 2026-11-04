@@ -18,8 +18,8 @@ public class LocationController {
     private final UserService users;
 
     @GetMapping
-    public List<LocationResponse> findAll(@RequestParam Long houseId, Principal principal) {
-        return locations.findAll(houseId, users.findByEmail(principal.getName()));
+    public List<LocationResponse> findAll(@RequestParam Long houseId, @RequestParam(defaultValue = "false") boolean includeArchived, Principal principal) {
+        return locations.findAll(houseId, includeArchived, users.findByEmail(principal.getName()));
     }
 
     @GetMapping("/{id}")
@@ -37,6 +37,16 @@ public class LocationController {
     public LocationResponse update(@PathVariable Long id, @Valid @RequestBody LocationRequest request,
                                    Principal principal) {
         return locations.update(id, request, users.findByEmail(principal.getName()));
+    }
+
+    @PatchMapping("/{id}/archive")
+    public LocationResponse archive(@PathVariable Long id, Principal principal) {
+        return locations.archive(id, users.findByEmail(principal.getName()));
+    }
+
+    @PatchMapping("/{id}/restore")
+    public LocationResponse restore(@PathVariable Long id, Principal principal) {
+        return locations.restore(id, users.findByEmail(principal.getName()));
     }
 
     @DeleteMapping("/{id}")

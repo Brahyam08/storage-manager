@@ -28,6 +28,9 @@ public class Location {
     @JoinColumn(name = "parent_id")
     private Location parent;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean archived = false;
+
     public Location(Long id, String name, String description) {
         this.id = id;
         this.name = name;

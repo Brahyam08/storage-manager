@@ -23,8 +23,13 @@ public class LocationService {
     private final ItemRestockRepository restocks;
 
     public List<LocationResponse> findAll(Long houseId, User user) {
+        return findAll(houseId, false, user);
+    }
+
+    public List<LocationResponse> findAll(Long houseId, boolean includeArchived, User user) {
         houseService.findById(houseId, user);
         return locationRepository.findAllByHouseIdOrderByIdAsc(houseId).stream()
+                .filter(location -> includeArchived || !location.isArchived())
                 .map(LocationResponse::from).toList();
     }
 
@@ -32,6 +37,12 @@ public class LocationService {
         Long houseId = locationRepository.findHouseIdById(id).orElseThrow(this::notFound);
         houseService.findById(houseId, user);
         return inHouse(id, houseId);
+    }
+
+    public Location findActiveById(Long id, User user) {
+        Location location = findById(id, user);
+        requireActive(location);
+        return location;
     }
 
     public LocationResponse findResponse(Long id, User user) {
@@ -70,9 +81,41 @@ public class LocationService {
 
     @Transactional
     public Location lockForUpdate(Long id, User user) {
+        Location location = lockedLocation(id, user);
+        requireActive(location);
+        return location;
+    }
+
+    @Transactional
+    public LocationResponse archive(Long id, User user) {
+        Location location = lockedLocation(id, user);
+        if (!location.isArchived() && (items.existsByLocationId(id)
+                || locationRepository.existsByParentIdAndArchivedFalse(id))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Traslada los objetos y archiva o reorganiza las ubicaciones interiores antes de archivar");
+        }
+        location.setArchived(true);
+        return LocationResponse.from(locationRepository.save(location));
+    }
+
+    @Transactional
+    public LocationResponse restore(Long id, User user) {
+        Location location = lockedLocation(id, user);
+        if (location.getParent() != null) requireActive(location.getParent());
+        location.setArchived(false);
+        return LocationResponse.from(locationRepository.save(location));
+    }
+
+    private Location lockedLocation(Long id, User user) {
         Long houseId = locationRepository.findHouseIdById(id).orElseThrow(this::notFound);
         houseService.lockForUpdate(houseId, user);
         return inHouse(id, houseId);
+    }
+
+    private void requireActive(Location location) {
+        if (location.isArchived()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La ubicación está archivada. Restáurala antes de usarla");
+        }
     }
 
     private Location inHouse(Long id, Long houseId) {
@@ -82,6 +125,7 @@ public class LocationService {
     private void apply(Location location, LocationRequest request) {
         Location parent = request.getParentId() == null ? null
                 : inHouse(request.getParentId(), location.getHouse().getId());
+        if (parent != null) requireActive(parent);
         for (Location ancestor = parent; ancestor != null; ancestor = ancestor.getParent()) {
             if (ancestor.getId().equals(location.getId())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La jerarquía no puede contener ciclos");

@@ -97,7 +97,7 @@ public class ItemService {
         if (quantity == null || quantity < 1 || !quantity.equals(item.getQuantity())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Se debe mover la cantidad completa del objeto");
         }
-        Location destination = locations.findById(toLocationId, user);
+        Location destination = locations.findActiveById(toLocationId, user);
         if (!item.getLocation().getHouse().getId().equals(destination.getHouse().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pueden mover objetos entre casas");
         }

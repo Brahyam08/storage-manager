@@ -9,6 +9,7 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
     List<Location> findAllByHouseIdOrderByIdAsc(Long houseId);
     Optional<Location> findByIdAndHouseId(Long id, Long houseId);
     boolean existsByParentId(Long parentId);
+    boolean existsByParentIdAndArchivedFalse(Long parentId);
 
     @Query("select l.house.id from Location l where l.id = :id")
     Optional<Long> findHouseIdById(@Param("id") Long id);
