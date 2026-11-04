@@ -9,6 +9,8 @@ Run the app with Docker at http://localhost:8080. Follow the
 reusable items, movement history and privacy between two accounts.
 
 The demo runs locally; no public hosting or shared demo credentials are configured.
+[Mobile installation groundwork](docs/pwa-installation.md) provides a manifest and
+icons; full installation still needs HTTPS and checks on actual devices.
 
 ![Inventory with synthetic demonstration data](docs/images/inventory-desktop.jpg)
 

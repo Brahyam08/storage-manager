@@ -28,12 +28,39 @@ import { AuthService } from '../core/auth.service';
         </p>
         <button class="button secondary" type="button" (click)="logout()">Cerrar sesión</button>
       </section>
+      <section class="panel install-guide" aria-labelledby="install-title">
+        <p class="eyebrow">EN TU MÓVIL</p>
+        <h2 id="install-title">Añadir a la pantalla de inicio</h2>
+        <p>Abre Storage Manager desde su icono, como una aplicación.</p>
+        <ul>
+          <li>
+            <strong>iPhone:</strong> en Safari, abre Compartir y elige «Añadir a pantalla de
+            inicio». Si aparece, activa «Abrir como app web».
+          </li>
+          <li>
+            <strong>Android:</strong> en Chrome, abre el menú y busca «Instalar aplicación» o
+            «Añadir a pantalla de inicio».
+          </li>
+        </ul>
+        <p class="muted">Las opciones dependen de tu navegador y de su versión.</p>
+        @if (!secureContext) {
+          <p class="muted">
+            Esta dirección de red local usa HTTP. Puedes probar la web; para completar la
+            instalación necesitaremos una dirección HTTPS.
+          </p>
+        }
+        <p class="muted">
+          Necesitas conexión para consultar y modificar tu inventario. Al abrir la aplicación
+          instalada por primera vez puede que tengas que iniciar sesión.
+        </p>
+      </section>
     </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfilePageComponent {
   readonly auth = inject(AuthService);
+  readonly secureContext = window.isSecureContext;
   private readonly router = inject(Router);
   logout() {
     this.auth.clear();

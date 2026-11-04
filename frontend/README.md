@@ -175,3 +175,7 @@ to validate item ownership/membership; a URL is not a grant of access.
 
 Owners can replenish units directly from item details with a preview and a separate
 restock history; see [restock rules](../docs/item-restocks.md).
+
+The [mobile installation foundation](../docs/pwa-installation.md) includes a web
+manifest, icons and profile instructions. No service worker or offline inventory
+is enabled; HTTPS and actual device installation remain pending.

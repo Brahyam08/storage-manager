@@ -55,7 +55,7 @@ resultado observado. Añadir capturas solo con datos ficticios.
 ## Antes de invitar a testers externos
 
 Preparar HTTPS, entorno/base separados, acceso restringido a testers, copias y
-restauración comprobadas, y límites del alojamiento gratuito. Después añadir PWA
-instalable y comprobar sus actualizaciones. No cachear respuestas privadas de API
+restauración comprobadas, y límites del alojamiento gratuito. La [base PWA](pwa-installation.md) ya incluye manifiesto e iconos; verificar
+instalación y actualizaciones con HTTPS y móviles reales antes de darla por terminada. No cachear respuestas privadas de API
 como parte del funcionamiento offline. El soporte de inventario sin conexión
 queda fuera de la primera beta.
