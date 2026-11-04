@@ -12,23 +12,25 @@
   }
   @if (item.availableQuantity > 0) {
     <form [formGroup]="form" (ngSubmit)="take()">
-      <fieldset class="creation-fields" [disabled]="busy() || committed()">
-        <div>
-          <label for="take-quantity">Objetos que retiras para usar</label
-          ><input
-            id="take-quantity"
-            formControlName="quantity"
-            type="number"
-            min="1"
-            [max]="item.availableQuantity"
-            step="1"
-          />
-          @if (form.controls.quantity.touched && form.invalid) {
-            <small class="field-error"
-              >Introduce un entero entre 1 y {{ item.availableQuantity }}.</small
-            >
-          }
-        </div>
+      <fieldset class="creation-fields use-fields" [disabled]="busy() || committed()">
+        @if (item.availableQuantity > 1) {
+          <div>
+            <label for="take-quantity">Objetos que retiras para usar</label
+            ><input
+              id="take-quantity"
+              formControlName="quantity"
+              type="number"
+              min="1"
+              [max]="item.availableQuantity"
+              step="1"
+            />
+            @if (form.controls.quantity.touched && form.invalid) {
+              <small class="field-error"
+                >Introduce un entero entre 1 y {{ item.availableQuantity }}.</small
+              >
+            }
+          </div>
+        }
         <button class="button primary" type="submit">Retirar para usar</button>
       </fieldset>
     </form>

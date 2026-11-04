@@ -106,4 +106,28 @@ describe('Reusable item usage', () => {
     expect(component.busy()).toBe(false);
     http.expectOne('/api/items/5/uses').flush([]);
   });
+  it('shows quantity only for multiple available objects and resets it when one remains', () => {
+    fixture.componentRef.setInput('item', { ...item, quantity: 3, availableQuantity: 3 });
+    fixture.detectChanges();
+    http.expectOne('/api/items/4/uses').flush([]);
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).not.toBeNull();
+    fixture.componentInstance.form.controls.quantity.setValue(2);
+    fixture.componentRef.setInput('item', {
+      ...item,
+      quantity: 3,
+      inUseQuantity: 2,
+      availableQuantity: 1,
+    });
+    fixture.detectChanges();
+    http.expectOne('/api/items/4/uses').flush([]);
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeNull();
+    expect(fixture.componentInstance.form.controls.quantity.value).toBe(1);
+    fixture.nativeElement.querySelector('button[type="submit"]').click();
+    const request = http.expectOne('/api/items/4/uses');
+    expect(request.request.body).toEqual({ quantity: 1 });
+    request.flush(use);
+    http
+      .expectOne('/api/items/4')
+      .flush({ ...item, quantity: 3, inUseQuantity: 3, availableQuantity: 0 });
+  });
 });

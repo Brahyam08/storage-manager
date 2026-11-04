@@ -46,7 +46,7 @@ Acciones consultadas el 4 de noviembre de 2026:
 El script completo se ha ejecutado con variables de Spring y JVM que apuntaban
 a una base inválida de prueba: fueron aisladas y la secuencia terminó correctamente.
 Los comandos Java y Angular del workflow se han ejecutado localmente; el proyecto
-contiene 122 tests Java y 47 Angular. La configuración del workflow pasa actionlint
+contiene 122 tests Java y 48 Angular. La configuración del workflow pasa actionlint
 1.7.12 y el script pasa `bash -n`. Docker ejecuta el mismo verificador existente,
 con rutas, privacidad, concurrencia, rollback y tres ciclos de persistencia.
 Una ejecución futura en GitHub será la prueba del entorno remoto: la validación

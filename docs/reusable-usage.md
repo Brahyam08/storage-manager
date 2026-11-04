@@ -26,6 +26,9 @@ Cada devolución registra todos los objetos de esa retirada en su ubicación hab
 No hay devolución parcial, destino alternativo, fechas límite ni identificación
 individual de ejemplares. Tras devolver se puede usar la acción de movimiento.
 
+Si solo queda un objeto disponible, Angular muestra directamente Retirar para usar
+y envía cantidad1. El campo de cantidad aparece cuando hay varios disponibles.
+
 Angular refresca el objeto tras una acción aceptada y carga su historial. Si falla
 ese refresco después de aceptar la acción, bloquea repetirla y pide actualizar;
 no confunde un fallo de lectura con una retirada fallida. Cambiar selección cancela
@@ -33,7 +36,7 @@ peticiones, sin prometer deshacer una operación ya aceptada por el servidor.
 
 ## Verificación
 
-116 pruebas Java y38 Angular pasan, además de build de producción. Se cubren
+122 pruebas Java y 48 Angular pasan, además de build de producción. Se cubren
 privacidad, suplantación del actor, disponibilidad, permisos de devolución, historial,
 validación, cambios incompatibles y fallo parcial de actualización de la interfaz.
 El verificador Docker comprueba retiradas concurrentes (solo una para un objeto),
