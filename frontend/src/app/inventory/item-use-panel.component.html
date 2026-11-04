@@ -16,7 +16,8 @@
   }
 
   <p class="muted">
-    Cada devolución devuelve la retirada completa a su ubicación habitual: {{ item.location.path }}.
+    Las devoluciones registran la retirada completa. Ubicación habitual actual:
+    {{ item.location?.path ?? 'Sin ubicación' }}.
   </p>
   @if (error()) {
     <p class="error-banner" role="alert">{{ error() }}</p>
@@ -70,7 +71,8 @@
           >{{ use.quantity }} {{ use.quantity === 1 ? 'objeto' : 'objetos' }} ·
           {{ use.usedById === userId ? 'Tú' : 'Usuario #' + use.usedById }}</strong
         ><span
-          >Retirada: {{ use.takenAt | date: 'dd/MM/yyyy HH:mm:ss' }} · {{ use.location.path }}</span
+          >Retirada: {{ use.takenAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
+          {{ use.location?.path ?? 'Sin ubicación' }}</span
         >
         @if (use.returnedAt) {
           <span>Devuelto: {{ use.returnedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span>

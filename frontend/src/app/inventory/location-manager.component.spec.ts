@@ -111,14 +111,16 @@ describe('Location management', () => {
     expect(component.parents().some((location) => location.id === 4)).toBe(false);
   });
 
-  it('restores an archived location without allowing editing or deleting it first', () => {
+  it('allows confirming deletion of an archived location without restoring it', () => {
     const component = fixture.componentInstance;
     const archived = { ...locations[3], archived: true };
     component.locations.set([archived]);
     component.edit(archived);
     component.askDelete(archived);
     expect(component.editing()).toBeNull();
-    expect(component.pendingDelete()).toBeNull();
+    expect(component.pendingDelete()?.id).toBe(4);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No se elimina ningún objeto');
     component.toggleArchive(archived);
     http.expectOne('/api/locations/4/restore').flush({ ...archived, archived: false });
     http.expectOne('/api/locations?houseId=1&includeArchived=true').flush([locations[3]]);

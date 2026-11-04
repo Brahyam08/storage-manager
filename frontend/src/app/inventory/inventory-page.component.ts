@@ -28,7 +28,7 @@ import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { House, InventoryItem } from '../core/models';
 
-type ItemFilter = 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
+type ItemFilter = 'unassigned' | 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
 
 @Component({
   selector: 'app-inventory-page',
@@ -68,6 +68,8 @@ export class InventoryPageComponent {
   readonly visibleItems = computed(() =>
     this.items().filter((item) => {
       switch (this.filter()) {
+        case 'unassigned':
+          return item.location === null;
         case 'private':
           return item.visibility === 'PRIVATE';
         case 'shared':
@@ -138,7 +140,9 @@ export class InventoryPageComponent {
 
   private initialFilter(): ItemFilter {
     const filter = this.route.snapshot.queryParamMap.get('filter');
-    return ['private', 'shared', 'empty', 'consumable', 'reusable'].includes(filter ?? '')
+    return ['unassigned', 'private', 'shared', 'empty', 'consumable', 'reusable'].includes(
+      filter ?? '',
+    )
       ? (filter as ItemFilter)
       : 'all';
   }

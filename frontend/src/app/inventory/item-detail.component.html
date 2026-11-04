@@ -1,5 +1,5 @@
 <section class="panel item-detail-panel" aria-label="Detalle del objeto">
-  <p class="eyebrow">{{ item.location.path }}</p>
+  <p class="eyebrow">{{ item.location?.path ?? 'Sin ubicación' }}</p>
   <div class="item-detail-heading">
     <div>
       <h2 #detailTitle tabindex="-1">{{ item.name }}</h2>
@@ -282,7 +282,7 @@
                   entry.restockedById === userId ? 'Tú' : 'Usuario #' + entry.restockedById
                 }}</span
               >
-              <span>{{ entry.location.path }}</span>
+              <span>{{ entry.location?.path ?? 'Sin ubicación' }}</span>
             </li>
           }
         </ul>
@@ -418,9 +418,8 @@
       @if (mode() === 'move') {
         <h3>Cambiar de sitio</h3>
         <p class="muted">
-          Ubicación actual: {{ item.location.path }}. Se trasladará la cantidad completa ({{
-            item.quantity
-          }}
+          Ubicación actual: {{ item.location?.path ?? 'Sin ubicación' }}. Se trasladará la cantidad
+          completa ({{ item.quantity }}
           {{
             item.kind === 'REUSABLE'
               ? item.quantity === 1
@@ -464,7 +463,7 @@
         <ul class="consumption-list">
           @for (entry of movementHistory(); track entry.id) {
             <li>
-              <strong>De: {{ entry.fromLocation.path }}</strong
+              <strong>De: {{ entry.fromLocation?.path ?? 'Sin ubicación' }}</strong
               ><span>A: {{ entry.toLocation.path }}</span
               ><span
                 >{{ entry.quantity }}
@@ -497,7 +496,7 @@
               ><span
                 >{{ entry.consumedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
                 {{ entry.consumedById === userId ? 'Tú' : 'Usuario #' + entry.consumedById }}</span
-              ><span>{{ entry.location.path }}</span>
+              ><span>{{ entry.location?.path ?? 'Sin ubicación' }}</span>
             </li>
           }
         </ul>

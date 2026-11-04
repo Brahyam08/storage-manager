@@ -132,8 +132,10 @@
     <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de ubicación">
       <h3 #actionTitle tabindex="-1">¿Eliminar {{ location.name }}?</h3>
       <p>
-        Esta acción no se puede deshacer. Solo se eliminará si no contiene otras ubicaciones,
-        objetos ni historial.
+        Se eliminará solo esta ubicación. Sus objetos conservarán la casa, las cantidades, la
+        privacidad y los historiales, y quedarán como «Sin ubicación». Las sububicaciones pasarán
+        directamente a la casa. No se elimina ningún objeto. La ubicación no se podrá restaurar; su
+        referencia se conservará en los historiales.
       </p>
       <div class="detail-actions">
         <button
@@ -203,17 +205,18 @@
                 (click)="edit(location)"
                 [attr.aria-label]="'Editar ubicación ' + location.path"
               >
-                Editar</button
-              ><button
-                class="button secondary danger-outline"
-                type="button"
-                [disabled]="busy()"
-                (click)="askDelete(location)"
-                [attr.aria-label]="'Eliminar ubicación ' + location.path"
-              >
-                Eliminar
+                Editar
               </button>
             }
+            <button
+              class="button secondary danger-outline"
+              type="button"
+              [disabled]="busy()"
+              (click)="askDelete(location)"
+              [attr.aria-label]="'Eliminar ubicación ' + location.path"
+            >
+              Eliminar
+            </button>
           </div>
         </li>
       }

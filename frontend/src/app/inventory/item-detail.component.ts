@@ -169,7 +169,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
         name: value.name.trim(),
         description: value.description.trim(),
         category: value.category.trim(),
-        locationId: this.item.location.id,
+        locationId: this.item.location?.id ?? null,
       })
       .pipe(
         takeUntil(this.selectionChanged),
@@ -351,13 +351,15 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   openMove() {
     if (this.item.archived) return;
     if (this.busy() || this.item.inUseQuantity > 0) return;
+    const houseId = this.item.houseId ?? this.item.location?.houseId;
+    if (houseId == null) return;
     this.mode.set('move');
     this.moveForm.reset();
     this.destinations.set([]);
     this.error.set('');
     this.busy.set(true);
     this.api
-      .locations(this.item.location.houseId)
+      .locations(houseId)
       .pipe(
         takeUntil(this.selectionChanged),
         takeUntilDestroyed(this.destroyRef),
@@ -367,9 +369,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
         next: (locations) =>
           this.destinations.set(
             locations.filter(
-              (location) =>
-                location.houseId === this.item.location.houseId &&
-                location.id !== this.item.location.id,
+              (location) => location.houseId === houseId && location.id !== this.item.location?.id,
             ),
           ),
         error: (error) => this.error.set(apiError(error)),

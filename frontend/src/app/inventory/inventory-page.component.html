@@ -212,6 +212,7 @@
             <label class="sr-only" for="item-filter">Filtrar objetos</label
             ><select id="item-filter" [value]="filter()" (change)="setFilter($event)">
               <option value="all">Todos los objetos</option>
+              <option value="unassigned">Sin ubicación</option>
               <option value="private">Privados</option>
               <option value="shared">Compartidos</option>
               <option value="empty">Consumibles agotados</option>
@@ -262,7 +263,7 @@
                       <span class="mobile-label">{{
                         item.kind === 'REUSABLE' ? 'Ubicación habitual' : 'Dónde está'
                       }}</span
-                      >{{ item.location.path }}
+                      >{{ item.location?.path ?? 'Sin ubicación' }}
                     </div>
                     <div class="item-quantity" [class.empty]="item.outOfStock">
                       <strong>{{

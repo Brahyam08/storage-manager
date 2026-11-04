@@ -42,6 +42,31 @@ describe('House switching', () => {
     http.verify();
   });
 
+  it('keeps unassigned objects visible and offers a filter for them', async () => {
+    const request = await vi.waitFor(() =>
+      http.expectOne((request) => request.url === '/api/items'),
+    );
+    const item = {
+      name: 'Teclado',
+      kind: 'REUSABLE',
+      quantity: 1,
+      inUseQuantity: 0,
+      availableQuantity: 1,
+      ownerId: 7,
+      visibility: 'PRIVATE',
+      outOfStock: false,
+      houseId: 1,
+    };
+    request.flush([
+      { ...item, id: 1, location: null },
+      { ...item, id: 2, location: { id: 3, houseId: 1, path: 'Cajón' } },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Sin ubicación');
+    fixture.componentInstance.filter.set('unassigned');
+    expect(fixture.componentInstance.visibleItems().map((item) => item.id)).toEqual([1]);
+  });
+
   it('requests archived objects only after explicitly enabling them', async () => {
     (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
     fixture.componentInstance.toggleArchived();

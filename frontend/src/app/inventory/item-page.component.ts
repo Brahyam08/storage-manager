@@ -49,7 +49,10 @@ export class ItemPageComponent {
   readonly error = signal('');
   get backParams() {
     return {
-      house: this.route.snapshot.queryParamMap.get('house') ?? this.item()?.location.houseId,
+      house:
+        this.route.snapshot.queryParamMap.get('house') ??
+        this.item()?.houseId ??
+        this.item()?.location?.houseId,
       search: this.route.snapshot.queryParamMap.get('search'),
       filter: this.route.snapshot.queryParamMap.get('filter'),
       ...(this.route.snapshot.queryParamMap.get('archived') === '1' ? { archived: '1' } : {}),

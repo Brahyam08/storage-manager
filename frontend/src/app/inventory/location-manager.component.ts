@@ -175,7 +175,6 @@ export class LocationManagerComponent implements OnChanges {
 
   askDelete(location: StorageLocation) {
     if (
-      location.archived ||
       this.busy() ||
       this.loading() ||
       this.loadError() ||

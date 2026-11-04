@@ -13,6 +13,7 @@ export interface House {
 
 export interface StorageLocation {
   archived?: boolean;
+  deleted?: boolean;
   id: number;
   name: string;
   description: string | null;
@@ -26,6 +27,7 @@ export type ItemKind = 'CONSUMABLE' | 'REUSABLE';
 export interface InventoryItem {
   archived?: boolean;
   individual?: boolean;
+  houseId?: number;
   inUseQuantity: number;
   availableQuantity: number;
   kind: ItemKind;
@@ -36,7 +38,7 @@ export interface InventoryItem {
   quantity: number;
   ownerId: number;
   visibility: 'PRIVATE' | 'HOUSE_SHARED';
-  location: StorageLocation;
+  location: StorageLocation | null;
   outOfStock: boolean;
 }
 
@@ -54,7 +56,7 @@ export interface CreateItem {
   description: string;
   category: string;
   quantity: number;
-  locationId: number;
+  locationId: number | null;
   visibility: InventoryItem['visibility'];
 }
 
@@ -64,12 +66,12 @@ export interface ItemConsumption {
   remainingQuantity: number;
   consumedById: number;
   consumedAt: string;
-  location: StorageLocation;
+  location: StorageLocation | null;
 }
 
 export interface ItemMovement {
   id: number;
-  fromLocation: StorageLocation;
+  fromLocation: StorageLocation | null;
   toLocation: StorageLocation;
   quantity: number;
   movedAt: string;
@@ -81,7 +83,7 @@ export interface ItemUse {
   usedById: number;
   takenAt: string;
   returnedAt: string | null;
-  location: StorageLocation;
+  location: StorageLocation | null;
 }
 
 export interface ItemRestock {
@@ -90,5 +92,5 @@ export interface ItemRestock {
   resultingQuantity: number;
   restockedById: number;
   restockedAt: string;
-  location: StorageLocation;
+  location: StorageLocation | null;
 }

@@ -420,6 +420,20 @@ describe('Item detail', () => {
     expect(updated).toHaveBeenCalledExactlyOnceWith({ ...item, location: destination });
   });
 
+  it('renders an unassigned item and can choose a new location in its house', () => {
+    fixture.componentRef.setInput('item', { ...item, location: null, houseId: 1 });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Sin ubicación');
+    const component = fixture.componentInstance;
+    component.openMove();
+    http.expectOne('/api/locations?houseId=1').flush([{ ...item.location, id: 8 }]);
+    component.moveForm.controls.toLocationId.setValue(8);
+    component.move();
+    http
+      .expectOne((request) => request.url === '/api/items/4/move')
+      .flush({ ...item, location: { ...item.location, id: 8 } });
+  });
+
   it('requires an allowed destination and allows relocating zero-stock records', () => {
     const component = fixture.componentInstance;
     component.openMove();
@@ -472,7 +486,7 @@ describe('Item detail', () => {
       );
     expect(component.error()).toContain('cantidad completa');
     expect(component.moveForm.controls.toLocationId.value).toBe(8);
-    expect(component.item.location.id).toBe(3);
+    expect(component.item.location?.id).toBe(3);
     expect(updated).not.toHaveBeenCalled();
   });
 
