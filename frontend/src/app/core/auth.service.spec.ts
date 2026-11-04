@@ -10,6 +10,7 @@ import {
 import { AuthService } from './auth.service';
 import { authInterceptor } from './auth.interceptor';
 import { authGuard } from './auth.guard';
+import { isObservable } from 'rxjs';
 
 const profile = { id: 7, username: 'Alice', email: 'alice@example.test', role: 'VIEWER' } as const;
 
@@ -19,6 +20,7 @@ describe('Authentication boundaries', () => {
   let router: Router;
 
   beforeEach(() => {
+    sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
@@ -31,7 +33,10 @@ describe('Authentication boundaries', () => {
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
   });
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    sessionStorage.clear();
+  });
 
   function signIn() {
     auth.login(' alice@example.test ', '  password  ').subscribe();
@@ -50,6 +55,31 @@ describe('Authentication boundaries', () => {
     auth.clear();
     expect(auth.user()).toBeNull();
     expect(auth.token()).toBeNull();
+  });
+
+  it('restores a tab session using a fresh server profile after reload', () => {
+    signIn();
+    expect(sessionStorage.getItem('storage-manager.session')).toBe('test-token');
+    const reloaded = TestBed.runInInjectionContext(() => new AuthService());
+    expect(reloaded.user()).toBeNull();
+    let restored: boolean | undefined;
+    reloaded.restore().subscribe((value) => (restored = value));
+    http.expectOne('/api/users/me').flush(profile);
+    expect(restored).toBe(true);
+    expect(reloaded.user()).toEqual(profile);
+    reloaded.clear();
+    expect(sessionStorage.getItem('storage-manager.session')).toBeNull();
+  });
+
+  it('rejects an expired stored session instead of trusting cached identity', () => {
+    sessionStorage.setItem('storage-manager.session', 'expired-token');
+    const reloaded = TestBed.runInInjectionContext(() => new AuthService());
+    let restored: boolean | undefined;
+    reloaded.restore().subscribe((value) => (restored = value));
+    http.expectOne('/api/users/me').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(restored).toBe(false);
+    expect(reloaded.user()).toBeNull();
+    expect(sessionStorage.getItem('storage-manager.session')).toBeNull();
   });
 
   it('does not send credentials outside the API or expire the session on an external error', () => {
@@ -91,6 +121,23 @@ describe('Authentication boundaries', () => {
     expect(router.serializeUrl(guard() as ReturnType<Router['createUrlTree']>)).toBe('/acceso');
     signIn();
     expect(guard()).toBe(true);
+  });
+
+  it('waits for server verification before allowing a restored session into inventory', () => {
+    signIn();
+    vi.spyOn(auth, 'user').mockReturnValue(null);
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+    expect(isObservable(result)).toBe(true);
+    if (!isObservable(result)) throw new Error('Expected an asynchronous guard');
+    let allowed: unknown;
+    result.subscribe((value) => (allowed = value));
+    expect(allowed).toBeUndefined();
+    const request = http.expectOne('/api/users/me');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(profile);
+    expect(allowed).toBe(true);
   });
 
   it('does not let an old rejected request clear a newer session', () => {

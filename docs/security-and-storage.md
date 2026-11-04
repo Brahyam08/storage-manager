@@ -8,7 +8,18 @@ sus límites; no es una auditoría integral ni una garantía de ausencia de fall
 La interfaz Angular llama a la API Java y esta guarda el inventario en PostgreSQL.
 En el entorno local, PostgreSQL corre en Docker en el ordenador del usuario y
 conserva sus datos en un volumen. No se guarda el inventario en localStorage ni
-IndexedDB. JWT y perfil de sesión se mantienen en memoria del navegador.
+IndexedDB. El JWT se conserva en sessionStorage de la pestaña para sobrevivir a
+recargas; el perfil se mantiene en memoria y se vuelve a consultar a la API antes
+de permitir acceso al inventario tras una recarga. No se guarda la contraseña.
+Cerrar sesión o recibir un 401 para el token actual borra el acceso almacenado.
+La caducidad del servidor no se amplía al recargar. Si el navegador bloquea el
+almacenamiento, el acceso funciona solo en memoria.
+
+sessionStorage es accesible al JavaScript del mismo origen: no protege el token
+ante una vulnerabilidad XSS. No equivale a una cookie HttpOnly. El navegador
+puede restaurar pestañas o copiar su sesión al duplicarlas; en equipos compartidos
+hay que usar Cerrar sesión. Una sesión con cookies HttpOnly requeriría adaptar
+el backend y la protección CSRF; queda como mejora independiente.
 
 Las contraseñas se almacenan como hashes BCrypt. Nombres, descripciones, categorías,
 ubicaciones e historiales no tienen cifrado de campos implementado por la app.

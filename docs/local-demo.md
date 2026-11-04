@@ -16,8 +16,9 @@ Si ya tienes un proyecto Compose con datos, usa su mismo nombre y archivo de
 entorno al arrancarlo; cambiar de proyecto crea otro volumen y puede parecer que
 la base está vacía. No elimines volúmenes para preparar la presentación.
 
-Crea dos cuentas de prueba en dos pestañas. La sesión se mantiene en memoria por
-pestaña: refrescar exige iniciar sesión otra vez, pero conserva el inventario.
+Crea dos cuentas de prueba en dos pestañas abiertas de forma independiente. El
+token se conserva en sessionStorage por pestaña: refrescar verifica la sesión con
+el servidor y conserva el acceso mientras siga vigente. Cerrar sesión la borra.
 No hay contraseña ni usuario de demostración incluidos en el repositorio.
 
 Con la primera cuenta crea una casa, una ubicación Estudio y un Cajón dentro.

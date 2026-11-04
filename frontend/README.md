@@ -38,7 +38,9 @@ Deletion is permanent and restricted by server history checks; see
 
 ## Session and privacy
 
-JWT/profile exist only in memory. Refreshing requires signing in again. The
+The JWT is kept in sessionStorage for this tab, so a reload restores the session
+only after fetching a fresh profile from the API. The profile stays in memory.
+Logout or a rejected/expired token clears the stored credential. The
 interceptor sends Bearer credentials only to relative `/api/` requests. Protected
 401 responses clear the matching session; old failures cannot clear a new login.
 Passwords are never trimmed; registration validates the BCrypt 72-byte UTF-8
@@ -58,11 +60,11 @@ npm run build
 npm audit
 ```
 
-48 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+51 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
-member, reload logout and mobile layout. Creation checks also covered nested locations,
+member, session reload and mobile layout. Creation checks also covered nested locations,
 empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. Consumption checks used 10 → 5 → 0 units,
 verified persisted history, disabled consumption at zero, and owner editing. The unchanged backend separately has
 122 passing tests.
