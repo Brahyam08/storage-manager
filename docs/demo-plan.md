@@ -16,12 +16,12 @@ No es una garantía de contratación. Las candidaturas pueden avanzar en paralel
    e historial de consumos implementados. Tipos consumible/reutilizable explícitos,
    con consumo bloqueado para reutilizables. Movimiento completo e historial de
    movimientos, uso/devolución de reutilizables, borrado de objetos y edición/borrado
-   de ubicaciones implementados. Empaquetado web/API Docker implementado y verificado. Pendiente despliegue público. Ver frontend/README.md.
+   de ubicaciones implementados. Empaquetado web/API Docker implementado y verificado. La demo se mantendrá local y sin contratar alojamiento, por decisión del usuario. Ver frontend/README.md.
 5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
-   persistencia tras recrear contenedores. Pendientes demo completa, datos de
-   presentación y despliegue. Registro/login, errores genéricos y cuotas básicas por dirección ya verificados.
+   persistencia tras recrear contenedores. Preparación de datos de presentación y revisión del recorrido local. Registro/login, errores genéricos y cuotas básicas por dirección ya verificados.
    Dependencias Maven y recursos HTTP de Swagger revisados; ver dependency-review.md.
-6. README de portfolio, capturas, guion de demo y decisiones técnicas explicables.
+6. README de portfolio y guion local en local-demo.md; verificaciones locales y
+   workflow remoto manual opcional en verification.md. Capturas con datos ficticios.
 
 ## Distribución orientativa del tiempo
 

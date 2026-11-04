@@ -2,6 +2,24 @@
 
 Inventory application with Angular and a Java REST API for managing physical items across storage locations. Built to solve a real problem: tracking where items like drone parts, batteries, controllers, and other gear are stored across multiple drawers and compartments — so you never have to tear apart a room looking for something again.
 
+## Local demo
+
+Run the app with Docker at http://localhost:8080. Follow the
+[five-minute interview walkthrough](docs/local-demo.md) to try consumables,
+reusable items, movement history and privacy between two accounts.
+
+The demo runs locally; no public hosting or shared demo credentials are configured.
+
+![Inventory with synthetic demonstration data](docs/images/inventory-desktop.jpg)
+
+[Mobile layout](docs/images/inventory-mobile.jpg) · Captures use fictitious inventory.
+
+```mermaid
+flowchart LR
+    Browser["Angular in the browser"] -->|"HTTP /api + Bearer"| App["Spring Boot: web + API"]
+    App -->|"JPA + transactions"| DB[("PostgreSQL volume")]
+```
+
 ## Tech Stack
 
 - **Java 21** + **Spring Boot 4.x**
@@ -52,10 +70,9 @@ for the verified controls, limits and owner-only encryption considerations.
 
 ### Prerequisites
 
-- Java 21
-- Maven
-- PostgreSQL 16
-- Docker (optional)
+- For the full local demo: Docker with Compose. Build tools run inside the image.
+- For API development outside Docker: Java 21, Maven Wrapper and PostgreSQL 16.
+- For frontend development: a supported Node version; see [frontend setup](frontend/README.md).
 
 ### Option 1 — Run locally
 
@@ -67,7 +84,9 @@ CREATE DATABASE storage_manager;
 \q
 ```
 
-2. Update `src/main/resources/application.yaml` with your database credentials.
+2. Configure `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` and
+   `SPRING_DATASOURCE_PASSWORD` in your local environment. Do not put real
+   credentials into the tracked application.yaml.
 
 3. Set a local `JWT_SECRET` environment variable with at least 32 characters.
 
@@ -292,6 +311,11 @@ History timestamps include UTC offsets and display in the browser’s local zone
 see [timestamp compatibility](docs/history-timestamps.md).
 
 ## Verification
+
+Run all checks locally with `./scripts/verify_local.sh`. See
+[local verification and optional CI](docs/verification.md). The GitHub workflow is
+manual only and has no deployment steps.
+
 
 Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
 by Maven; no machine-specific agent path is required. The current suite has 122 tests,
