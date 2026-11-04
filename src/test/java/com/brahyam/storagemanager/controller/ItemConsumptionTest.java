@@ -256,10 +256,8 @@ class ItemConsumptionTest {
     }
 
     @Test
-    void shouldProtectConsumedItemsAndLocationsFromDeletion() throws Exception {
+    void shouldPreserveHistoricalLocationsUntilTheirItemsAreDeleted() throws Exception {
         consume(5, ownerToken, 200);
-        mvc.perform(delete("/api/items/{id}", item.getId()).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
         mvc.perform(patch("/api/items/{id}/move", item.getId()).header("Authorization", ownerToken)
                         .param("toLocationId", target.getId().toString()).param("quantity", "5"))
                 .andExpect(status().isOk());

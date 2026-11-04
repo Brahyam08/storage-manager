@@ -159,8 +159,6 @@ class ItemRestockTest {
         mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Tornillos\",\"kind\":\"REUSABLE\",\"quantity\":12,\"locationId\":" + source.getId() + "}"))
                 .andExpect(status().isConflict());
-        mvc.perform(delete("/api/items/{id}", item.getId()).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
         mvc.perform(patch("/api/items/{id}/move", item.getId()).header("Authorization", ownerToken)
                 .param("toLocationId", target.getId().toString()).param("quantity", "12"))
                 .andExpect(status().isOk());

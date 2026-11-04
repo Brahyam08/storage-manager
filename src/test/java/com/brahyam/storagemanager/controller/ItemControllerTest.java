@@ -277,15 +277,15 @@ class ItemControllerTest {
     }
 
     @Test
-    void shouldLetOwnerDeleteWithoutHistoryAndPreserveMovementAuditOtherwise() throws Exception {
+    void shouldLetOwnerDeleteItemsAndTheirOwnMovementHistory() throws Exception {
         long empty = create("Sin historial", source, null, ownerToken);
         mvc.perform(delete("/api/items/{id}", empty).header("Authorization", ownerToken)).andExpect(status().isNoContent());
         assertFalse(items.existsById(empty));
         long moved = create("Con historial", source, null, ownerToken);
         move(moved, target, 3, ownerToken, 200);
-        mvc.perform(delete("/api/items/{id}", moved).header("Authorization", ownerToken)).andExpect(status().isConflict());
-        assertTrue(items.existsById(moved));
-        assertEquals(1, movements.count());
+        mvc.perform(delete("/api/items/{id}", moved).header("Authorization", ownerToken)).andExpect(status().isNoContent());
+        assertFalse(items.existsById(moved));
+        assertEquals(0, movements.count());
     }
 
     @Test

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ItemConsumptionRepository extends JpaRepository<ItemConsumption, Long> {
+    void deleteByItemId(Long itemId);
     List<ItemConsumption> findByItemIdOrderByConsumedAtDescIdDesc(Long itemId);
     boolean existsByItemId(Long itemId);
     boolean existsByLocationId(Long locationId);

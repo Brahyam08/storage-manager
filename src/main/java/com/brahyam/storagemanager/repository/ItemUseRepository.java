@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.*;
 
 public interface ItemUseRepository extends JpaRepository<ItemUse, Long> {
+    void deleteByItemId(Long itemId);
     @Query("select coalesce(sum(u.quantity), 0) from ItemUse u where u.item.id = :itemId and u.returnedAt is null")
     long activeQuantity(@Param("itemId") Long itemId);
     Optional<ItemUse> findByIdAndItemId(Long id, Long itemId);

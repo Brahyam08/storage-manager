@@ -177,7 +177,9 @@ class ItemUseTest {
                 .andExpect(status().isConflict());
         mvc.perform(patch("/api/items/{id}/move", item.getId()).header("Authorization", ownerToken)
                 .param("toLocationId", target.getId().toString()).param("quantity", "10")).andExpect(status().isOk());
-        mvc.perform(delete("/api/items/{id}", item.getId()).header("Authorization", ownerToken)).andExpect(status().isConflict());
         assertEquals(source.getId(), uses.findByItemIdOrderByTakenAtDescIdDesc(item.getId()).getFirst().getLocation().getId());
+        mvc.perform(delete("/api/items/{id}", item.getId()).header("Authorization", ownerToken)).andExpect(status().isNoContent());
+        assertFalse(items.existsById(item.getId()));
+        assertTrue(uses.findByItemIdOrderByTakenAtDescIdDesc(item.getId()).isEmpty());
     }
 }

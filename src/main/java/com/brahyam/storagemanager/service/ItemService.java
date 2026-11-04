@@ -86,12 +86,17 @@ public class ItemService {
 
     @Transactional
     public void deleteById(Long id, User user) {
-        Item item = forUpdate(id, user);
+        Item item = lockAccessible(id, user);
         requireOwner(item, user);
-        if (movements.existsByItemId(id) || consumptions.existsByItemId(id) || uses.existsByItemId(id) || restocks.existsByItemId(id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "El objeto tiene historial");
+        if (uses.activeQuantity(id) > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Devuelve los objetos en uso antes de eliminarlos");
         }
+        movements.deleteByItemId(id);
+        consumptions.deleteByItemId(id);
+        restocks.deleteByItemId(id);
+        uses.deleteByItemId(id);
         items.delete(item);
+        items.flush();
     }
 
     @Transactional

@@ -393,6 +393,56 @@ def verify():
                 query("DROP TRIGGER verification_reject_update ON items; DROP FUNCTION verification_reject_update();")
             print("Forced PostgreSQL failures roll back stock, location and audit records", flush=True)
 
+            delete_id = create_item("Permanent deletion fixture")
+            api("POST", f"/api/items/{delete_id}/consume", owner, {"quantity": 2})
+            api("POST", f"/api/items/{delete_id}/restocks", owner, {"quantity": 1})
+            api("PATCH", f"/api/items/{delete_id}/move?toLocationId={places[1]}&quantity=9", owner)
+            api("PATCH", f"/api/items/{delete_id}/archive", owner)
+            delete_histories = {path: api("GET", f"/api/items/{delete_id}/{path}", owner)[1]
+                                for path in ["consumptions", "restocks", "history"]}
+            api("DELETE", f"/api/items/{delete_id}", member, expected=404)
+            query("CREATE FUNCTION verification_reject_delete() RETURNS trigger LANGUAGE plpgsql AS $$ "
+                  f"BEGIN IF OLD.id = {delete_id} THEN RAISE EXCEPTION 'verification failure'; END IF; RETURN OLD; END; $$; "
+                  "CREATE TRIGGER verification_reject_delete BEFORE DELETE ON items "
+                  "FOR EACH ROW EXECUTE FUNCTION verification_reject_delete();")
+            try:
+                api("DELETE", f"/api/items/{delete_id}", owner, expected=500)
+                check(api("GET", f"/api/items/{delete_id}", owner)[1]["quantity"] == 9, "Failed delete lost the item")
+                for path, records in delete_histories.items():
+                    check(api("GET", f"/api/items/{delete_id}/{path}", owner)[1] == records, "Failed delete lost history")
+            finally:
+                query("DROP TRIGGER verification_reject_delete ON items; DROP FUNCTION verification_reject_delete();")
+            api("DELETE", f"/api/items/{delete_id}", owner, expected=204)
+            api("GET", f"/api/items/{delete_id}", owner, expected=404)
+            for table in ["item_movements", "item_consumptions", "item_restocks", "item_uses"]:
+                check(query(f"SELECT count(*) FROM {table} WHERE item_id={delete_id};") == "0", "Orphan history after deletion")
+            check(api("GET", f"/api/items/{shared_id}/consumptions", owner)[1] == consumption_history,
+                  "Deleting one object changed another object's history")
+            _, delete_use = api("POST", "/api/items", owner, {"name": "Delete/use race fixture", "quantity": 1,
+                    "locationId": places[0], "kind": "REUSABLE", "individual": True}, 201)
+            delete_use_id = delete_use["id"]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                take_future = pool.submit(api, "POST", f"/api/items/{delete_use_id}/uses", owner, {"quantity": 1}, None)
+                delete_future = pool.submit(api, "DELETE", f"/api/items/{delete_use_id}", owner, None, None)
+                taken, deleted = take_future.result(), delete_future.result()
+            if taken[0] == 201:
+                check(deleted[0] == 409, "Deleted an object while it was in use")
+                api("POST", f"/api/items/{delete_use_id}/uses/{taken[1]['id']}/return", owner, {})
+                api("PATCH", f"/api/items/{delete_use_id}/archive", owner)
+                api("DELETE", f"/api/items/{delete_use_id}", owner, expected=204)
+            else:
+                check(taken[0] == 404 and deleted[0] == 204, "Unexpected delete/use concurrency result")
+            check(query(f"SELECT count(*) FROM item_uses WHERE item_id={delete_use_id};") == "0", "Returned use history not deleted")
+            _, returned_fixture = api("POST", "/api/items", owner, {"name": "Returned use deletion fixture", "quantity": 1,
+                    "locationId": places[0], "kind": "REUSABLE"}, 201)
+            returned_id = returned_fixture["id"]
+            _, returned_use = api("POST", f"/api/items/{returned_id}/uses", owner, {"quantity": 1}, expected=201)
+            api("POST", f"/api/items/{returned_id}/uses/{returned_use['id']}/return", owner, {})
+            api("PATCH", f"/api/items/{returned_id}/archive", owner)
+            api("DELETE", f"/api/items/{returned_id}", owner, expected=204)
+            check(query(f"SELECT count(*) FROM item_uses WHERE item_id={returned_id};") == "0", "Returned history remains after archived-item deletion")
+            print("Permanent deletion preserves other objects, rolls back history on failure and respects active uses", flush=True)
+
             for cycle in range(3):
                 print("Removing containers and recreating them with the same test volume", flush=True)
                 command("down")
