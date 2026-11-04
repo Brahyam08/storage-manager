@@ -123,6 +123,25 @@ def verify():
             for path in ["/favicon.svg", "/3rdpartylicenses.txt"]:
                 with urllib.request.urlopen(url + path, timeout=30) as response:
                     check(len(response.read()) > 0, "Missing application asset")
+            check(b'href="/manifest.webmanifest"' in index and b'apple-touch-icon' in index,
+                  "Install metadata missing from HTML")
+            with urllib.request.urlopen(url + "/manifest.webmanifest", timeout=30) as response:
+                check("application/manifest+json" in response.headers.get("Content-Type", ""), "Wrong manifest MIME type")
+                manifest = json.load(response)
+            check(manifest["id"] == "/" and manifest["scope"] == "/" and manifest["start_url"] == "/inventario",
+                  "Unexpected PWA identity or launch route")
+            check(manifest["display"] == "standalone", "Manifest does not request app display")
+            check({icon["sizes"] for icon in manifest["icons"]} >= {"192x192", "512x512"}, "Required icons missing")
+            for icon in manifest["icons"] + [{"src": "/icons/icon-180.png", "sizes": "180x180"}]:
+                with urllib.request.urlopen(url + icon["src"], timeout=30) as response:
+                    data = response.read()
+                    check("image/png" in response.headers.get("Content-Type", "") and data[:8] == b"\x89PNG\r\n\x1a\n",
+                          "Missing or invalid PNG icon")
+                    width, height = int.from_bytes(data[16:20]), int.from_bytes(data[20:24])
+                    check(f"{width}x{height}" == icon["sizes"], "Icon dimensions differ from manifest")
+            api("GET", "/icons/missing.png", expected=404)
+            api("GET", "/api/missing.webmanifest", expected=401)
+            api("POST", "/manifest.webmanifest", expected=401)
             api("GET", "/api/items", expected=401)
             api("GET", "/api/missing.js", expected=401)
             api("GET", "/missing-bundle.js", expected=404)

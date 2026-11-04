@@ -29,16 +29,19 @@ class WebRoutingTest {
 
     @Test
     void shouldNotForwardUnknownApiPathsOrAssetLookalikesToTheApp() throws Exception {
-        for (String path : new String[]{"/api/unknown", "/api/missing.js", "/api/items/missing.css", "/api/users", "/objetos/missing.js", "/objetos/4/history"}) {
+        for (String path : new String[]{"/api/unknown", "/api/missing.js", "/api/items/missing.css", "/api/users", "/objetos/missing.js", "/objetos/4/history", "/api/missing.webmanifest"}) {
             mvc.perform(get(path)).andExpect(status().isUnauthorized());
         }
         mvc.perform(get("/missing-bundle.js")).andExpect(status().isNotFound());
         mvc.perform(get("/media/missing-image.png")).andExpect(status().isNotFound());
+        mvc.perform(get("/icons/missing.png")).andExpect(status().isNotFound());
     }
 
     @Test
     void shouldNotAllowMutationRequestsToPublicUiPaths() throws Exception {
         mvc.perform(post("/inventario")).andExpect(status().isUnauthorized());
         mvc.perform(delete("/index.html")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/manifest.webmanifest")).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/icons/icon-192.png")).andExpect(status().isUnauthorized());
     }
 }

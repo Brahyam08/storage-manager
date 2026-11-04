@@ -27,7 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private static final String[] WEB_PATHS = {"/", "/index.html", "/acceso", "/registro", "/inventario", "/perfil", "/objetos/{id:[0-9]+}",
-            "/*.js", "/*.css", "/favicon.svg", "/media/**", "/3rdpartylicenses.txt"};
+            "/*.js", "/*.css", "/favicon.svg", "/manifest.webmanifest", "/icons/**", "/media/**", "/3rdpartylicenses.txt"};
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
