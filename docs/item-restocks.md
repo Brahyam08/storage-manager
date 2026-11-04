@@ -32,8 +32,9 @@ aceptarse. No reintenta automáticamente una escritura; no hay clave de idempote
 para reintentos de red. Si una respuesta se pierde, consultar cantidad/historial
 antes de volver a confirmar la misma reposición.
 
-Un objeto con reposiciones no se puede borrar ni cambiar de tipo. La ubicación
-histórica también queda protegida frente a borrado, aunque se traslade el objeto.
+Un objeto con reposiciones no puede cambiar de tipo. Su propietario puede
+eliminarlo junto con esas reposiciones mediante confirmación explícita. La ubicación
+histórica queda protegida mientras existan referencias a ella.
 Las etiquetas de ubicación reflejan la jerarquía actual, igual que otros historiales.
 El ajuste manual de cantidad en edición permanece para corregir recuentos y no
 se convierte retroactivamente en una reposición. No se genera historial ficticio.

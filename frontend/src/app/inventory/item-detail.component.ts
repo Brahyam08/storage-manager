@@ -321,14 +321,14 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   askDelete() {
-    if (this.item.archived) return;
+    if (this.item.inUseQuantity > 0) return;
     if (this.busy() || this.item.ownerId !== this.userId) return;
     this.error.set('');
     this.mode.set('delete');
   }
 
   deleteItem() {
-    if (this.item.archived) return;
+    if (this.item.inUseQuantity > 0) return;
     if (this.busy() || this.mode() !== 'delete' || this.item.ownerId !== this.userId) return;
     this.busy.set(true);
     this.error.set('');
@@ -340,7 +340,10 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
         finalize(() => this.busy.set(false)),
       )
       .subscribe({
-        next: () => this.deleted.emit(this.item.id),
+        next: () => {
+          this.mode.set(null);
+          this.deleted.emit(this.item.id);
+        },
         error: (error) => this.error.set(apiError(error)),
       });
   }

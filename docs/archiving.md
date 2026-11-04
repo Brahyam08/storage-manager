@@ -1,9 +1,9 @@
 # Archivar y restaurar objetos y ubicaciones
 
 Archivar retira un registro del uso habitual sin borrar sus datos ni historial.
-Es reversible. El borrado definitivo conserva sus restricciones anteriores: no
-se permite borrar registros referenciados por historiales. No se borran movimientos,
-consumos, reposiciones ni usos como consecuencia de archivar.
+Es reversible. Archivar no borra movimientos, consumos, reposiciones ni usos.
+[Eliminar un objeto](item-deletion.md) es independiente: borra definitivamente
+el objeto y sus historiales, incluso archivado, una vez devueltas las piezas en uso.
 
 ## Objetos con historial
 
@@ -15,7 +15,7 @@ la cantidad a cero; tampoco representa un traslado físico.
 
 Solo el propietario archiva/restaura. Un objeto en uso no se puede archivar: hay
 que devolverlo antes. Mientras está archivado no admite edición, consumo, reposición,
-movimiento ni retirada. La lectura y el historial mantienen la privacidad anterior:
+movimiento ni retirada. Su propietario sí puede eliminarlo definitivamente. La lectura y el historial mantienen la privacidad anterior:
 miembros leen compartidos, privados solo su propietario, sin excepción ADMIN global.
 Si su ubicación está archivada, hay que restaurar primero la ubicación.
 

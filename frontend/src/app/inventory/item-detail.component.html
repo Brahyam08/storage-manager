@@ -145,11 +145,11 @@
       <button class="button secondary" type="button" [disabled]="busy()" (click)="refresh()">
         Actualizar objeto
       </button>
-      @if (item.ownerId === userId && !item.archived) {
+      @if (item.ownerId === userId) {
         <button
           class="button secondary danger-outline"
           type="button"
-          [disabled]="busy()"
+          [disabled]="busy() || item.inUseQuantity > 0"
           (click)="askDelete()"
         >
           Eliminar objeto
@@ -189,8 +189,9 @@
     <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de objeto">
       <h3 #actionTitle tabindex="-1">¿Eliminar {{ item.name }}?</h3>
       <p>
-        Esta acción no se puede deshacer. Los objetos con historial de movimientos, consumos,
-        reposiciones o usos se conservan y no se pueden eliminar.
+        Esta acción es definitiva. Se eliminarán este objeto y todo su historial de movimientos,
+        consumos, reposiciones y usos. No podrás recuperarlos. Si quieres conservarlos, cancela y
+        utiliza Archivar objeto.
       </p>
       <div class="detail-actions">
         <button class="button danger" type="button" [disabled]="busy()" (click)="deleteItem()">

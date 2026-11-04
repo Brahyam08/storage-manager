@@ -33,7 +33,7 @@ Angular 21 matches the installed Node version; consult the
 - Delete owned items with confirmation, preserving protected history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 
-Deletion is permanent and restricted by server history checks; see
+Deletion permanently removes the object and its history; active withdrawals must be returned first; see
 [management rules](../docs/inventory-management.md). There is no bundled demo account.
 
 ## Session and privacy
@@ -60,7 +60,7 @@ npm run build
 npm audit
 ```
 
-81 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+83 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
@@ -139,7 +139,7 @@ dates, including empty/loading/error states. Browser verification against isolat
 PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
 unchanged quantities, updated paths and both histories. Unit tests additionally
 cover member actions, forbidden destinations, zero stock, duplicate submit, stale
-stock and cancelled responses. The backend suite now passes 149 tests, including usage and security regressions.
+stock and cancelled responses. The backend suite now passes 153 tests, including usage and security regressions.
 
 
 ## Reusable availability

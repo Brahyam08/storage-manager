@@ -45,6 +45,28 @@ describe('Item detail', () => {
     http.verify();
   });
 
+  it('offers permanent deletion for an archived item with an explicit history warning', () => {
+    fixture.componentRef.setInput('item', { ...item, archived: true });
+    fixture.detectChanges();
+    fixture.componentInstance.askDelete();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('todo su historial');
+    expect(fixture.nativeElement.textContent).toContain('No podrás recuperarlos');
+    fixture.componentInstance.deleteItem();
+    const request = http.expectOne('/api/items/4');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('does not start deletion while pieces remain in use', () => {
+    fixture.componentRef.setInput('item', { ...item, inUseQuantity: 1 });
+    fixture.detectChanges();
+    fixture.componentInstance.askDelete();
+    fixture.componentInstance.deleteItem();
+    expect(fixture.componentInstance.mode()).toBeNull();
+    http.expectNone('/api/items/4');
+  });
+
   it('archives only after confirmation and preserves the returned record', () => {
     const component = fixture.componentInstance;
     const updated = vi.fn();
@@ -520,7 +542,7 @@ describe('Item detail', () => {
     expect(deleted).toHaveBeenCalledExactlyOnceWith(4);
   });
 
-  it('keeps an item with protected history when deletion is refused', () => {
+  it('keeps an item visible when deletion is refused because it is in use', () => {
     const component = fixture.componentInstance;
     const deleted = vi.fn();
     component.deleted.subscribe(deleted);
@@ -528,8 +550,8 @@ describe('Item detail', () => {
     component.deleteItem();
     http
       .expectOne('/api/items/4')
-      .flush({ error: 'El objeto tiene historial' }, { status: 409, statusText: 'Conflict' });
-    expect(component.error()).toContain('historial');
+      .flush({ error: 'El objeto está en uso' }, { status: 409, statusText: 'Conflict' });
+    expect(component.error()).toContain('en uso');
     expect(component.item.id).toBe(4);
     expect(deleted).not.toHaveBeenCalled();
     expect(component.busy()).toBe(false);

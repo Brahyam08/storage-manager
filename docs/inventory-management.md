@@ -9,11 +9,11 @@ Los destinos de jerarquía excluyen la propia ubicación y sus descendientes. La
 vuelve a validar casa, existencia y ausencia de ciclos; la lista del navegador no
 es una autorización. Las ubicaciones continúan siendo compartidas por la casa.
 
-El propietario de un objeto puede abrir **Eliminar objeto**. La API conserva los
-objetos con historial de movimientos, consumos, reposiciones o usos y devuelve409 al intentar
-eliminarlos. El borrado definitivo es permanente y no elimina historiales. Para
-retirar registros del uso habitual sin perderlos, usar el [archivado reversible](archiving.md).
-No se deben borrar datos para ocultar conflictos.
+El propietario puede **Eliminar objeto** aunque tenga historial o esté archivado.
+La confirmación advierte que se borran también movimientos, consumos, reposiciones
+y usos anteriores. Si hay piezas en uso, se deben devolver antes. Es irreversible
+desde la aplicación; [reglas de eliminación](item-deletion.md). Para conservar los
+registros, usar el [archivado reversible](archiving.md).
 
 Una ubicación solo puede eliminarse si no contiene otras ubicaciones, objetos ni
 referencias desde los historiales. La confirmación explica esa condición. Cancelar
