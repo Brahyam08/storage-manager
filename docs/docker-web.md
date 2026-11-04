@@ -22,6 +22,26 @@ no elimina ese volumen. No uses `--volumes` con datos que quieras conservar.
 Actualizar la imagen no requiere cambiar contraseñas ni crear una nueva base.
 Realiza una copia antes de actualizar un entorno con datos importantes.
 
+## Acceso desde el móvil en la misma red
+
+Por defecto la web solo escucha en localhost. Para habilitar otros dispositivos,
+añade `API_BIND_ADDRESS=0.0.0.0` al archivo de entorno local que ya usas. Recrea
+solo la aplicación, conservando el nombre de proyecto y la base de datos:
+
+```bash
+docker compose --env-file .env.playground -p storage-playground up -d --no-deps app
+```
+
+Abre `http://IP_LOCAL_DEL_ORDENADOR:8080` en el móvil; localhost en el móvil apunta
+al propio teléfono. En macOS puedes consultar la IP en Ajustes del Sistema → Red.
+Ambos dispositivos deben estar en la misma red, sin aislamiento de invitados;
+el firewall debe permitir el puerto de la aplicación. No hace falta abrir puertos
+en el router ni cambiar CORS. PostgreSQL sigue ligado a 127.0.0.1.
+
+Este modo usa HTTP: resérvalo para una red de confianza y datos de prueba. No es
+un despliegue público con HTTPS. Para deshabilitarlo, vuelve a
+`API_BIND_ADDRESS=127.0.0.1` y recrea la aplicación con el mismo comando.
+
 ## Rutas y acceso
 
 GET/HEAD de `/`, `/acceso`, `/registro` e `/inventario` reciben la entrada Angular.

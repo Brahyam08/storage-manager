@@ -27,8 +27,10 @@ El cifrado del disco del sistema no se ha verificado y es una capa independiente
 Los backups locales tampoco tienen cifrado propio de la aplicación; proteger el
 volumen y las copias es parte de la protección de los datos.
 
-Los puertos del Compose y del frontend local están ligados a loopback. Esta
-configuración de desarrollo no define el despliegue público ni su HTTPS.
+Por defecto los puertos están ligados a loopback. `API_BIND_ADDRESS` permite
+habilitar la web/API en la red local; PostgreSQL sigue en loopback y el servidor
+Angular de desarrollo no cambia. El modo LAN usa HTTP y se limita a redes de
+confianza con datos de prueba; no define un despliegue público con HTTPS.
 
 ## Qué significa Privado
 

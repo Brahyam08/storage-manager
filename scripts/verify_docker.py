@@ -47,7 +47,7 @@ def verify():
         environment_file.write_text(
             "POSTGRES_DB=storage_verify\nPOSTGRES_USER=storage_verify\n"
             + "POSTGRES_PASSWORD=" + secrets.token_urlsafe(32) + "\n"
-            + "JWT_SECRET=" + secrets.token_urlsafe(48) + "\nAPI_PORT=0\nDB_PORT=0\n")
+            + "JWT_SECRET=" + secrets.token_urlsafe(48) + "\nAPI_BIND_ADDRESS=127.0.0.1\nAPI_PORT=0\nDB_PORT=0\n")
         environment_file.chmod(0o600)
         # Explicit values prevent a developer's exported database credentials being used.
         environment = os.environ.copy()
