@@ -1334,21 +1334,30 @@ input[readonly] {
   line-height: 1.6;
 }
 
-.item-stock.individual strong {
+.item-stock.individual strong,
+.item-stock.inactive strong {
   font-size: 1.1rem;
   line-height: 1.4;
   overflow-wrap: normal;
 }
 
-.location-archive-toggle {
+.archive-toggle {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-block: 20px;
 }
-.location-archive-toggle input {
+.archive-toggle input {
   width: 18px;
   height: 18px;
   min-height: 0;
   margin: 0;
+}
+
+.archive-confirmation {
+  margin-block: 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f5f7f1;
 }

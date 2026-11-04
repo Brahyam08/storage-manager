@@ -1,6 +1,8 @@
 <section class="item-use-section" aria-label="Uso y devoluciones">
   <h3>Uso y devoluciones</h3>
-  @if (item.individual) {
+  @if (item.archived) {
+    <p class="muted">Registro archivado. Puedes consultar su historial de uso.</p>
+  } @else if (item.individual) {
     <p class="muted">
       {{
         item.inUseQuantity ? 'Este objeto está en uso.' : 'Este objeto está disponible para usar.'
@@ -19,7 +21,7 @@
   @if (error()) {
     <p class="error-banner" role="alert">{{ error() }}</p>
   }
-  @if (item.availableQuantity > 0) {
+  @if (item.availableQuantity > 0 && !item.archived) {
     <form [formGroup]="form" (ngSubmit)="take()">
       <fieldset class="creation-fields use-fields" [disabled]="busy() || committed()">
         @if (item.availableQuantity > 1) {
@@ -43,7 +45,7 @@
         <button class="button primary" type="submit">Retirar para usar</button>
       </fieldset>
     </form>
-  } @else if (!item.individual) {
+  } @else if (!item.individual && !item.archived) {
     <p class="muted">Todos los objetos están en uso.</p>
   }
   @if (busy()) {

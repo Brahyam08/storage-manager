@@ -45,6 +45,7 @@ y viewport390 sin desbordamiento horizontal; pruebas de Safari real pendientes.
 - Reponer unidades desde agotado, comprobar vista previa e historial; consumo simultáneo en otra sesión.
 - Consumir parte del stock, retirar/devolver un reutilizable y consultar historiales.
 - Mover objetos y comprobar las restricciones cuando hay unidades en uso.
+- Archivar/restaurar objeto con historial; restaurar ubicación antes del objeto cuando ambas están archivadas.
 - Confirmaciones de eliminación: cancelar en la UI; borrado definitivo solo en fixtures.
 - Dos cuentas: acceso privado, cambios compartidos y conflictos simultáneos.
 - Red lenta o interrumpida: carga visible, botones bloqueados y recuperación sin duplicados.

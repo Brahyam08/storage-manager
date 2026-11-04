@@ -11,8 +11,9 @@ es una autorización. Las ubicaciones continúan siendo compartidas por la casa.
 
 El propietario de un objeto puede abrir **Eliminar objeto**. La API conserva los
 objetos con historial de movimientos, consumos, reposiciones o usos y devuelve409 al intentar
-eliminarlos. El borrado disponible es permanente; esta entrega no añade archivo,
-papelera ni borrado del historial. No se deben borrar datos para ocultar conflictos.
+eliminarlos. El borrado definitivo es permanente y no elimina historiales. Para
+retirar registros del uso habitual sin perderlos, usar el [archivado reversible](archiving.md).
+No se deben borrar datos para ocultar conflictos.
 
 Una ubicación solo puede eliminarse si no contiene otras ubicaciones, objetos ni
 referencias desde los historiales. La confirmación explica esa condición. Cancelar
@@ -32,8 +33,9 @@ objetos y sububicaciones; no es necesario borrarlo. Si el cajón desaparece, hoy
 se puede mover cada objeto a otro destino. El borrado sigue bloqueado si quedan
 sububicaciones o referencias históricas, aunque ya no haya objetos.
 
-Trasladar todo el contenido y archivar la ubicación es una mejora pendiente;
-no está implementada y no debe confundirse con el borrado actual.
+Archivar/restaurar objetos y ubicaciones ya permite retirarlos del uso habitual
+conservando sus historiales. Trasladar todo el contenido en una sola operación
+sigue pendiente; no se mueve ni archiva contenido en cascada automáticamente.
 
 ## Comprobaciones
 

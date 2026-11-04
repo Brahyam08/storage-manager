@@ -71,6 +71,7 @@ export class ItemUsePanelComponent implements OnChanges {
   }
 
   take() {
+    if (this.item.archived) return;
     if (this.busy() || this.committed() || this.item.availableQuantity === 0) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();

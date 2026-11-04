@@ -42,6 +42,18 @@ describe('House switching', () => {
     http.verify();
   });
 
+  it('requests archived objects only after explicitly enabling them', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
+    fixture.componentInstance.toggleArchived();
+    const request = http.expectOne((request) => request.url === '/api/items');
+    expect(request.request.params.get('includeArchived')).toBe('true');
+    request.flush([]);
+    fixture.componentInstance.toggleArchived();
+    const active = http.expectOne((request) => request.url === '/api/items');
+    expect(active.request.params.has('includeArchived')).toBe(false);
+    active.flush([]);
+  });
+
   it('distinguishes an individual state from a group quantity in the item cards', async () => {
     const request = await vi.waitFor(() =>
       http.expectOne((request) => request.url === '/api/items'),

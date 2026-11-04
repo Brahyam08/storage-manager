@@ -58,6 +58,14 @@ export class InventoryApiService {
     return this.http.delete<void>(`/api/locations/${id}`);
   }
 
+  archiveItem(id: number) {
+    return this.http.patch<InventoryItem>(`/api/items/${id}/archive`, null);
+  }
+
+  restoreItem(id: number) {
+    return this.http.patch<InventoryItem>(`/api/items/${id}/restore`, null);
+  }
+
   deleteItem(id: number) {
     return this.http.delete<void>(`/api/items/${id}`);
   }
@@ -112,9 +120,10 @@ export class InventoryApiService {
     return this.http.post<ItemUse>(`/api/items/${id}/uses/${useId}/return`, {});
   }
 
-  items(houseId: number, search: string) {
+  items(houseId: number, search: string, includeArchived = false) {
     let params = new HttpParams().set('houseId', houseId);
     if (search) params = params.set('search', search);
+    if (includeArchived) params = params.set('includeArchived', true);
     return this.http.get<InventoryItem[]>('/api/items', { params });
   }
 }

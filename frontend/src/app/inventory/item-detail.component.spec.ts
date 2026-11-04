@@ -45,6 +45,58 @@ describe('Item detail', () => {
     http.verify();
   });
 
+  it('archives only after confirmation and preserves the returned record', () => {
+    const component = fixture.componentInstance;
+    const updated = vi.fn();
+    component.updated.subscribe(updated);
+    component.askArchive();
+    http.expectNone('/api/items/4/archive');
+    component.setArchived(true);
+    component.setArchived(true);
+    const request = http.expectOne('/api/items/4/archive');
+    expect(request.request.method).toBe('PATCH');
+    request.flush({ ...item, archived: true });
+    expect(updated).toHaveBeenCalledWith(expect.objectContaining({ archived: true, quantity: 10 }));
+    expect(component.mode()).toBeNull();
+  });
+
+  it('offers restore and history instead of stock mutations for an archived item', () => {
+    fixture.componentRef.setInput('item', { ...item, archived: true });
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(fixture.nativeElement.textContent).toContain('Restaurar objeto');
+    expect(fixture.nativeElement.textContent).not.toContain('Registrar consumo');
+    expect(fixture.nativeElement.textContent).not.toContain('Añadir unidades');
+    component.open('edit');
+    component.consume();
+    component.openMove();
+    expect(component.mode()).toBeNull();
+    http.expectNone('/api/items/4/consume');
+    component.setArchived(false);
+    http.expectOne('/api/items/4/restore').flush({ ...item, archived: false });
+  });
+
+  it('keeps an archive conflict visible without clearing item data', () => {
+    const component = fixture.componentInstance;
+    component.askArchive();
+    component.setArchived(true);
+    http
+      .expectOne('/api/items/4/archive')
+      .flush({ error: 'Devuelve los objetos en uso' }, { status: 409, statusText: 'Conflict' });
+    expect(component.error()).toContain('Devuelve los objetos');
+    expect(component.item.quantity).toBe(10);
+    expect(component.busy()).toBe(false);
+  });
+
+  it('does not allow another member to archive or restore the item', () => {
+    fixture.componentRef.setInput('userId', 8);
+    fixture.detectChanges();
+    fixture.componentInstance.askArchive();
+    fixture.componentInstance.setArchived(false);
+    expect(fixture.componentInstance.mode()).toBeNull();
+    http.expectNone('/api/items/4/restore');
+  });
+
   it('shows availability instead of quantity for an individual reusable object', () => {
     fixture.componentRef.setInput('item', {
       ...item,

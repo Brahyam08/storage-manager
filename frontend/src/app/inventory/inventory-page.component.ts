@@ -52,6 +52,7 @@ export class InventoryPageComponent {
   readonly houseBusy = signal(false);
   readonly error = signal('');
   readonly itemError = signal('');
+  readonly showArchived = signal(this.route.snapshot.queryParamMap.get('archived') === '1');
   readonly managingHouses = signal(false);
   readonly invitationCode = signal('');
   readonly notice = signal('');
@@ -118,7 +119,7 @@ export class InventoryPageComponent {
           this.itemError.set('');
           this.loadingItems.set(houseId !== null);
           if (houseId === null) return EMPTY;
-          return this.api.items(houseId, search.trim()).pipe(
+          return this.api.items(houseId, search.trim(), this.showArchived()).pipe(
             catchError((error) => {
               this.itemError.set(apiError(error));
               return of([]);
@@ -254,6 +255,11 @@ export class InventoryPageComponent {
     this.inventoryNotice.set('');
     this.filter.set('all');
     this.searchControl.setValue('');
+    this.refreshItems.next();
+  }
+
+  toggleArchived() {
+    this.showArchived.update((value) => !value);
     this.refreshItems.next();
   }
 

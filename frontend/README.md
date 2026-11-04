@@ -60,7 +60,7 @@ npm run build
 npm audit
 ```
 
-72 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+81 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
@@ -139,7 +139,7 @@ dates, including empty/loading/error states. Browser verification against isolat
 PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
 unchanged quantities, updated paths and both histories. Unit tests additionally
 cover member actions, forbidden destinations, zero stock, duplicate submit, stale
-stock and cancelled responses. The backend suite now passes 136 tests, including usage and security regressions.
+stock and cancelled responses. The backend suite now passes 149 tests, including usage and security regressions.
 
 
 ## Reusable availability
@@ -182,3 +182,6 @@ is enabled; HTTPS and actual device installation remain pending.
 
 Reusable items can be explicitly individual or grouped; existing records remain
 grouped. See [individual item rules](../docs/individual-items.md).
+
+Items and locations can be archived and restored while preserving history; see
+[archive rules](../docs/archiving.md). Archived records are excluded by default.

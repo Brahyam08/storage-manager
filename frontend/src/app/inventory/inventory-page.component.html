@@ -219,6 +219,10 @@
               <option value="reusable">Reutilizables</option>
             </select>
           </div>
+          <label class="archive-toggle"
+            ><input type="checkbox" [checked]="showArchived()" (change)="toggleArchived()" />
+            Mostrar objetos archivados</label
+          >
           @if (itemError()) {
             <div class="error-banner" role="alert">
               {{ itemError() }}
@@ -243,6 +247,7 @@
                       house: selectedId(),
                       search: searchControl.value,
                       filter: filter(),
+                      archived: showArchived() ? '1' : null,
                     }"
                     [attr.aria-label]="'Ver detalle de ' + item.name"
                   >
@@ -261,23 +266,27 @@
                     </div>
                     <div class="item-quantity" [class.empty]="item.outOfStock">
                       <strong>{{
-                        item.individual
-                          ? item.inUseQuantity
-                            ? 'En uso'
-                            : 'Disponible'
-                          : item.quantity
+                        item.archived
+                          ? 'Archivado'
+                          : item.individual
+                            ? item.inUseQuantity
+                              ? 'En uso'
+                              : 'Disponible'
+                            : item.quantity
                       }}</strong
                       ><small>{{
-                        item.individual
-                          ? 'Objeto individual'
-                          : item.kind === 'REUSABLE'
-                            ? 'Disponibles: ' +
-                              item.availableQuantity +
-                              ' · En uso: ' +
-                              item.inUseQuantity
-                            : item.outOfStock
-                              ? 'Sin existencias'
-                              : 'unidades consumibles'
+                        item.archived
+                          ? 'Registro conservado'
+                          : item.individual
+                            ? 'Objeto individual'
+                            : item.kind === 'REUSABLE'
+                              ? 'Disponibles: ' +
+                                item.availableQuantity +
+                                ' · En uso: ' +
+                                item.inUseQuantity
+                              : item.outOfStock
+                                ? 'Sin existencias'
+                                : 'unidades consumibles'
                       }}</small>
                     </div>
                     <span

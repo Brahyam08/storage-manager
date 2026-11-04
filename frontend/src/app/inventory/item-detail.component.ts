@@ -38,7 +38,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   @Input({ required: true }) item!: InventoryItem;
   @Input({ required: true }) userId!: number;
   @ViewChild('detailTitle') private title?: ElementRef<HTMLHeadingElement>;
-  @ViewChild('deleteTitle') set deleteTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
+  @ViewChild('actionTitle') set actionTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
     title?.nativeElement.focus();
   }
   readonly updated = output<InventoryItem>();
@@ -50,7 +50,16 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly mode = signal<
-    'edit' | 'consume' | 'restock' | 'restocks' | 'history' | 'move' | 'movements' | 'delete' | null
+    | 'edit'
+    | 'consume'
+    | 'restock'
+    | 'restocks'
+    | 'history'
+    | 'move'
+    | 'movements'
+    | 'delete'
+    | 'archive'
+    | null
   >(null);
   readonly history = signal<ItemConsumption[]>([]);
   readonly restocks = signal<ItemRestock[]>([]);
@@ -131,6 +140,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   open(mode: 'edit' | 'consume' | 'restock') {
+    if (this.item.archived) return;
     if (
       this.busy() ||
       ((mode === 'edit' || mode === 'restock') && this.item.ownerId !== this.userId) ||
@@ -143,6 +153,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   save() {
+    if (this.item.archived) return;
     if (this.busy() || this.item.ownerId !== this.userId) return;
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
@@ -172,6 +183,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   consume() {
+    if (this.item.archived) return;
     if (this.busy() || this.item.kind === 'REUSABLE') return;
     if (this.consumeForm.invalid) {
       this.consumeForm.markAllAsTouched();
@@ -208,6 +220,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   restock() {
+    if (this.item.archived) return;
     if (
       this.busy() ||
       this.item.individual ||
@@ -278,13 +291,44 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       });
   }
 
+  askArchive() {
+    if (this.busy() || this.item.archived || this.item.ownerId !== this.userId) return;
+    this.error.set('');
+    this.mode.set('archive');
+  }
+
+  setArchived(archived: boolean) {
+    if (this.busy() || this.item.ownerId !== this.userId || (archived && this.mode() !== 'archive'))
+      return;
+    this.busy.set(true);
+    this.error.set('');
+    const request = archived
+      ? this.api.archiveItem(this.item.id)
+      : this.api.restoreItem(this.item.id);
+    request
+      .pipe(
+        takeUntil(this.selectionChanged),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (item) => {
+          this.mode.set(null);
+          this.updated.emit(item);
+        },
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
+
   askDelete() {
+    if (this.item.archived) return;
     if (this.busy() || this.item.ownerId !== this.userId) return;
     this.error.set('');
     this.mode.set('delete');
   }
 
   deleteItem() {
+    if (this.item.archived) return;
     if (this.busy() || this.mode() !== 'delete' || this.item.ownerId !== this.userId) return;
     this.busy.set(true);
     this.error.set('');
@@ -302,6 +346,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   openMove() {
+    if (this.item.archived) return;
     if (this.busy() || this.item.quantity === 0 || this.item.inUseQuantity > 0) return;
     this.mode.set('move');
     this.moveForm.reset();
@@ -329,6 +374,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   move() {
+    if (this.item.archived) return;
     if (this.busy() || this.item.quantity === 0 || this.item.inUseQuantity > 0) return;
     if (this.moveForm.invalid) {
       this.moveForm.markAllAsTouched();

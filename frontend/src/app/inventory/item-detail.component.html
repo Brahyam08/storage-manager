@@ -12,10 +12,16 @@
       class="item-stock"
       [class.empty]="item.outOfStock"
       [class.individual]="item.individual"
+      [class.inactive]="item.archived"
       role="status"
       aria-label="Existencias del objeto"
     >
-      @if (item.individual) {
+      @if (item.archived) {
+        <strong>Archivado</strong>
+        <span>{{
+          item.individual ? 'Objeto individual' : item.quantity + ' unidades registradas'
+        }}</span>
+      } @else if (item.individual) {
         <strong>{{ item.inUseQuantity ? 'En uso' : 'Disponible' }}</strong>
         <span>Objeto individual</span>
       } @else {
@@ -47,7 +53,7 @@
   <div class="item-action-group" role="group" aria-label="Uso e historial">
     <p class="action-group-title">Uso e historial</p>
     <div class="detail-actions">
-      @if (item.kind === 'CONSUMABLE') {
+      @if (item.kind === 'CONSUMABLE' && !item.archived) {
         <button
           class="button primary"
           type="button"
@@ -57,7 +63,7 @@
           Registrar consumo
         </button>
       }
-      @if (item.ownerId === userId && !item.individual) {
+      @if (item.ownerId === userId && !item.individual && !item.archived) {
         <button
           class="button secondary"
           type="button"
@@ -67,14 +73,16 @@
           Añadir unidades
         </button>
       }
-      <button
-        class="button secondary"
-        type="button"
-        [disabled]="busy() || item.quantity === 0 || item.inUseQuantity > 0"
-        (click)="openMove()"
-      >
-        Mover objeto
-      </button>
+      @if (!item.archived) {
+        <button
+          class="button secondary"
+          type="button"
+          [disabled]="busy() || item.quantity === 0 || item.inUseQuantity > 0"
+          (click)="openMove()"
+        >
+          Mover objeto
+        </button>
+      }
       <button class="button secondary" type="button" [disabled]="busy()" (click)="loadMovements()">
         Ver movimientos
       </button>
@@ -108,7 +116,28 @@
   <div class="item-action-group" role="group" aria-label="Gestión del objeto">
     <p class="action-group-title">Gestión del objeto</p>
     <div class="detail-actions">
-      @if (item.ownerId === userId) {
+      @if (item.ownerId === userId && item.archived) {
+        <button
+          class="button secondary"
+          type="button"
+          [disabled]="busy()"
+          (click)="setArchived(false)"
+        >
+          Restaurar objeto
+        </button>
+      }
+      @if (item.ownerId === userId && !item.archived) {
+        <button
+          class="button secondary"
+          type="button"
+          [disabled]="busy() || item.inUseQuantity > 0"
+          (click)="askArchive()"
+        >
+          Archivar objeto
+        </button>
+      }
+
+      @if (item.ownerId === userId && !item.archived) {
         <button class="button secondary" type="button" [disabled]="busy()" (click)="open('edit')">
           Editar objeto
         </button>
@@ -116,7 +145,7 @@
       <button class="button secondary" type="button" [disabled]="busy()" (click)="refresh()">
         Actualizar objeto
       </button>
-      @if (item.ownerId === userId) {
+      @if (item.ownerId === userId && !item.archived) {
         <button
           class="button secondary danger-outline"
           type="button"
@@ -128,9 +157,37 @@
       }
     </div>
   </div>
+  @if (item.archived) {
+    <p class="creation-notice" role="status">
+      Este objeto está archivado. Conserva su cantidad e historial; restáuralo para volver a
+      utilizarlo. Si su ubicación está archivada, restaura primero la ubicación.
+    </p>
+  }
+  @if (mode() === 'archive') {
+    <div class="archive-confirmation" role="group" aria-label="Confirmar archivado del objeto">
+      <h3 #actionTitle tabindex="-1">¿Archivar {{ item.name }}?</h3>
+      <p>
+        Dejará de aparecer en el inventario habitual. Se conservarán sus datos e historial y podrás
+        restaurarlo desde Mostrar objetos archivados.
+      </p>
+      <div class="detail-actions">
+        <button
+          class="button primary"
+          type="button"
+          [disabled]="busy()"
+          (click)="setArchived(true)"
+        >
+          Confirmar archivado
+        </button>
+        <button class="button secondary" type="button" [disabled]="busy()" (click)="mode.set(null)">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  }
   @if (mode() === 'delete') {
     <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de objeto">
-      <h3 #deleteTitle tabindex="-1">¿Eliminar {{ item.name }}?</h3>
+      <h3 #actionTitle tabindex="-1">¿Eliminar {{ item.name }}?</h3>
       <p>
         Esta acción no se puede deshacer. Los objetos con historial de movimientos, consumos,
         reposiciones o usos se conservan y no se pueden eliminar.
@@ -149,7 +206,7 @@
       </div>
     </div>
   }
-  @if (mode() && mode() !== 'delete') {
+  @if (mode() && mode() !== 'delete' && mode() !== 'archive') {
     <div class="item-action-content">
       @if (mode() === 'restock' && item.ownerId === userId) {
         <h3>Añadir unidades</h3>

@@ -52,6 +52,7 @@ export class ItemPageComponent {
       house: this.route.snapshot.queryParamMap.get('house') ?? this.item()?.location.houseId,
       search: this.route.snapshot.queryParamMap.get('search'),
       filter: this.route.snapshot.queryParamMap.get('filter'),
+      ...(this.route.snapshot.queryParamMap.get('archived') === '1' ? { archived: '1' } : {}),
     };
   }
 

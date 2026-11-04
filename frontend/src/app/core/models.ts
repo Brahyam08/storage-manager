@@ -24,6 +24,7 @@ export interface StorageLocation {
 export type ItemKind = 'CONSUMABLE' | 'REUSABLE';
 
 export interface InventoryItem {
+  archived?: boolean;
   individual?: boolean;
   inUseQuantity: number;
   availableQuantity: number;
