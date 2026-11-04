@@ -217,6 +217,7 @@ def verify():
             _, stock = api("POST", f"/api/items/{shared_id}/consume", owner, {"quantity": 2})
             check(stock["quantity"] == 0 and stock["outOfStock"], "Zero-stock item not retained")
             _, consumption_history = api("GET", f"/api/items/{shared_id}/consumptions", member)
+            check(all(entry["consumedAt"].endswith("Z") for entry in consumption_history), "Consumption timestamps missing UTC offset")
             check(len(consumption_history) == 3, "Consumption history missing")
             check(consumption_history[-1]["consumedById"] == accounts["member"]["id"], "Wrong session actor")
             api("GET", f"/api/items/{shared_id}/consumptions", outsider, expected=404)
@@ -256,6 +257,7 @@ def verify():
             api("POST", f"/api/items/{reusable_id}/uses/{use_id}/return", owner, expected=409)
             check(api("GET", f"/api/items/{reusable_id}", owner)[1]["availableQuantity"] == 1, "Return did not restore availability")
             use_history = api("GET", f"/api/items/{reusable_id}/uses", owner)[1]
+            check(all(entry["takenAt"].endswith("Z") and entry["returnedAt"].endswith("Z") for entry in use_history), "Use timestamps missing UTC offset")
             print("Reusable use concurrency, return rollback and duplicate-return protection passed", flush=True)
 
             moving_id = create_item("Concurrent movement", quantity=2)
@@ -264,6 +266,7 @@ def verify():
                         f"/api/items/{moving_id}/move?toLocationId={place}&quantity=2", owner)[0], places[1:]))
             check(results == [200, 200], "Concurrent moves failed")
             _, history = api("GET", f"/api/items/{moving_id}/history", owner)
+            check(all(entry["movedAt"].endswith("Z") for entry in history), "Movement timestamps missing UTC offset")
             check(len(history) == 2 and history[1]["fromLocation"]["id"] == places[0]
                   and history[0]["fromLocation"]["id"] == history[1]["toLocation"]["id"], "Broken movement chain")
             _, moved_item = api("GET", f"/api/items/{moving_id}", owner)

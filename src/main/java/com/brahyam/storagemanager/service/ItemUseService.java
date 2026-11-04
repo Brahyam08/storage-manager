@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -36,7 +37,7 @@ public class ItemUseService {
         use.setUsedBy(user);
         use.setLocation(item.getLocation());
         use.setQuantity(quantity);
-        use.setTakenAt(LocalDateTime.now());
+        use.setTakenAt(LocalDateTime.now(ZoneOffset.UTC));
         return ItemUseResponse.from(uses.save(use));
     }
 
@@ -50,7 +51,7 @@ public class ItemUseService {
         if (use.getReturnedAt() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La devolución ya está registrada");
         }
-        use.setReturnedAt(LocalDateTime.now());
+        use.setReturnedAt(LocalDateTime.now(ZoneOffset.UTC));
         return ItemUseResponse.from(uses.save(use));
     }
 

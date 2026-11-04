@@ -66,6 +66,18 @@ class ItemConsumptionTest {
 
 
     @Test
+    void shouldReturnConsumptionTimestampWithUtcOffset() throws Exception {
+        java.time.Instant before = java.time.Instant.now().minusSeconds(1);
+        consume(1, ownerToken, 200);
+        String history = mvc.perform(get("/api/items/{id}/consumptions", item.getId()).header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String value = com.jayway.jsonpath.JsonPath.read(history, "$[0].consumedAt");
+        java.time.Instant recorded = java.time.Instant.parse(value);
+        assertFalse(recorded.isBefore(before));
+        assertFalse(recorded.isAfter(java.time.Instant.now().plusSeconds(1)));
+    }
+
+    @Test
     void shouldCreateReusableItemsAndRejectConsumptionWithoutChangingHistory() throws Exception {
         item.setKind(ItemKind.REUSABLE);
         item.setQuantity(1);

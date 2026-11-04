@@ -91,6 +91,19 @@ class ItemControllerTest {
 
 
     @Test
+    void shouldReturnMovementTimestampWithUtcOffset() throws Exception {
+        long id = create("Timestamp fixture", source, null, ownerToken);
+        java.time.Instant before = java.time.Instant.now().minusSeconds(1);
+        move(id, target, 3, ownerToken, 200);
+        String history = mvc.perform(get("/api/items/{id}/history", id).header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String value = com.jayway.jsonpath.JsonPath.read(history, "$[0].movedAt");
+        java.time.Instant recorded = java.time.Instant.parse(value);
+        assertFalse(recorded.isBefore(before));
+        assertFalse(recorded.isAfter(java.time.Instant.now().plusSeconds(1)));
+    }
+
+    @Test
     void shouldTreatSqlPayloadsAsBoundSearchValuesWithoutLeakingOtherOwners() throws Exception {
         create("Private diamonds", source, null, fellowToken);
         for (String payload : new String[]{"' OR 1=1 --", "'; DROP TABLE items; --"}) {

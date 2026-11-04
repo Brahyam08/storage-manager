@@ -1,6 +1,6 @@
 # Storage Manager
 
-REST API for managing physical inventory across storage locations. Built to solve a real problem: tracking where items like drone parts, batteries, controllers, and other gear are stored across multiple drawers and compartments — so you never have to tear apart a room looking for something again.
+Inventory application with Angular and a Java REST API for managing physical items across storage locations. Built to solve a real problem: tracking where items like drone parts, batteries, controllers, and other gear are stored across multiple drawers and compartments — so you never have to tear apart a room looking for something again.
 
 ## Tech Stack
 
@@ -288,10 +288,13 @@ src/main/java/com/brahyam/storagemanager/
 - **Movement history as a separate entity** — instead of just updating the item's location, every movement is recorded with origin, destination, quantity, and timestamp. This provides a complete audit trail.
 - **Explicit API DTOs** — validated request DTOs and dedicated house, location, item, movement and profile responses keep persistence relations out of the API. Registration also returns a dedicated profile DTO without password or hash.
 
+History timestamps include UTC offsets and display in the browser’s local zone;
+see [timestamp compatibility](docs/history-timestamps.md).
+
 ## Verification
 
 Run the Java suite with `mvn test` (Java 21). Mockito instrumentation is configured
-by Maven; no machine-specific agent path is required. The current suite has 119 tests,
+by Maven; no machine-specific agent path is required. The current suite has 122 tests,
 including OpenAPI schema and Swagger UI checks. Docker verification also checks
 the packaged documentation endpoints.
 

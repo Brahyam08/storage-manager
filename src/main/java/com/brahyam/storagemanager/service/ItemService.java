@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -104,7 +105,7 @@ public class ItemService {
         movement.setFromLocation(item.getLocation());
         movement.setToLocation(destination);
         movement.setQuantity(quantity);
-        movement.setMovedAt(LocalDateTime.now());
+        movement.setMovedAt(LocalDateTime.now(ZoneOffset.UTC));
         movements.save(movement);
         item.setLocation(destination);
         return response(items.save(item));
@@ -129,7 +130,7 @@ public class ItemService {
         consumption.setLocation(item.getLocation());
         consumption.setQuantity(quantity);
         consumption.setRemainingQuantity(item.getQuantity());
-        consumption.setConsumedAt(LocalDateTime.now());
+        consumption.setConsumedAt(LocalDateTime.now(ZoneOffset.UTC));
         consumptions.save(consumption);
         return response(items.save(item));
     }

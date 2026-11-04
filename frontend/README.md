@@ -65,7 +65,7 @@ create/join/invite, search/filter, empty houses, private-item exclusion for anot
 member, reload logout and mobile layout. Creation checks also covered nested locations,
 empty-house onboarding, zero-stock shared objects, private defaults and mobile submission. Consumption checks used 10 → 5 → 0 units,
 verified persisted history, disabled consumption at zero, and owner editing. The unchanged backend separately has
-119 passing tests.
+122 passing tests.
 
 Targeted Angular CLI overrides use glob 14.0.3 and minimatch 11.0.4 for
 [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
@@ -137,7 +137,7 @@ dates, including empty/loading/error states. Browser verification against isolat
 PostgreSQL covered moving ten consumable units, a reusable item on mobile, the
 unchanged quantities, updated paths and both histories. Unit tests additionally
 cover member actions, forbidden destinations, zero stock, duplicate submit, stale
-stock and cancelled responses. The backend suite now passes 119 tests, including usage and security regressions.
+stock and cancelled responses. The backend suite now passes 122 tests, including usage and security regressions.
 
 
 ## Reusable availability

@@ -81,6 +81,21 @@ class ItemUseTest {
     }
 
     @Test
+    void shouldReturnUseAndReturnTimestampsWithUtcOffsets() throws Exception {
+        java.time.Instant before = java.time.Instant.now().minusSeconds(1);
+        long id = take(1, ownerToken);
+        giveBack(id, ownerToken, 200);
+        String history = mvc.perform(get("/api/items/{id}/uses", item.getId()).header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        for (String field : new String[]{"takenAt", "returnedAt"}) {
+            String value = com.jayway.jsonpath.JsonPath.read(history, "$[0]." + field);
+            java.time.Instant recorded = java.time.Instant.parse(value);
+            assertFalse(recorded.isBefore(before));
+            assertFalse(recorded.isAfter(java.time.Instant.now().plusSeconds(1)));
+        }
+    }
+
+    @Test
     void shouldKeepTotalAndRecordAvailabilityAndReturnOnce() throws Exception {
         long id = take(2, ownerToken);
         mvc.perform(get("/api/items/{id}", item.getId()).header("Authorization", ownerToken))
