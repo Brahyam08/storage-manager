@@ -40,3 +40,6 @@ versionado optimista; el consumo usa la operación atómica específica.
 Una reposición registrada impide cambiar de tipo para mantener el significado
 del historial. Añadir unidades no modifica el tipo ni libera objetos en uso; ver
 [reposiciones](item-restocks.md).
+
+Reutilizable puede ser [individual o grupo](individual-items.md): el modo es
+explícito y no se deduce de tener una unidad.

@@ -65,6 +65,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   readonly historyLoaded = signal(false);
   readonly editForm = this.fb.nonNullable.group(
     {
+      individual: this.fb.nonNullable.control(false),
       kind: this.fb.nonNullable.control<ItemKind>('CONSUMABLE', Validators.required),
       name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
       description: ['', Validators.maxLength(255)],
@@ -100,6 +101,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     this.moveForm.reset();
     this.historyLoaded.set(false);
     this.editForm.reset({
+      individual: this.item.individual ?? false,
       kind: this.item.kind,
       name: this.item.name,
       description: this.item.description ?? '',
@@ -132,6 +134,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     if (
       this.busy() ||
       ((mode === 'edit' || mode === 'restock') && this.item.ownerId !== this.userId) ||
+      (mode === 'restock' && this.item.individual) ||
       (mode === 'consume' && (this.item.kind === 'REUSABLE' || this.item.quantity === 0))
     )
       return;
@@ -151,6 +154,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     this.api
       .updateItem(this.item.id, {
         ...value,
+        individual: value.kind === 'REUSABLE' && value.individual,
         name: value.name.trim(),
         description: value.description.trim(),
         category: value.category.trim(),
@@ -204,7 +208,13 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   restock() {
-    if (this.busy() || this.mode() !== 'restock' || this.item.ownerId !== this.userId) return;
+    if (
+      this.busy() ||
+      this.item.individual ||
+      this.mode() !== 'restock' ||
+      this.item.ownerId !== this.userId
+    )
+      return;
     if (this.restockForm.invalid) {
       this.restockForm.markAllAsTouched();
       return;

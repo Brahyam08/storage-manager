@@ -11,27 +11,33 @@
     <div
       class="item-stock"
       [class.empty]="item.outOfStock"
+      [class.individual]="item.individual"
       role="status"
       aria-label="Existencias del objeto"
     >
-      <strong>{{ item.quantity }}</strong>
-      <span>{{
-        item.kind === 'REUSABLE'
-          ? item.quantity === 1
-            ? 'objeto registrado'
-            : 'objetos registrados'
-          : item.quantity === 1
-            ? 'unidad disponible'
-            : 'unidades disponibles'
-      }}</span>
-      @if (item.kind === 'REUSABLE') {
-        <small
-          >{{ item.availableQuantity }}
-          {{ item.availableQuantity === 1 ? 'disponible' : 'disponibles' }} ·
-          {{ item.inUseQuantity }} en uso</small
-        >
-      } @else if (item.outOfStock) {
-        <small>Sin existencias</small>
+      @if (item.individual) {
+        <strong>{{ item.inUseQuantity ? 'En uso' : 'Disponible' }}</strong>
+        <span>Objeto individual</span>
+      } @else {
+        <strong>{{ item.quantity }}</strong>
+        <span>{{
+          item.kind === 'REUSABLE'
+            ? item.quantity === 1
+              ? 'objeto registrado'
+              : 'objetos registrados'
+            : item.quantity === 1
+              ? 'unidad disponible'
+              : 'unidades disponibles'
+        }}</span>
+        @if (item.kind === 'REUSABLE') {
+          <small
+            >{{ item.availableQuantity }}
+            {{ item.availableQuantity === 1 ? 'disponible' : 'disponibles' }} ·
+            {{ item.inUseQuantity }} en uso</small
+          >
+        } @else if (item.outOfStock) {
+          <small>Sin existencias</small>
+        }
       }
     </div>
   </div>
@@ -51,7 +57,7 @@
           Registrar consumo
         </button>
       }
-      @if (item.ownerId === userId) {
+      @if (item.ownerId === userId && !item.individual) {
         <button
           class="button secondary"
           type="button"
@@ -228,7 +234,15 @@
           <fieldset class="creation-fields" [disabled]="busy()">
             <div>
               <label for="edit-kind">Tipo de objeto</label
-              ><select id="edit-kind" formControlName="kind">
+              ><select
+                id="edit-kind"
+                formControlName="kind"
+                (change)="
+                  editForm.controls.individual.value &&
+                    editForm.controls.kind.value === 'REUSABLE' &&
+                    editForm.controls.quantity.setValue(1)
+                "
+              >
                 <option value="CONSUMABLE">Consumible: se gasta</option>
                 <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
               ><small class="field-hint"
@@ -236,6 +250,27 @@
                 tipo.</small
               >
             </div>
+            @if (editForm.controls.kind.value === 'REUSABLE') {
+              <div>
+                <label for="edit-individual">Cómo lo gestionas</label>
+                <select
+                  id="edit-individual"
+                  formControlName="individual"
+                  (change)="
+                    editForm.controls.individual.value && editForm.controls.quantity.setValue(1)
+                  "
+                >
+                  <option [ngValue]="true" [disabled]="item.quantity !== 1">
+                    Un objeto individual
+                  </option>
+                  <option [ngValue]="false">Un grupo de objetos iguales</option>
+                </select>
+                <small class="field-hint"
+                  >Un teclado concreto es individual. Varias sillas iguales pueden ser un
+                  grupo.</small
+                >
+              </div>
+            }
             <div>
               <label for="edit-name">Nombre del objeto</label
               ><input id="edit-name" formControlName="name" maxlength="255" />
@@ -247,35 +282,39 @@
               <label for="edit-category">Categoría</label
               ><input id="edit-category" formControlName="category" maxlength="255" />
             </div>
-            <div>
-              <label for="edit-quantity">{{
-                editForm.controls.kind.value === 'REUSABLE'
-                  ? 'Número de objetos'
-                  : 'Cantidad actual (ajuste)'
-              }}</label
-              ><input
-                id="edit-quantity"
-                type="number"
-                formControlName="quantity"
-                [min]="editForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
-                max="2147483647"
-                step="1"
-              /><small class="field-hint">{{
-                editForm.controls.kind.value === 'REUSABLE'
-                  ? 'Estos objetos se conservan al usarlos.'
-                  : 'Para gastar unidades con historial, usa Registrar consumo.'
-              }}</small>
-              @if (
-                editForm.controls.quantity.touched &&
-                (editForm.controls.quantity.invalid || editForm.hasError('reusableQuantity'))
-              ) {
-                <small class="field-error">{{
+            @if (
+              editForm.controls.kind.value !== 'REUSABLE' || !editForm.controls.individual.value
+            ) {
+              <div>
+                <label for="edit-quantity">{{
                   editForm.controls.kind.value === 'REUSABLE'
-                    ? 'Introduce un número entero de objetos, al menos 1.'
-                    : 'Introduce una cantidad entera igual o mayor que 0.'
+                    ? 'Número de objetos'
+                    : 'Cantidad actual (ajuste)'
+                }}</label
+                ><input
+                  id="edit-quantity"
+                  type="number"
+                  formControlName="quantity"
+                  [min]="editForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
+                  max="2147483647"
+                  step="1"
+                /><small class="field-hint">{{
+                  editForm.controls.kind.value === 'REUSABLE'
+                    ? 'Estos objetos se conservan al usarlos.'
+                    : 'Para gastar unidades con historial, usa Registrar consumo.'
                 }}</small>
-              }
-            </div>
+                @if (
+                  editForm.controls.quantity.touched &&
+                  (editForm.controls.quantity.invalid || editForm.hasError('reusableQuantity'))
+                ) {
+                  <small class="field-error">{{
+                    editForm.controls.kind.value === 'REUSABLE'
+                      ? 'Introduce un número entero de objetos, al menos 1.'
+                      : 'Introduce una cantidad entera igual o mayor que 0.'
+                  }}</small>
+                }
+              </div>
+            }
             <div>
               <label for="edit-visibility">Quién puede verlo</label
               ><select id="edit-visibility" formControlName="visibility">

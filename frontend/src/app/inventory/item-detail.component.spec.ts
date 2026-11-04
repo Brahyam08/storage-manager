@@ -45,6 +45,44 @@ describe('Item detail', () => {
     http.verify();
   });
 
+  it('shows availability instead of quantity for an individual reusable object', () => {
+    fixture.componentRef.setInput('item', {
+      ...item,
+      kind: 'REUSABLE',
+      individual: true,
+      quantity: 1,
+      availableQuantity: 1,
+    });
+    fixture.detectChanges();
+    http.expectOne('/api/items/4/uses').flush([]);
+    const component = fixture.componentInstance;
+    expect(fixture.nativeElement.querySelector('.item-stock').textContent).toContain('Disponible');
+    expect(fixture.nativeElement.textContent).not.toContain('Añadir unidades');
+    component.open('restock');
+    expect(component.mode()).toBeNull();
+    component.restock();
+    http.expectNone('/api/items/4/restocks');
+    component.open('edit');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#edit-quantity')).toBeNull();
+  });
+
+  it('preserves quantity controls for a reusable group with only one object', () => {
+    fixture.componentRef.setInput('item', {
+      ...item,
+      kind: 'REUSABLE',
+      individual: false,
+      quantity: 1,
+      availableQuantity: 1,
+    });
+    fixture.detectChanges();
+    http.expectOne('/api/items/4/uses').flush([]);
+    expect(fixture.nativeElement.textContent).toContain('Añadir unidades');
+    fixture.componentInstance.open('edit');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#edit-quantity')).not.toBeNull();
+  });
+
   it('previews added units and submits only the increment once', () => {
     const component = fixture.componentInstance;
     const updated = vi.fn();
@@ -210,6 +248,7 @@ describe('Item detail', () => {
     const request = http.expectOne('/api/items/4');
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({
+      individual: false,
       kind: 'CONSUMABLE',
       name: 'Tornillos M3',
       category: 'Ferretería',

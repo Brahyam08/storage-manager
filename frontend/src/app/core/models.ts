@@ -23,6 +23,7 @@ export interface StorageLocation {
 export type ItemKind = 'CONSUMABLE' | 'REUSABLE';
 
 export interface InventoryItem {
+  individual?: boolean;
   inUseQuantity: number;
   availableQuantity: number;
   kind: ItemKind;
@@ -45,6 +46,7 @@ export interface CreateLocation {
 }
 
 export interface CreateItem {
+  individual?: boolean;
   kind: ItemKind;
   name: string;
   description: string;

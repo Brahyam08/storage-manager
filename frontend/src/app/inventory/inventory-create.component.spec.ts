@@ -31,6 +31,24 @@ describe('Inventory creation', () => {
     http.verify();
   });
 
+  it('creates an explicitly individual reusable without a quantity input', () => {
+    const component = fixture.componentInstance;
+    component.open('item');
+    component.itemForm.patchValue({
+      name: 'Teclado',
+      locationId: 3,
+      kind: 'REUSABLE',
+      individual: true,
+      quantity: 1,
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#item-stock')).toBeNull();
+    component.createItem();
+    const request = http.expectOne('/api/items');
+    expect(request.request.body).toMatchObject({ kind: 'REUSABLE', individual: true, quantity: 1 });
+    request.flush({ id: 4 });
+  });
+
   it('creates zero-stock items privately and submits only once while busy', () => {
     const component = fixture.componentInstance;
     component.itemForm.patchValue({ name: ' Tornillos ', locationId: 3, quantity: 0 });
@@ -41,6 +59,7 @@ describe('Inventory creation', () => {
     const request = http.expectOne('/api/items');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
+      individual: false,
       kind: 'CONSUMABLE',
       name: 'Tornillos',
       description: '',

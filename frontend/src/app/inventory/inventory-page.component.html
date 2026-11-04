@@ -230,7 +230,8 @@
             </div>
           } @else if (visibleItems().length) {
             <div class="item-list-heading" aria-hidden="true">
-              <span>OBJETO</span><span>UBICACIÓN</span><span>UNIDADES</span><span>VISIBILIDAD</span>
+              <span>OBJETO</span><span>UBICACIÓN</span><span>CANTIDAD / ESTADO</span
+              ><span>VISIBILIDAD</span>
             </div>
             <ul class="item-list">
               @for (item of visibleItems(); track item.id) {
@@ -259,16 +260,24 @@
                       >{{ item.location.path }}
                     </div>
                     <div class="item-quantity" [class.empty]="item.outOfStock">
-                      <strong>{{ item.quantity }}</strong
+                      <strong>{{
+                        item.individual
+                          ? item.inUseQuantity
+                            ? 'En uso'
+                            : 'Disponible'
+                          : item.quantity
+                      }}</strong
                       ><small>{{
-                        item.kind === 'REUSABLE'
-                          ? 'Disponibles: ' +
-                            item.availableQuantity +
-                            ' · En uso: ' +
-                            item.inUseQuantity
-                          : item.outOfStock
-                            ? 'Sin existencias'
-                            : 'unidades consumibles'
+                        item.individual
+                          ? 'Objeto individual'
+                          : item.kind === 'REUSABLE'
+                            ? 'Disponibles: ' +
+                              item.availableQuantity +
+                              ' · En uso: ' +
+                              item.inUseQuantity
+                            : item.outOfStock
+                              ? 'Sin existencias'
+                              : 'unidades consumibles'
                       }}</small>
                     </div>
                     <span

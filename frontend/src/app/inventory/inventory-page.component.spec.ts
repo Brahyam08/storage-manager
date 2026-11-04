@@ -42,6 +42,31 @@ describe('House switching', () => {
     http.verify();
   });
 
+  it('distinguishes an individual state from a group quantity in the item cards', async () => {
+    const request = await vi.waitFor(() =>
+      http.expectOne((request) => request.url === '/api/items'),
+    );
+    const item = {
+      kind: 'REUSABLE',
+      name: 'Teclado',
+      quantity: 1,
+      availableQuantity: 1,
+      inUseQuantity: 0,
+      ownerId: 7,
+      visibility: 'PRIVATE',
+      outOfStock: false,
+      location: { id: 3, houseId: 1, path: 'Cajón' },
+    };
+    request.flush([
+      { ...item, id: 1, individual: true },
+      { ...item, id: 2, individual: false },
+    ]);
+    fixture.detectChanges();
+    const quantities = fixture.nativeElement.querySelectorAll('.item-quantity strong');
+    expect(quantities[0].textContent.trim()).toBe('Disponible');
+    expect(quantities[1].textContent.trim()).toBe('1');
+  });
+
   it('cancels data from the previous house before loading the next', async () => {
     const first = await vi.waitFor(() =>
       http.expectOne(

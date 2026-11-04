@@ -50,6 +50,7 @@ export class InventoryCreateComponent implements OnChanges {
   });
   readonly itemForm = this.fb.group(
     {
+      individual: this.fb.nonNullable.control(true),
       kind: this.fb.nonNullable.control<ItemKind>('CONSUMABLE', Validators.required),
       name: this.fb.nonNullable.control('', this.nameValidators),
       description: this.fb.nonNullable.control('', Validators.maxLength(255)),
@@ -172,6 +173,7 @@ export class InventoryCreateComponent implements OnChanges {
     this.api
       .createItem({
         ...value,
+        individual: value.kind === 'REUSABLE' && value.individual,
         locationId: value.locationId,
         name: value.name.trim(),
         description: value.description.trim(),

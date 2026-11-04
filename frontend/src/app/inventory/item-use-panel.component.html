@@ -1,9 +1,18 @@
 <section class="item-use-section" aria-label="Uso y devoluciones">
   <h3>Uso y devoluciones</h3>
-  <p class="muted">
-    Disponibles: {{ item.availableQuantity }} · En uso: {{ item.inUseQuantity }}. Retirar para usar
-    no reduce el total de objetos.
-  </p>
+  @if (item.individual) {
+    <p class="muted">
+      {{
+        item.inUseQuantity ? 'Este objeto está en uso.' : 'Este objeto está disponible para usar.'
+      }}
+    </p>
+  } @else {
+    <p class="muted">
+      Disponibles: {{ item.availableQuantity }} · En uso: {{ item.inUseQuantity }}. Retirar para
+      usar no reduce el total de objetos.
+    </p>
+  }
+
   <p class="muted">
     Cada devolución devuelve la retirada completa a su ubicación habitual: {{ item.location.path }}.
   </p>
@@ -34,7 +43,7 @@
         <button class="button primary" type="submit">Retirar para usar</button>
       </fieldset>
     </form>
-  } @else {
+  } @else if (!item.individual) {
     <p class="muted">Todos los objetos están en uso.</p>
   }
   @if (busy()) {

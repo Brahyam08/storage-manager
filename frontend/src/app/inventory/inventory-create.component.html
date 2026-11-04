@@ -104,13 +104,40 @@
             <fieldset class="creation-fields" [disabled]="busy() || loading() || !!locationError()">
               <div>
                 <label for="item-kind">Tipo de objeto</label
-                ><select id="item-kind" formControlName="kind">
+                ><select
+                  id="item-kind"
+                  formControlName="kind"
+                  (change)="
+                    itemForm.controls.individual.value &&
+                      itemForm.controls.kind.value === 'REUSABLE' &&
+                      itemForm.controls.quantity.setValue(1)
+                  "
+                >
                   <option value="CONSUMABLE">Consumible: se gasta</option>
                   <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
                 ><small class="field-hint"
                   >Un tornillo es consumible. Un ratón o un taladro es reutilizable.</small
                 >
               </div>
+              @if (itemForm.controls.kind.value === 'REUSABLE') {
+                <div>
+                  <label for="item-individual">Cómo lo gestionas</label>
+                  <select
+                    id="item-individual"
+                    formControlName="individual"
+                    (change)="
+                      itemForm.controls.individual.value && itemForm.controls.quantity.setValue(1)
+                    "
+                  >
+                    <option [ngValue]="true">Un objeto individual</option>
+                    <option [ngValue]="false">Un grupo de objetos iguales</option>
+                  </select>
+                  <small class="field-hint"
+                    >Un teclado concreto es individual. Varias sillas iguales pueden ser un
+                    grupo.</small
+                  >
+                </div>
+              }
               <div>
                 <label for="item-name">Nombre del objeto</label
                 ><input
@@ -144,29 +171,33 @@
                   <small class="field-error">Selecciona una ubicación.</small>
                 }
               </div>
-              <div>
-                <label for="item-stock">{{
-                  itemForm.controls.kind.value === 'REUSABLE' ? 'Número de objetos' : 'Cantidad'
-                }}</label
-                ><input
-                  id="item-stock"
-                  type="number"
-                  formControlName="quantity"
-                  [min]="itemForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
-                  max="2147483647"
-                  step="1"
-                />
-                @if (
-                  itemForm.controls.quantity.touched &&
-                  (itemForm.controls.quantity.invalid || itemForm.hasError('reusableQuantity'))
-                ) {
-                  <small class="field-error">{{
-                    itemForm.controls.kind.value === 'REUSABLE'
-                      ? 'Introduce un número entero de objetos, al menos 1.'
-                      : 'Introduce una cantidad entera igual o mayor que 0.'
-                  }}</small>
-                }
-              </div>
+              @if (
+                itemForm.controls.kind.value !== 'REUSABLE' || !itemForm.controls.individual.value
+              ) {
+                <div>
+                  <label for="item-stock">{{
+                    itemForm.controls.kind.value === 'REUSABLE' ? 'Número de objetos' : 'Cantidad'
+                  }}</label
+                  ><input
+                    id="item-stock"
+                    type="number"
+                    formControlName="quantity"
+                    [min]="itemForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
+                    max="2147483647"
+                    step="1"
+                  />
+                  @if (
+                    itemForm.controls.quantity.touched &&
+                    (itemForm.controls.quantity.invalid || itemForm.hasError('reusableQuantity'))
+                  ) {
+                    <small class="field-error">{{
+                      itemForm.controls.kind.value === 'REUSABLE'
+                        ? 'Introduce un número entero de objetos, al menos 1.'
+                        : 'Introduce una cantidad entera igual o mayor que 0.'
+                    }}</small>
+                  }
+                </div>
+              }
               <div>
                 <label for="item-visibility">Quién puede verlo</label
                 ><select id="item-visibility" formControlName="visibility">
