@@ -130,183 +130,189 @@
       </div>
     </div>
   }
-  @if (mode() === 'edit' && item.ownerId === userId) {
-    <form [formGroup]="editForm" (ngSubmit)="save()">
-      <fieldset class="creation-fields" [disabled]="busy()">
-        <div>
-          <label for="edit-kind">Tipo de objeto</label
-          ><select id="edit-kind" formControlName="kind">
-            <option value="CONSUMABLE">Consumible: se gasta</option>
-            <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
-          ><small class="field-hint"
-            >Un objeto con historial de consumos o de uso no puede cambiar de tipo.</small
-          >
-        </div>
-        <div>
-          <label for="edit-name">Nombre del objeto</label
-          ><input id="edit-name" formControlName="name" maxlength="255" />
-          @if (editForm.controls.name.touched && editForm.controls.name.invalid) {
-            <small class="field-error">Escribe un nombre de hasta 255 caracteres.</small>
-          }
-        </div>
-        <div>
-          <label for="edit-category">Categoría</label
-          ><input id="edit-category" formControlName="category" maxlength="255" />
-        </div>
-        <div>
-          <label for="edit-quantity">{{
-            editForm.controls.kind.value === 'REUSABLE'
-              ? 'Número de objetos'
-              : 'Cantidad actual (ajuste)'
-          }}</label
-          ><input
-            id="edit-quantity"
-            type="number"
-            formControlName="quantity"
-            [min]="editForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
-            max="2147483647"
-            step="1"
-          /><small class="field-hint">{{
-            editForm.controls.kind.value === 'REUSABLE'
-              ? 'Estos objetos se conservan al usarlos.'
-              : 'Para gastar unidades con historial, usa Registrar consumo.'
-          }}</small>
-          @if (
-            editForm.controls.quantity.touched &&
-            (editForm.controls.quantity.invalid || editForm.hasError('reusableQuantity'))
-          ) {
-            <small class="field-error">{{
-              editForm.controls.kind.value === 'REUSABLE'
-                ? 'Introduce un número entero de objetos, al menos 1.'
-                : 'Introduce una cantidad entera igual o mayor que 0.'
-            }}</small>
-          }
-        </div>
-        <div>
-          <label for="edit-visibility">Quién puede verlo</label
-          ><select id="edit-visibility" formControlName="visibility">
-            <option value="PRIVATE">Privado: solo yo</option>
-            <option value="HOUSE_SHARED">Compartido con la casa</option>
-          </select>
-        </div>
-        <div class="full-width">
-          <label for="edit-description">Descripción</label
-          ><input id="edit-description" formControlName="description" maxlength="255" />
-        </div>
-        <button class="button primary" type="submit">Guardar cambios</button>
-      </fieldset>
-    </form>
-  }
-  @if (mode() === 'consume') {
-    <form [formGroup]="consumeForm" (ngSubmit)="consume()">
-      <fieldset class="creation-fields" [disabled]="busy()">
-        <div>
-          <label for="consume-quantity">Unidades que has gastado</label
-          ><input
-            id="consume-quantity"
-            type="number"
-            formControlName="quantity"
-            min="1"
-            [max]="item.quantity"
-            step="1"
-          />
-          @if (consumeForm.controls.quantity.touched && consumeForm.controls.quantity.invalid) {
-            <small class="field-error">Introduce un entero entre 1 y {{ item.quantity }}.</small>
-          }
-          <small class="field-hint"
-            >Se descontarán de las {{ item.quantity }} unidades actuales. El consumo quedará
-            registrado.</small
-          >
-        </div>
-        <button class="button primary" type="submit">Confirmar consumo</button>
-      </fieldset>
-    </form>
-  }
-  @if (mode() === 'move') {
-    <h3>Cambiar de sitio</h3>
-    <p class="muted">
-      Ubicación actual: {{ item.location.path }}. Se trasladará la cantidad completa ({{
-        item.quantity
-      }}
-      {{
-        item.kind === 'REUSABLE'
-          ? item.quantity === 1
-            ? 'objeto'
-            : 'objetos'
-          : item.quantity === 1
-            ? 'unidad'
-            : 'unidades'
-      }}) dentro de esta casa.
-    </p>
-    @if (destinations().length) {
-      <form [formGroup]="moveForm" (ngSubmit)="move()">
-        <fieldset class="creation-fields" [disabled]="busy()">
-          <div>
-            <label for="move-destination">Ubicación de destino</label
-            ><select id="move-destination" formControlName="toLocationId">
-              <option [ngValue]="null">Elige dónde guardarlo</option>
-              @for (location of destinations(); track location.id) {
-                <option [ngValue]="location.id">{{ location.path }}</option>
+  @if (mode() && mode() !== 'delete') {
+    <div class="item-action-content">
+      @if (mode() === 'edit' && item.ownerId === userId) {
+        <form [formGroup]="editForm" (ngSubmit)="save()">
+          <fieldset class="creation-fields" [disabled]="busy()">
+            <div>
+              <label for="edit-kind">Tipo de objeto</label
+              ><select id="edit-kind" formControlName="kind">
+                <option value="CONSUMABLE">Consumible: se gasta</option>
+                <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
+              ><small class="field-hint"
+                >Un objeto con historial de consumos o de uso no puede cambiar de tipo.</small
+              >
+            </div>
+            <div>
+              <label for="edit-name">Nombre del objeto</label
+              ><input id="edit-name" formControlName="name" maxlength="255" />
+              @if (editForm.controls.name.touched && editForm.controls.name.invalid) {
+                <small class="field-error">Escribe un nombre de hasta 255 caracteres.</small>
               }
-            </select>
-            @if (moveForm.controls.toLocationId.touched && moveForm.invalid) {
-              <small class="field-error">Selecciona una ubicación de destino.</small>
-            }
-          </div>
-          <button class="button primary" type="submit">Confirmar traslado</button>
-        </fieldset>
-      </form>
-    } @else if (!busy() && !error()) {
-      <p class="muted">
-        No hay otra ubicación en esta casa. Crea una desde Nueva ubicación y vuelve a abrir Mover
-        objeto.
-      </p>
-    }
-  }
-  @if (mode() === 'movements' && movementsLoaded()) {
-    <h3>Historial de movimientos</h3>
-    @if (!movementHistory().length) {
-      <p class="muted">Todavía no hay movimientos registrados.</p>
-    }
-    <ul class="consumption-list">
-      @for (entry of movementHistory(); track entry.id) {
-        <li>
-          <strong>De: {{ entry.fromLocation.path }}</strong
-          ><span>A: {{ entry.toLocation.path }}</span
-          ><span
-            >{{ entry.quantity }}
-            {{
-              item.kind === 'REUSABLE'
-                ? entry.quantity === 1
-                  ? 'objeto'
-                  : 'objetos'
-                : entry.quantity === 1
-                  ? 'unidad'
-                  : 'unidades'
-            }}
-            · {{ entry.movedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span
-          >
-        </li>
+            </div>
+            <div>
+              <label for="edit-category">Categoría</label
+              ><input id="edit-category" formControlName="category" maxlength="255" />
+            </div>
+            <div>
+              <label for="edit-quantity">{{
+                editForm.controls.kind.value === 'REUSABLE'
+                  ? 'Número de objetos'
+                  : 'Cantidad actual (ajuste)'
+              }}</label
+              ><input
+                id="edit-quantity"
+                type="number"
+                formControlName="quantity"
+                [min]="editForm.controls.kind.value === 'REUSABLE' ? 1 : 0"
+                max="2147483647"
+                step="1"
+              /><small class="field-hint">{{
+                editForm.controls.kind.value === 'REUSABLE'
+                  ? 'Estos objetos se conservan al usarlos.'
+                  : 'Para gastar unidades con historial, usa Registrar consumo.'
+              }}</small>
+              @if (
+                editForm.controls.quantity.touched &&
+                (editForm.controls.quantity.invalid || editForm.hasError('reusableQuantity'))
+              ) {
+                <small class="field-error">{{
+                  editForm.controls.kind.value === 'REUSABLE'
+                    ? 'Introduce un número entero de objetos, al menos 1.'
+                    : 'Introduce una cantidad entera igual o mayor que 0.'
+                }}</small>
+              }
+            </div>
+            <div>
+              <label for="edit-visibility">Quién puede verlo</label
+              ><select id="edit-visibility" formControlName="visibility">
+                <option value="PRIVATE">Privado: solo yo</option>
+                <option value="HOUSE_SHARED">Compartido con la casa</option>
+              </select>
+            </div>
+            <div class="full-width">
+              <label for="edit-description">Descripción</label
+              ><input id="edit-description" formControlName="description" maxlength="255" />
+            </div>
+            <button class="button primary" type="submit">Guardar cambios</button>
+          </fieldset>
+        </form>
       }
-    </ul>
-  }
-  @if (mode() === 'history' && historyLoaded()) {
-    <h3>Historial de consumos</h3>
-    @if (!history().length) {
-      <p class="muted">Todavía no hay consumos registrados.</p>
-    }
-    <ul class="consumption-list">
-      @for (entry of history(); track entry.id) {
-        <li>
-          <strong
-            >{{ entry.quantity }} unidades consumidas · Quedaron
-            {{ entry.remainingQuantity }}</strong
-          ><span
-            >{{ entry.consumedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
-            {{ entry.consumedById === userId ? 'Tú' : 'Usuario #' + entry.consumedById }}</span
-          ><span>{{ entry.location.path }}</span>
-        </li>
+      @if (mode() === 'consume') {
+        <form [formGroup]="consumeForm" (ngSubmit)="consume()">
+          <fieldset class="creation-fields" [disabled]="busy()">
+            <div>
+              <label for="consume-quantity">Unidades que has gastado</label
+              ><input
+                id="consume-quantity"
+                type="number"
+                formControlName="quantity"
+                min="1"
+                [max]="item.quantity"
+                step="1"
+              />
+              @if (consumeForm.controls.quantity.touched && consumeForm.controls.quantity.invalid) {
+                <small class="field-error"
+                  >Introduce un entero entre 1 y {{ item.quantity }}.</small
+                >
+              }
+              <small class="field-hint"
+                >Se descontarán de las {{ item.quantity }} unidades actuales. El consumo quedará
+                registrado.</small
+              >
+            </div>
+            <button class="button primary" type="submit">Confirmar consumo</button>
+          </fieldset>
+        </form>
       }
-    </ul>
+      @if (mode() === 'move') {
+        <h3>Cambiar de sitio</h3>
+        <p class="muted">
+          Ubicación actual: {{ item.location.path }}. Se trasladará la cantidad completa ({{
+            item.quantity
+          }}
+          {{
+            item.kind === 'REUSABLE'
+              ? item.quantity === 1
+                ? 'objeto'
+                : 'objetos'
+              : item.quantity === 1
+                ? 'unidad'
+                : 'unidades'
+          }}) dentro de esta casa.
+        </p>
+        @if (destinations().length) {
+          <form [formGroup]="moveForm" (ngSubmit)="move()">
+            <fieldset class="creation-fields" [disabled]="busy()">
+              <div>
+                <label for="move-destination">Ubicación de destino</label
+                ><select id="move-destination" formControlName="toLocationId">
+                  <option [ngValue]="null">Elige dónde guardarlo</option>
+                  @for (location of destinations(); track location.id) {
+                    <option [ngValue]="location.id">{{ location.path }}</option>
+                  }
+                </select>
+                @if (moveForm.controls.toLocationId.touched && moveForm.invalid) {
+                  <small class="field-error">Selecciona una ubicación de destino.</small>
+                }
+              </div>
+              <button class="button primary" type="submit">Confirmar traslado</button>
+            </fieldset>
+          </form>
+        } @else if (!busy() && !error()) {
+          <p class="muted">
+            No hay otra ubicación en esta casa. Crea una desde Nueva ubicación y vuelve a abrir
+            Mover objeto.
+          </p>
+        }
+      }
+      @if (mode() === 'movements' && movementsLoaded()) {
+        <h3>Historial de movimientos</h3>
+        @if (!movementHistory().length) {
+          <p class="muted">Todavía no hay movimientos registrados.</p>
+        }
+        <ul class="consumption-list">
+          @for (entry of movementHistory(); track entry.id) {
+            <li>
+              <strong>De: {{ entry.fromLocation.path }}</strong
+              ><span>A: {{ entry.toLocation.path }}</span
+              ><span
+                >{{ entry.quantity }}
+                {{
+                  item.kind === 'REUSABLE'
+                    ? entry.quantity === 1
+                      ? 'objeto'
+                      : 'objetos'
+                    : entry.quantity === 1
+                      ? 'unidad'
+                      : 'unidades'
+                }}
+                · {{ entry.movedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span
+              >
+            </li>
+          }
+        </ul>
+      }
+      @if (mode() === 'history' && historyLoaded()) {
+        <h3>Historial de consumos</h3>
+        @if (!history().length) {
+          <p class="muted">Todavía no hay consumos registrados.</p>
+        }
+        <ul class="consumption-list">
+          @for (entry of history(); track entry.id) {
+            <li>
+              <strong
+                >{{ entry.quantity }} unidades consumidas · Quedaron
+                {{ entry.remainingQuantity }}</strong
+              ><span
+                >{{ entry.consumedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
+                {{ entry.consumedById === userId ? 'Tú' : 'Usuario #' + entry.consumedById }}</span
+              ><span>{{ entry.location.path }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
   }
 </section>
