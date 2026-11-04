@@ -26,10 +26,10 @@ uso activo, elimina solo filas cuyo item_id coincide en item_movements,
 item_consumptions,item_restocks,item_uses, y después el objeto. Es una transacción:
 si falla el borrado, se conservan tanto objeto como sus historiales.
 
-No se borran usuarios, ubicaciones ni registros de otros objetos. El borrado de
-ubicaciones mantiene sus restricciones de hijos, objetos y referencias históricas.
-Si ya no queda ninguna referencia, una ubicación vacía puede eliminarse según
-esas reglas; no se borra automáticamente al eliminar su último objeto.
+No se borran usuarios, ubicaciones ni registros de otros objetos. El [borrado de
+ubicaciones](location-deletion.md) es independiente: deja sus objetos sin ubicación
+y conserva sus historiales. No se elimina una ubicación automáticamente al borrar
+su último objeto.
 
 ## Verificación
 

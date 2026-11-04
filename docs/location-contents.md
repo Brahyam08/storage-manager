@@ -8,8 +8,8 @@ Las sububicaciones y los objetos archivados permanecen en su sitio.
 Es una única transacción: cada objeto registra su movimiento y conserva los
 historiales anteriores. Si falla cualquier paso no se traslada ninguno. El destino
 debe ser otra ubicación activa de la misma casa. No se elimina ni archiva el origen;
-puede archivarse después si no quedan objetos ni sububicaciones activos. El borrado
-de ubicaciones sigue bloqueado por referencias históricas.
+puede archivarse después si no quedan objetos ni sububicaciones activos. [Eliminar la ubicación](location-deletion.md) permite dejar los objetos restantes
+sin ubicación, conservando los historiales.
 
 ## Permisos y confirmación
 

@@ -29,7 +29,7 @@ Angular 21 matches the installed Node version; consult the
 - Open item details, edit as owner, record consumption and view consumption history.
 - Move all units to another location in the same house and inspect movement history.
 - Take reusable items for use, return them, and inspect availability and usage history.
-- Manage location names, descriptions and hierarchy; delete eligible locations.
+- Manage location names, descriptions and hierarchy; delete locations while keeping their objects as **Sin ubicación**.
 - Delete owned items with confirmation, preserving protected history.
 - Location paths, quantities, loading/errors/empty states and mobile layout.
 

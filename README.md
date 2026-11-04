@@ -186,7 +186,9 @@ Location creation and updates require `houseId` and `name`, with optional
 Responses include `id`, `name`, `description`, `houseId`, `parentId` and the full
 `path`, such as `Despacho → Cajonera → Cajón 2`. Creators and members may organize
 their house's locations. Cycles and changing a location's house are rejected;
-deleting locations with children, items or history returns `409`.
+deleting a location leaves its direct items unassigned in the same house and
+promotes direct child locations to house roots. Historical references remain available;
+see [location deletion](docs/location-deletion.md).
 Legacy locations without a house are preserved and excluded from location access.
 See [location contract](docs/house-locations.md) and
 [bulk content transfers](docs/location-contents.md).
@@ -223,7 +225,7 @@ from the session. Owners can edit/delete; house members can read and move shared
 items. House creators and global ADMIN accounts cannot access others' private items.
 Privacy applies to lists, search, ID, changes, movement and history.
 
-Responses include `ownerId`, `visibility` and location with its full `path`.
+Responses include `ownerId`, `houseId`, `visibility` and nullable `location` with its full `path`.
 Moves require the entire quantity and a different location in the same house;
 location and history are saved atomically, including zero-stock records. PUT cannot
 change location. Owners can permanently delete active or archived items together

@@ -33,8 +33,8 @@ para reintentos de red. Si una respuesta se pierde, consultar cantidad/historial
 antes de volver a confirmar la misma reposición.
 
 Un objeto con reposiciones no puede cambiar de tipo. Su propietario puede
-eliminarlo junto con esas reposiciones mediante confirmación explícita. La ubicación
-histórica queda protegida mientras existan referencias a ella.
+eliminarlo junto con esas reposiciones mediante confirmación explícita. [Eliminar la ubicación](location-deletion.md) conserva su referencia histórica
+y deja el objeto sin ubicación.
 Las etiquetas de ubicación reflejan la jerarquía actual, igual que otros historiales.
 El ajuste manual de cantidad en edición permanece para corregir recuentos y no
 se convierte retroactivamente en una reposición. No se genera historial ficticio.

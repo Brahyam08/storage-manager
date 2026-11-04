@@ -9,7 +9,8 @@ mis cosas: «Despacho → Cajonera → Cajón 2».
 - GET `/api/locations/{id}`: una ubicación accesible.
 - POST `/api/locations`: crea una ubicación; devuelve 201 y Location.
 - PUT `/api/locations/{id}`: modifica nombre, descripción y padre, conservando casa.
-- DELETE `/api/locations/{id}`: elimina una ubicación vacía; devuelve 204.
+- DELETE `/api/locations/{id}`: retira solo la ubicación; devuelve204. Sus objetos quedan sin
+  ubicación y sus sububicaciones pasan a la raíz. [Contrato actual](location-deletion.md).
 - Crear y actualizar requieren `name` y `houseId`; `description` y `parentId` son
   opcionales. Un padre nulo representa una raíz. Se recortan los espacios del nombre.
 - Respuesta: `id`, `name`, `description`, `houseId`, `parentId`, `path`.
@@ -23,8 +24,9 @@ El padre debe pertenecer a la misma casa. No se permite cambiar de casa, asignar
 como padre ni elegir un descendiente como padre. Las escrituras de jerarquía se
 serializan bloqueando la casa durante su transacción.
 
-Una ubicación con hijos, objetos o referencias en historial devuelve 409 al borrar.
-No se borran datos en cascada. No hay endpoints nuevos para borrar casas o miembros.
+El borrado admite hijos, objetos e historial, sin eliminar esos datos. La fila
+permanece únicamente como referencia histórica, excluida de las ubicaciones usables.
+No hay endpoints para borrar casas o miembros.
 
 ## Datos anteriores y alcance
 
@@ -32,15 +34,8 @@ No se borran datos en cascada. No hay endpoints nuevos para borrar casas o miemb
 casas. La API exige casa para registros nuevos y no expone ubicaciones antiguas sin
 asignación. No se atribuyen datos existentes automáticamente a una cuenta. Antes de
 usar datos reales se necesita una asignación explícita, revisada y con copia de
-seguridad. No se ha ejecutado ninguna migración contra PostgreSQL del usuario.
+seguridad. La compatibilidad actual se describe en [eliminación de ubicaciones](location-deletion.md).
 
-La entrega posterior `item-privacy.md` protege los accesos al inventario y su
-historial, añade privacidad y movimientos atómicos. Crear objetos y modificar
-ubicaciones comparten el bloqueo de la casa. Queda pendiente verificar PostgreSQL.
-
-## Verificación
-
-Nueve pruebas de API con JWT real, Security y H2 verifican rutas, acceso de miembros,
-aislación, cambios de padre/nombre, ciclos, borrado protegido, datos antiguos y
-peticiones anónimas. Se adaptaron los cinco tests de LocationService al nuevo
-contrato. No se verificaron PostgreSQL, Docker ni concurrencia real entre clientes.
+La privacidad del inventario y los historiales se describe en [item-privacy.md](item-privacy.md).
+Las escrituras comparten el bloqueo de casa y se verifican con las suites Java y
+PostgreSQL aislado, incluyendo rollback y persistencia tras recrear contenedores.

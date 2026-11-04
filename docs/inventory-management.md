@@ -15,8 +15,8 @@ y usos anteriores. Si hay piezas en uso, se deben devolver antes. Es irreversibl
 desde la aplicación; [reglas de eliminación](item-deletion.md). Para conservar los
 registros, usar el [archivado reversible](archiving.md).
 
-Una ubicación solo puede eliminarse si no contiene otras ubicaciones, objetos ni
-referencias desde los historiales. La confirmación explica esa condición. Cancelar
+Eliminar una ubicación deja sus objetos sin ubicación y sus sububicaciones en la
+raíz, conservando los historiales. La confirmación explica ese efecto. [Contrato](location-deletion.md). Cancelar
 no envía ninguna petición DELETE. Un conflicto mantiene el registro visible y
 muestra la respuesta de la API. Las confirmaciones reciben foco para teclado.
 
@@ -32,8 +32,7 @@ Si sigue siendo el mismo cajón, editar su nombre o ubicación padre conserva su
 objetos y sububicaciones; no es necesario borrarlo. Si el cajón desaparece, usa
 **Trasladar objetos** para llevar sus objetos activos directos a otro destino y
 archiva después el cajón. El traslado no incluye sububicaciones ni archivados;
-[contrato y permisos](location-contents.md). El borrado sigue bloqueado si quedan
-sububicaciones o referencias históricas, aunque ya no haya objetos.
+[contrato y permisos](location-contents.md). También puedes eliminar solo el cajón y dejar sus objetos como «Sin ubicación».
 
 Archivar/restaurar permite conservar los historiales. Ninguna operación mueve ni
 archiva contenido en cascada automáticamente.
@@ -42,7 +41,7 @@ archiva contenido en cascada automáticamente.
 
 Las suites Java y Angular cubren confirmación y cancelación, propiedad, privacidad,
 destinos jerárquicos permitidos, actualización de rutas y cambios de contexto.
-El verificador PostgreSQL aislado comprueba restricciones de borrado de ubicaciones,
+El verificador PostgreSQL aislado comprueba el borrado de ubicaciones sin pérdida de objetos,
 traslados atómicos, concurrencia y persistencia. Los objetos se pueden eliminar con
 historial según las [reglas actuales](item-deletion.md).
 
