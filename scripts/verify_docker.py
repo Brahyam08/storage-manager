@@ -223,6 +223,29 @@ def verify():
             api("GET", f"/api/items/{shared_id}/consumptions", outsider, expected=404)
             print("Privacy, shared stock, consumption and concurrent stock checks passed", flush=True)
 
+            restock_id = create_item("Replenished screws")
+            api("POST", f"/api/items/{restock_id}/restocks", member, {"quantity": 1}, expected=404)
+            api("POST", f"/api/items/{restock_id}/restocks", owner, {"quantity": 1.5}, expected=400)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                additions = list(pool.map(lambda quantity: api("POST", f"/api/items/{restock_id}/restocks",
+                        owner, {"quantity": quantity}, expected=None)[0], [2, 3]))
+            check(additions == [200, 200], "Concurrent restocks failed")
+            check(api("GET", f"/api/items/{restock_id}", owner)[1]["quantity"] == 15,
+                  "Concurrent restocks lost an increment")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                requests = [("consume", 7), ("restocks", 4)]
+                results = list(pool.map(lambda request: api("POST", f"/api/items/{restock_id}/{request[0]}",
+                        owner, {"quantity": request[1]}, expected=None)[0], requests))
+            check(results == [200, 200], "Concurrent consumption/restock failed")
+            check(api("GET", f"/api/items/{restock_id}", owner)[1]["quantity"] == 12,
+                  "Concurrent consumption and restock lost stock changes")
+            _, restock_history = api("GET", f"/api/items/{restock_id}/restocks", owner)
+            check(len(restock_history) == 3 and restock_history[0]["quantity"] == 4,
+                  "Restock audit records missing")
+            check(all(entry["restockedAt"].endswith("Z") for entry in restock_history), "Restock UTC offset missing")
+            api("GET", f"/api/items/{restock_id}/restocks", outsider, expected=404)
+            print("Concurrent restocks and consumption preserve stock and private history", flush=True)
+
             _, reusable = api("POST", "/api/items", owner, {"name": "Reusable mouse", "quantity": 1,
                     "locationId": places[0], "kind": "REUSABLE", "visibility": "HOUSE_SHARED"}, 201)
             reusable_id = reusable["id"]
@@ -281,12 +304,14 @@ def verify():
             try:
                 for method, path, body in [
                     ("POST", f"/api/items/{rollback_id}/consume", {"quantity": 1}),
+                    ("POST", f"/api/items/{rollback_id}/restocks", {"quantity": 1}),
                     ("PATCH", f"/api/items/{rollback_id}/move?toLocationId={places[1]}&quantity=4", None)]:
                     _, error = api(method, path, owner, body, expected=500)
                     check(error == {"error": "Error interno del servidor"}, "Forced database failure exposed internal details")
                 _, saved = api("GET", f"/api/items/{rollback_id}", owner)
                 check(saved["quantity"] == 4 and saved["location"]["id"] == places[0], "Failed transaction changed stock/location")
                 check(api("GET", f"/api/items/{rollback_id}/consumptions", owner)[1] == [], "Consumption failed to roll back")
+                check(api("GET", f"/api/items/{rollback_id}/restocks", owner)[1] == [], "Restock failed to roll back")
                 check(api("GET", f"/api/items/{rollback_id}/history", owner)[1] == [], "Movement failed to roll back")
             finally:
                 query("DROP TRIGGER verification_reject_update ON items; DROP FUNCTION verification_reject_update();")
@@ -306,6 +331,8 @@ def verify():
                 check(api("GET", f"/api/items/{reusable_id}/uses", owner)[1] == use_history, "Use history did not persist")
                 check(saved["quantity"] == 0 and saved["location"]["id"] == places[1], "Inventory did not persist")
                 check(api("GET", f"/api/items/{shared_id}/consumptions", owner)[1] == consumption_history, "Consumption history did not persist")
+                check(api("GET", f"/api/items/{restock_id}", owner)[1]["quantity"] == 12, "Restocked quantity did not persist")
+                check(api("GET", f"/api/items/{restock_id}/restocks", owner)[1] == restock_history, "Restock history did not persist")
                 check(api("GET", f"/api/items/{moving_id}/history", owner)[1] == history, "Movement history did not persist")
                 api("GET", f"/api/houses/{house['id']}", member)
                 preserved_legacy_data()

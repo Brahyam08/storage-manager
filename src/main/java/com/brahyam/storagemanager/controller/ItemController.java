@@ -65,6 +65,17 @@ public class ItemController {
         return items.consumptionHistory(id, users.findByEmail(principal.getName()));
     }
 
+    @PostMapping("/{id}/restocks")
+    public ItemResponse restock(@PathVariable Long id, @Valid @RequestBody RestockItemRequest request,
+                               Principal principal) {
+        return items.restock(id, request.quantity(), users.findByEmail(principal.getName()));
+    }
+
+    @GetMapping("/{id}/restocks")
+    public List<ItemRestockResponse> restocks(@PathVariable Long id, Principal principal) {
+        return items.restockHistory(id, users.findByEmail(principal.getName()));
+    }
+
     @PostMapping("/{id}/uses")
     public ResponseEntity<ItemUseResponse> take(@PathVariable Long id, @Valid @RequestBody UseItemRequest request, Principal principal) {
         ItemUseResponse use = uses.take(id, request.quantity(), users.findByEmail(principal.getName()));

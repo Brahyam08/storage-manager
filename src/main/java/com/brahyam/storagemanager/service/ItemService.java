@@ -20,6 +20,7 @@ public class ItemService {
     private final ItemUseRepository uses;
     private final ItemMovementRepository movements;
     private final ItemConsumptionRepository consumptions;
+    private final ItemRestockRepository restocks;
     private final LocationService locations;
     private final HouseService houses;
 
@@ -64,6 +65,9 @@ public class ItemService {
         if (request.getKind() != null && request.getKind() != item.getKind() && uses.existsByItemId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con usos registrados");
         }
+        if (request.getKind() != null && request.getKind() != item.getKind() && restocks.existsByItemId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con reposiciones registradas");
+        }
         long inUse = uses.activeQuantity(id);
         if (inUse > 0 && (request.getQuantity() < inUse
                 || (request.getKind() != null && request.getKind() != item.getKind())
@@ -80,7 +84,7 @@ public class ItemService {
     public void deleteById(Long id, User user) {
         Item item = forUpdate(id, user);
         requireOwner(item, user);
-        if (movements.existsByItemId(id) || consumptions.existsByItemId(id) || uses.existsByItemId(id)) {
+        if (movements.existsByItemId(id) || consumptions.existsByItemId(id) || uses.existsByItemId(id) || restocks.existsByItemId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El objeto tiene historial");
         }
         items.delete(item);
@@ -133,6 +137,35 @@ public class ItemService {
         consumption.setConsumedAt(LocalDateTime.now(ZoneOffset.UTC));
         consumptions.save(consumption);
         return response(items.save(item));
+    }
+
+    @Transactional
+    public ItemResponse restock(Long id, Integer quantity, User user) {
+        Item item = forUpdate(id, user);
+        requireOwner(item, user);
+        if (quantity == null || quantity < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Añade al menos una unidad");
+        }
+        long resultingQuantity = (long) item.getQuantity() + quantity;
+        if (resultingQuantity > Integer.MAX_VALUE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La cantidad resultante supera el límite admitido. Añade menos unidades");
+        }
+        item.setQuantity((int) resultingQuantity);
+        ItemRestock restock = new ItemRestock();
+        restock.setItem(item);
+        restock.setRestockedBy(user);
+        restock.setLocation(item.getLocation());
+        restock.setQuantity(quantity);
+        restock.setResultingQuantity(item.getQuantity());
+        restock.setRestockedAt(LocalDateTime.now(ZoneOffset.UTC));
+        restocks.save(restock);
+        return response(items.save(item));
+    }
+
+    public List<ItemRestockResponse> restockHistory(Long id, User user) {
+        requireAccessible(id, user);
+        return restocks.findByItemIdOrderByRestockedAtDescIdDesc(id).stream()
+                .map(ItemRestockResponse::from).toList();
     }
 
     public List<ItemConsumptionResponse> consumptionHistory(Long id, User user) {
