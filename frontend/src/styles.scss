@@ -1207,6 +1207,13 @@ input[readonly] {
   background: #963a2c;
   color: white;
 }
+.button.secondary.danger-outline {
+  color: #963a2c;
+  border-color: #e7bcb2;
+}
+.button.secondary.danger-outline:hover:not(:disabled) {
+  background: #fff8f5;
+}
 .danger-text {
   color: #963a2c;
 }
