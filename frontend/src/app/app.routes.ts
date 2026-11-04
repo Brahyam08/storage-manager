@@ -20,6 +20,18 @@ export const routes: Routes = [
         (module) => module.InventoryPageComponent,
       ),
   },
+  {
+    path: 'objetos/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./inventory/item-page.component').then((module) => module.ItemPageComponent),
+  },
+  {
+    path: 'perfil',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./auth/profile-page.component').then((module) => module.ProfilePageComponent),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'inventario' },
   { path: '**', redirectTo: 'inventario' },
 ];

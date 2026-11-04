@@ -60,7 +60,7 @@ npm run build
 npm audit
 ```
 
-52 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
+57 tests cover editing, consumption/history, creation, authentication, HTTP isolation, stale responses, password byte
 limits, partial registration success and house/invitation races. Production build
 passes. Browser checks with isolated Docker/PostgreSQL covered registration/login,
 create/join/invite, search/filter, empty houses, private-item exclusion for another
@@ -163,3 +163,12 @@ Both actions require explicit inline confirmation and support cancellation. A
 failed deletion preserves the visible record. Changing context cancels requests;
 an operation already accepted by the server may still complete. The current UI
 has no undo/archive; confirm only records you intend to remove permanently.
+
+## Profile and item navigation
+
+The account avatar/name opens `/perfil`, displaying the verified user's own name
+and email. Profile editing is not implemented. Every inventory row is one native
+link to `/objetos/:id`, including its location and quantity; it supports keyboard
+navigation and opening in a new tab. The detail has its own page and can reload
+directly. Its return link preserves house, search and filter. The API continues
+to validate item ownership/membership; a URL is not a grant of access.

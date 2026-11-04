@@ -44,7 +44,8 @@ un despliegue público con HTTPS. Para deshabilitarlo, vuelve a
 
 ## Rutas y acceso
 
-GET/HEAD de `/`, `/acceso`, `/registro` e `/inventario` reciben la entrada Angular.
+GET/HEAD de `/`, `/acceso`, `/registro`, `/inventario`, `/perfil` y
+`/objetos/{id}` (identificador numérico) reciben la entrada Angular.
 El guard del cliente sigue llevando a acceso cuando no hay sesión; servir el HTML
 no entrega inventario. Los endpoints protegidos de la API mantienen la autenticación
 y las reglas de propiedad/membresía. Solo los recursos públicos del frontend tienen

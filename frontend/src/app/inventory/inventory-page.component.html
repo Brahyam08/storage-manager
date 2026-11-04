@@ -35,12 +35,12 @@
           }
         </select>
       </div>
-      <div class="user-summary">
+      <a class="user-summary" routerLink="/perfil" aria-label="Mi perfil">
         <span class="user-avatar" aria-hidden="true">{{
           auth.user()?.username?.charAt(0)?.toUpperCase()
         }}</span
         ><span>{{ auth.user()?.username }}</span>
-      </div>
+      </a>
     </header>
     <main class="main-content">
       <div class="page-heading">
@@ -167,15 +167,6 @@
         @if (inventoryNotice()) {
           <p class="creation-notice" role="status">{{ inventoryNotice() }}</p>
         }
-        @if (selectedItem(); as item) {
-          <app-item-detail
-            [item]="item"
-            [userId]="auth.user()!.id"
-            (updated)="itemUpdated($event)"
-            (deleted)="itemDeleted($event)"
-            (closed)="selectedItem.set(null)"
-          />
-        }
         <section class="summary-grid" aria-label="Resumen del inventario mostrado">
           <article class="summary-card">
             <span>Objetos encontrados</span><strong>{{ visibleItems().length }}</strong
@@ -243,46 +234,50 @@
             </div>
             <ul class="item-list">
               @for (item of visibleItems(); track item.id) {
-                <li class="item-row">
-                  <div class="item-identity">
-                    <span class="item-symbol" aria-hidden="true">▧</span>
-                    <div>
-                      <h3>
-                        <button
-                          class="item-name-button"
-                          type="button"
-                          (click)="selectedItem.set(item)"
-                          [attr.aria-label]="'Ver detalle de ' + item.name"
-                        >
-                          {{ item.name }} <span aria-hidden="true">↗</span>
-                        </button>
-                      </h3>
-                      <span class="muted">{{ item.category || 'Sin categoría' }}</span>
-                    </div>
-                  </div>
-                  <div class="item-location">
-                    <span class="mobile-label">{{
-                      item.kind === 'REUSABLE' ? 'Ubicación habitual' : 'Dónde está'
-                    }}</span
-                    >{{ item.location.path }}
-                  </div>
-                  <div class="item-quantity" [class.empty]="item.outOfStock">
-                    <strong>{{ item.quantity }}</strong
-                    ><small>{{
-                      item.kind === 'REUSABLE'
-                        ? 'Disponibles: ' +
-                          item.availableQuantity +
-                          ' · En uso: ' +
-                          item.inUseQuantity
-                        : item.outOfStock
-                          ? 'Sin existencias'
-                          : 'unidades consumibles'
-                    }}</small>
-                  </div>
-                  <span class="visibility-badge" [class.shared]="item.visibility === 'HOUSE_SHARED'"
-                    ><i aria-hidden="true"></i
-                    >{{ item.visibility === 'PRIVATE' ? 'Privado' : 'Compartido' }}</span
+                <li>
+                  <a
+                    class="item-row item-card-link"
+                    [routerLink]="['/objetos', item.id]"
+                    [queryParams]="{
+                      house: selectedId(),
+                      search: searchControl.value,
+                      filter: filter(),
+                    }"
+                    [attr.aria-label]="'Ver detalle de ' + item.name"
                   >
+                    <div class="item-identity">
+                      <span class="item-symbol" aria-hidden="true">▧</span>
+                      <div>
+                        <h3>{{ item.name }} <span aria-hidden="true">↗</span></h3>
+                        <span class="muted">{{ item.category || 'Sin categoría' }}</span>
+                      </div>
+                    </div>
+                    <div class="item-location">
+                      <span class="mobile-label">{{
+                        item.kind === 'REUSABLE' ? 'Ubicación habitual' : 'Dónde está'
+                      }}</span
+                      >{{ item.location.path }}
+                    </div>
+                    <div class="item-quantity" [class.empty]="item.outOfStock">
+                      <strong>{{ item.quantity }}</strong
+                      ><small>{{
+                        item.kind === 'REUSABLE'
+                          ? 'Disponibles: ' +
+                            item.availableQuantity +
+                            ' · En uso: ' +
+                            item.inUseQuantity
+                          : item.outOfStock
+                            ? 'Sin existencias'
+                            : 'unidades consumibles'
+                      }}</small>
+                    </div>
+                    <span
+                      class="visibility-badge"
+                      [class.shared]="item.visibility === 'HOUSE_SHARED'"
+                      ><i aria-hidden="true"></i
+                      >{{ item.visibility === 'PRIVATE' ? 'Privado' : 'Compartido' }}</span
+                    >
+                  </a>
                 </li>
               }
             </ul>

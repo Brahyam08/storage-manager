@@ -17,7 +17,6 @@
         {{ item.visibility === 'PRIVATE' ? 'Privado' : 'Compartido con la casa' }}
       </p>
     </div>
-    <button class="text-button" type="button" (click)="closed.emit()">Cerrar detalle</button>
   </div>
   @if (item.description) {
     <p>{{ item.description }}</p>

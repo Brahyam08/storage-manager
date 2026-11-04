@@ -17,8 +17,16 @@ beta hasta comprobar acceso privado, persistencia y recuperación de errores.
 | Safari iPhone real y teclado | Pendiente de prueba en dispositivo; no equivale a viewport reducido. |
 | Chrome Android real y teclado | Pendiente. |
 
-52 tests Angular y compilación de producción correctos en esta pasada.
+57 tests Angular y compilación de producción correctos en esta pasada.
 No se ha repetido la suite Java: no hay cambios de backend.
+
+## Navegación de perfil y objetos — 4 de noviembre de 2026
+
+Comprobado con fixtures Docker: pulsar la ubicación dentro de una tarjeta abre
+su página, recargar conserva el objeto y la sesión, y el enlace de vuelta conserva
+el filtro privado. El avatar abre perfil con nombre/correo propios; viewport390
+sin desbordamiento horizontal. Perfil solo de consulta. 122 tests Java y57 Angular
+pasan; las rutas nuevas no abren endpoints de inventario anónimos.
 
 ## Siguientes recorridos
 

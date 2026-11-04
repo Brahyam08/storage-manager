@@ -42,7 +42,6 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
   readonly updated = output<InventoryItem>();
   readonly deleted = output<number>();
-  readonly closed = output<void>();
   private readonly api = inject(InventoryApiService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);

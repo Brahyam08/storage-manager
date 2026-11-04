@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -21,7 +21,6 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { ItemDetailComponent } from './item-detail.component';
 import { InventoryCreateComponent } from './inventory-create.component';
 import { Subject } from 'rxjs';
 import { AuthService } from '../core/auth.service';
@@ -33,7 +32,7 @@ type ItemFilter = 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusa
 
 @Component({
   selector: 'app-inventory-page',
-  imports: [ReactiveFormsModule, RouterLink, InventoryCreateComponent, ItemDetailComponent],
+  imports: [ReactiveFormsModule, RouterLink, InventoryCreateComponent],
   templateUrl: './inventory-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -41,11 +40,11 @@ export class InventoryPageComponent {
   readonly auth = inject(AuthService);
   private readonly api = inject(InventoryApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly refreshItems = new Subject<void>();
   readonly inventoryNotice = signal('');
-  readonly selectedItem = signal<InventoryItem | null>(null);
   readonly houses = signal<House[]>([]);
   readonly items = signal<InventoryItem[]>([]);
   readonly loadingHouses = signal(true);
@@ -56,10 +55,12 @@ export class InventoryPageComponent {
   readonly managingHouses = signal(false);
   readonly invitationCode = signal('');
   readonly notice = signal('');
-  readonly filter = signal<ItemFilter>('all');
+  readonly filter = signal<ItemFilter>(this.initialFilter());
   readonly houseControl = new FormControl<number | null>({ value: null, disabled: true });
   readonly selectedId = toSignal(this.houseControl.valueChanges, { initialValue: null });
-  readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly searchControl = new FormControl(this.route.snapshot.queryParamMap.get('search') ?? '', {
+    nonNullable: true,
+  });
   readonly selectedHouse = computed(
     () => this.houses().find((house) => house.id === this.selectedId()) ?? null,
   );
@@ -100,13 +101,12 @@ export class InventoryPageComponent {
         startWith(null),
         tap(() => {
           this.inventoryNotice.set('');
-          this.selectedItem.set(null);
           this.invitationCode.set('');
           this.notice.set('');
         }),
       ),
       this.searchControl.valueChanges.pipe(
-        startWith(''),
+        startWith(this.searchControl.value),
         debounceTime(250),
         distinctUntilChanged(),
       ),
@@ -131,7 +131,15 @@ export class InventoryPageComponent {
         this.items.set(items);
         this.loadingItems.set(false);
       });
-    this.loadHouses();
+    const house = Number(this.route.snapshot.queryParamMap.get('house'));
+    this.loadHouses(Number.isSafeInteger(house) && house > 0 ? house : undefined);
+  }
+
+  private initialFilter(): ItemFilter {
+    const filter = this.route.snapshot.queryParamMap.get('filter');
+    return ['private', 'shared', 'empty', 'consumable', 'reusable'].includes(filter ?? '')
+      ? (filter as ItemFilter)
+      : 'all';
   }
 
   loadHouses(preferredId?: number) {
@@ -234,32 +242,16 @@ export class InventoryPageComponent {
   reloadItems() {
     if (this.loadingItems() || this.selectedId() === null) return;
     this.inventoryNotice.set('');
-    this.selectedItem.set(null);
     this.refreshItems.next();
   }
 
   locationsChanged() {
     this.inventoryNotice.set('');
-    this.selectedItem.set(null);
     this.refreshItems.next();
-  }
-
-  itemDeleted(id: number) {
-    this.items.update((items) => items.filter((item) => item.id !== id));
-    this.selectedItem.set(null);
-    this.inventoryNotice.set('Objeto eliminado.');
-  }
-
-  itemUpdated(item: InventoryItem) {
-    this.items.update((items) =>
-      items.map((existing) => (existing.id === item.id ? item : existing)),
-    );
-    this.selectedItem.set(item);
   }
 
   itemCreated() {
     this.inventoryNotice.set('');
-    this.selectedItem.set(null);
     this.filter.set('all');
     this.searchControl.setValue('');
     this.refreshItems.next();
