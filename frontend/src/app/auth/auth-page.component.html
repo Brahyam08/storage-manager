@@ -22,12 +22,22 @@
   <section class="auth-form-section">
     <div class="auth-card">
       <p class="eyebrow">TU INVENTARIO, CERCA</p>
-      <h2>{{ registering ? 'Cada cosa empieza aquí.' : 'Qué bueno verte de nuevo.' }}</h2>
+      <h2>
+        {{
+          recovering()
+            ? 'Retomamos donde lo dejaste.'
+            : registering
+              ? 'Cada cosa empieza aquí.'
+              : 'Qué bueno verte de nuevo.'
+        }}
+      </h2>
       <p class="muted">
         {{
-          registering
-            ? 'Crea tu cuenta y organiza tu primera casa.'
-            : 'Entra para encontrar lo que necesitas.'
+          recovering()
+            ? 'Comprobamos tu sesión para que puedas continuar.'
+            : registering
+              ? 'Crea tu cuenta y organiza tu primera casa.'
+              : 'Entra para encontrar lo que necesitas.'
         }}
       </p>
       @if (registered) {
@@ -39,58 +49,80 @@
       @if (error()) {
         <p class="error-banner" role="alert">{{ error() }}</p>
       }
-      <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
-        @if (registering) {
-          <label for="username">Nombre de usuario</label
-          ><input
-            id="username"
-            formControlName="username"
-            autocomplete="username"
-            maxlength="255"
-            placeholder="Cómo quieres que te llamemos"
-          />
-          @if (form.controls.username.touched && form.controls.username.invalid) {
-            <small class="field-error">Escribe un nombre de usuario.</small>
+      @if (recovering()) {
+        <div class="session-recovery" [attr.aria-busy]="busy()">
+          <p>No necesitas volver a introducir tus credenciales mientras tu sesión siga vigente.</p>
+          @if (busy()) {
+            <p role="status">Comprobando tu sesión…</p>
           }
-        }
-        <label for="email">Correo electrónico</label
-        ><input
-          id="email"
-          type="email"
-          formControlName="email"
-          autocomplete="email"
-          maxlength="255"
-          placeholder="tu@correo.com"
-          (blur)="trimEmail()"
-        />
-        @if (form.controls.email.touched && form.controls.email.invalid) {
-          <small class="field-error">Escribe un correo electrónico válido.</small>
-        }
-        <label for="password">Contraseña</label
-        ><input
-          id="password"
-          type="password"
-          formControlName="password"
-          [autocomplete]="registering ? 'new-password' : 'current-password'"
-        />
-        @if (registering) {
-          <small class="field-hint">Al menos 8 caracteres. Los espacios también cuentan.</small>
-        }
-        @if (form.controls.password.touched && form.controls.password.invalid) {
-          <small class="field-error">{{
-            form.controls.password.hasError('passwordByteLimit') ||
-            form.controls.password.hasError('maxlength')
-              ? 'La contraseña es demasiado larga.'
-              : registering
-                ? 'Usa una contraseña de al menos 8 caracteres.'
-                : 'Escribe tu contraseña.'
-          }}</small>
-        }
-        <button class="button primary auth-submit" type="submit" [disabled]="busy()">
-          {{ busy() ? 'Un momento…' : registering ? 'Crear mi cuenta' : 'Entrar a mi inventario'
-          }}<span aria-hidden="true">↗</span>
-        </button>
-      </form>
+          <div class="detail-actions">
+            <button class="button primary" type="button" [disabled]="busy()" (click)="resume()">
+              Reintentar conexión
+            </button>
+            <button
+              class="button secondary"
+              type="button"
+              [disabled]="busy()"
+              (click)="useAnotherAccount()"
+            >
+              Usar otra cuenta
+            </button>
+          </div>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
+          @if (registering) {
+            <label for="username">Nombre de usuario</label
+            ><input
+              id="username"
+              formControlName="username"
+              autocomplete="username"
+              maxlength="255"
+              placeholder="Cómo quieres que te llamemos"
+            />
+            @if (form.controls.username.touched && form.controls.username.invalid) {
+              <small class="field-error">Escribe un nombre de usuario.</small>
+            }
+          }
+          <label for="email">Correo electrónico</label
+          ><input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            maxlength="255"
+            placeholder="tu@correo.com"
+            (blur)="trimEmail()"
+          />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <small class="field-error">Escribe un correo electrónico válido.</small>
+          }
+          <label for="password">Contraseña</label
+          ><input
+            id="password"
+            type="password"
+            formControlName="password"
+            [autocomplete]="registering ? 'new-password' : 'current-password'"
+          />
+          @if (registering) {
+            <small class="field-hint">Al menos 8 caracteres. Los espacios también cuentan.</small>
+          }
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <small class="field-error">{{
+              form.controls.password.hasError('passwordByteLimit') ||
+              form.controls.password.hasError('maxlength')
+                ? 'La contraseña es demasiado larga.'
+                : registering
+                  ? 'Usa una contraseña de al menos 8 caracteres.'
+                  : 'Escribe tu contraseña.'
+            }}</small>
+          }
+          <button class="button primary auth-submit" type="submit" [disabled]="busy()">
+            {{ busy() ? 'Un momento…' : registering ? 'Crear mi cuenta' : 'Entrar a mi inventario'
+            }}<span aria-hidden="true">↗</span>
+          </button>
+        </form>
+      }
       <p class="auth-switch">
         {{ registering ? '¿Ya tienes cuenta?' : '¿Primera vez por aquí?' }}
         <a [routerLink]="registering ? '/acceso' : '/registro'">{{

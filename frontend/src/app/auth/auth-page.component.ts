@@ -22,6 +22,7 @@ export class AuthPageComponent {
   readonly registering = this.route.snapshot.routeConfig?.path === 'registro';
   readonly registered = this.route.snapshot.queryParamMap.has('registered');
   readonly expired = this.route.snapshot.queryParamMap.has('expired');
+  readonly recovering = signal(!this.registering && !!this.auth.token());
   readonly busy = signal(false);
   readonly error = signal('');
   readonly form = this.fb.nonNullable.group({
@@ -43,6 +44,45 @@ export class AuthPageComponent {
       ],
     ],
   });
+
+  constructor() {
+    if (this.recovering()) this.resume();
+  }
+
+  resume() {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.error.set('');
+    this.auth
+      .restore()
+      .pipe(
+        finalize(() => this.busy.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((restored) => {
+        if (restored) {
+          const requested = this.route.snapshot.queryParamMap.get('returnTo') ?? '/inventario';
+          const destination = /^\/(inventario|perfil|objetos\/[1-9]\d*)(\?[^#]*)?$/.test(requested)
+            ? requested
+            : '/inventario';
+          void this.router.navigateByUrl(destination);
+        } else if (this.auth.token()) {
+          this.error.set(
+            'No podemos comprobar tu sesión ahora. Revisa la conexión y vuelve a intentarlo.',
+          );
+        } else {
+          this.recovering.set(false);
+          this.error.set('Tu sesión ha terminado. Vuelve a entrar para continuar.');
+        }
+      });
+  }
+
+  useAnotherAccount() {
+    if (this.busy()) return;
+    this.auth.clear();
+    this.recovering.set(false);
+    this.error.set('');
+  }
 
   trimEmail() {
     this.form.controls.email.setValue(this.form.controls.email.value.trim());

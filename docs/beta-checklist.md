@@ -17,7 +17,7 @@ beta hasta comprobar acceso privado, persistencia y recuperación de errores.
 | Safari iPhone real y teclado | Pendiente de prueba en dispositivo; no equivale a viewport reducido. |
 | Chrome Android real y teclado | Pendiente. |
 
-63 tests Angular y compilación de producción correctos en esta pasada.
+68 tests Angular y compilación de producción correctos en esta pasada.
 No se ha repetido la suite Java: no hay cambios de backend.
 
 ## Navegación de perfil y objetos — 4 de noviembre de 2026
@@ -37,6 +37,7 @@ y viewport390 sin desbordamiento horizontal; pruebas de Safari real pendientes.
 
 ## Siguientes recorridos
 
+- iPhone: mandar Safari a segundo plano y volver, con conexión estable e interrumpida; distinguir recuperación y caducidad.
 - Registro, validaciones, contraseña incorrecta y sesión caducada.
 - Primera casa vacía, unirse por invitación, código inválido y renovación.
 - Crear y editar ubicaciones anidadas; nombres largos y caracteres especiales.

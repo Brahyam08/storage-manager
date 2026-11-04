@@ -140,6 +140,41 @@ describe('Authentication boundaries', () => {
     expect(allowed).toBe(true);
   });
 
+  it('preserves a stored token and return route when restoration fails temporarily', () => {
+    signIn();
+    vi.spyOn(auth, 'user').mockReturnValue(null);
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, { url: '/objetos/4?house=1' } as RouterStateSnapshot),
+    );
+    if (!isObservable(result)) throw new Error('Expected an asynchronous guard');
+    let redirect = '';
+    result.subscribe((value) => {
+      redirect = router.serializeUrl(value as ReturnType<Router['createUrlTree']>);
+    });
+    http.expectOne('/api/users/me').flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(auth.token()).toBe('test-token');
+    expect(sessionStorage.getItem('storage-manager.session')).toBe('test-token');
+    expect(redirect).toContain('/acceso?returnTo=');
+    expect(redirect).not.toContain('expired');
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the expired-session message when the guard receives a 401', () => {
+    signIn();
+    vi.spyOn(auth, 'user').mockReturnValue(null);
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, { url: '/inventario' } as RouterStateSnapshot),
+    );
+    if (!isObservable(result)) throw new Error('Expected an asynchronous guard');
+    let redirect = '';
+    result.subscribe((value) => {
+      redirect = router.serializeUrl(value as ReturnType<Router['createUrlTree']>);
+    });
+    http.expectOne('/api/users/me').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(redirect).toBe('/acceso?expired=1');
+    expect(sessionStorage.getItem('storage-manager.session')).toBeNull();
+  });
+
   it('does not let an old rejected request clear a newer session', () => {
     signIn();
     TestBed.inject(HttpClient)

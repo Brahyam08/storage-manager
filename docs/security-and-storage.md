@@ -21,6 +21,16 @@ puede restaurar pestañas o copiar su sesión al duplicarlas; en equipos compart
 hay que usar Cerrar sesión. Una sesión con cookies HttpOnly requeriría adaptar
 el backend y la protección CSRF; queda como mejora independiente.
 
+Al restaurar una sesión, un fallo temporal de red o del servidor no equivale a
+caducidad. Si queda un token guardado, la pantalla de acceso intenta verificarlo
+y permite reintentar sin pedir contraseña. Solo un rechazo401 elimina ese token;
+el inventario no se abre hasta verificar el perfil. Si no queda sesión guardada,
+sigue siendo necesario iniciar sesión. El navegador controla la conservación de
+sessionStorage; no se garantiza persistencia al cerrar pestañas o en navegación
+privada. La causa exacta de la incidencia de Safari iPhone requiere comprobarse
+en el dispositivo: se corrigió un fallo reproducible de la app, no se verificó
+una política interna de Safari.
+
 Las contraseñas se almacenan como hashes BCrypt. Nombres, descripciones, categorías,
 ubicaciones e historiales no tienen cifrado de campos implementado por la app.
 El cifrado del disco del sistema no se ha verificado y es una capa independiente.
