@@ -6,10 +6,6 @@ import com.brahyam.storagemanager.entity.User;
 import com.brahyam.storagemanager.dto.LocationRequest;
 import com.brahyam.storagemanager.dto.LocationResponse;
 import com.brahyam.storagemanager.repository.ItemRepository;
-import com.brahyam.storagemanager.repository.ItemUseRepository;
-import com.brahyam.storagemanager.repository.ItemRestockRepository;
-import com.brahyam.storagemanager.repository.ItemConsumptionRepository;
-import com.brahyam.storagemanager.repository.ItemMovementRepository;
 import org.springframework.web.server.ResponseStatusException;
 import com.brahyam.storagemanager.repository.LocationRepository;
 import org.junit.jupiter.api.Test;
@@ -33,14 +29,6 @@ class LocationServiceTest {
     private HouseService houseService;
     @Mock
     private ItemRepository items;
-    @Mock
-    private ItemMovementRepository movements;
-    @Mock
-    private ItemConsumptionRepository consumptions;
-    @Mock
-    private ItemUseRepository uses;
-    @Mock
-    private ItemRestockRepository restocks;
     private final User user = new User();
     private final House house = new House(5L, "Casa", user);
 
@@ -54,21 +42,14 @@ class LocationServiceTest {
     private LocationService locationService;
 
     @Test
-    void shouldPreserveLocationReferencedOnlyByRestockHistory() {
+    void shouldRetainDeletedLocationOnlyAsHistoricalReference() {
         Location location = new Location(1L, "Cajón", null);
         stubLocation(1L, location);
-        when(restocks.existsByLocationId(1L)).thenReturn(true);
-        assertThrows(ResponseStatusException.class, () -> locationService.deleteById(1L, user));
+        locationService.deleteById(1L, user);
+        assertTrue(location.isDeleted());
+        assertEquals("Cajón", location.getDeletedPath());
         verify(locationRepository, never()).delete(any(Location.class));
-    }
-
-    @Test
-    void shouldPreserveLocationReferencedByUseHistory() {
-        Location location = new Location(1L, "Cajón", null);
-        stubLocation(1L, location);
-        when(uses.existsByLocationId(1L)).thenReturn(true);
-        assertThrows(ResponseStatusException.class, () -> locationService.deleteById(1L, user));
-        verify(locationRepository, never()).delete(any(Location.class));
+        assertThrows(ResponseStatusException.class, () -> locationService.findById(1L, user));
     }
 
     @Test
@@ -132,7 +113,8 @@ class LocationServiceTest {
         // Act
         locationService.deleteById(1L, user);
         // Assert
-        verify(locationRepository).delete(existingLocation);
+        assertTrue(existingLocation.isDeleted());
+        verify(locationRepository).flush();
     }
 
     @Test

@@ -114,24 +114,21 @@ class LocationControllerTest {
     }
 
     @Test
-    void shouldDeleteEmptyLocationsButKeepThoseWithChildrenOrItems() throws Exception {
+    void shouldDeleteOnlyLocationAndDetachItsChildrenAndItems() throws Exception {
         long root = create("Raíz", null, house.getId(), ownerToken);
         long child = create("Hijo", root, house.getId(), ownerToken);
-        mvc.perform(delete("/api/locations/{id}", root).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
-        Item item = items.saveAndFlush(new Item(null, "Ratón", null, null, 1, locations.findById(child).orElseThrow()));
-        mvc.perform(delete("/api/locations/{id}", child).header("Authorization", memberToken))
-                .andExpect(status().isConflict());
-        items.delete(item);
-        items.flush();
-        mvc.perform(delete("/api/locations/{id}", child).header("Authorization", memberToken))
+        Item item = items.saveAndFlush(new Item(null, "Ratón", null, null, 1, locations.findById(root).orElseThrow()));
+        mvc.perform(delete("/api/locations/{id}", root).header("Authorization", memberToken))
                 .andExpect(status().isNoContent());
-        mvc.perform(get("/api/locations/{id}", child).header("Authorization", ownerToken))
+        assertNull(items.findById(item.getId()).orElseThrow().getLocation());
+        assertEquals(house.getId(), item.getHouse().getId());
+        assertNull(locations.findById(child).orElseThrow().getParent());
+        mvc.perform(get("/api/locations/{id}", root).header("Authorization", ownerToken))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void shouldKeepLocationsReferencedByMovementHistory() throws Exception {
+    void shouldDeleteLocationsWhilePreservingMovementReferences() throws Exception {
         long source = create("Origen", null, house.getId(), ownerToken);
         long target = create("Destino", null, house.getId(), ownerToken);
         Location from = locations.findById(source).orElseThrow();
@@ -139,7 +136,7 @@ class LocationControllerTest {
         Item item = items.saveAndFlush(new Item(null, "Ratón", null, null, 1, to));
         movements.saveAndFlush(new ItemMovement(null, item, from, to, 1, java.time.LocalDateTime.now()));
         mvc.perform(delete("/api/locations/{id}", source).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNoContent());
     }
 
     @Test

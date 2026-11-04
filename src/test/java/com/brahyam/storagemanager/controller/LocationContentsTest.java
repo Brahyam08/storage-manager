@@ -116,4 +116,46 @@ class LocationContentsTest {
         move(ownerToken,target,snapshot().replace(":10",":-1"),400);
         unchanged();
     }
+    @Test void deletingLocationPreservesInventoryPrivacyAndAllowsRelocation() throws Exception {
+        second.setVisibility(ItemVisibility.PRIVATE); items.saveAndFlush(second);
+        mvc.perform(post("/api/items/{id}/consume",first.getId()).header("Authorization",memberToken)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":1}" )).andExpect(status().isOk());
+        mvc.perform(delete("/api/locations/{id}",source.getId()).header("Authorization",memberToken))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/items").param("houseId",house.getId().toString()).header("Authorization",ownerToken))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].houseId").value(house.getId()))
+            .andExpect(jsonPath("$[0].location").value(org.hamcrest.Matchers.nullValue()));
+        mvc.perform(get("/api/items/{id}",second.getId()).header("Authorization",memberToken)).andExpect(status().isNotFound());
+        mvc.perform(get("/api/items/{id}",first.getId()).header("Authorization",token(outsider))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/items/{id}/consumptions",first.getId()).header("Authorization",ownerToken))
+            .andExpect(status().isOk()).andExpect(jsonPath("$[0].location.deleted").value(true));
+        mvc.perform(post("/api/items/{id}/restocks",first.getId()).header("Authorization",ownerToken)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":1}" )).andExpect(status().isOk());
+        mvc.perform(put("/api/items/{id}",first.getId()).header("Authorization",ownerToken)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Sin cajón\",\"quantity\":10,\"locationId\":null}" ))
+            .andExpect(status().isOk());
+        mvc.perform(patch("/api/items/{id}/move",first.getId()).header("Authorization",memberToken)
+            .param("toLocationId",target.getId().toString()).param("quantity","10")).andExpect(status().isOk());
+        mvc.perform(get("/api/items/{id}/history",first.getId()).header("Authorization",ownerToken))
+            .andExpect(status().isOk()).andExpect(jsonPath("$[0].fromLocation").value(org.hamcrest.Matchers.nullValue()));
+        mvc.perform(get("/api/locations").param("houseId",house.getId().toString()).param("includeArchived","true")
+            .header("Authorization",ownerToken)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+        mvc.perform(patch("/api/locations/{id}/restore",source.getId()).header("Authorization",ownerToken)).andExpect(status().isNotFound());
+    }
+    @Test void deletingArchivedLocationKeepsArchivedItemsAndActiveUses() throws Exception {
+        source.setArchived(true); locations.saveAndFlush(source);
+        first.setArchived(true); items.saveAndFlush(first);
+        second.setKind(ItemKind.REUSABLE); second.setQuantity(1); items.saveAndFlush(second);
+        ItemUse use=new ItemUse(); use.setItem(second); use.setLocation(source); use.setUsedBy(owner);
+        use.setQuantity(1); use.setTakenAt(LocalDateTime.now()); uses.saveAndFlush(use);
+        mvc.perform(delete("/api/locations/{id}",source.getId()).header("Authorization",ownerToken)).andExpect(status().isNoContent());
+        assertTrue(first.isArchived()); assertNull(first.getLocation());
+        mvc.perform(patch("/api/items/{id}/restore",first.getId()).header("Authorization",ownerToken)).andExpect(status().isOk());
+        mvc.perform(post("/api/items/{id}/uses/{use}/return",second.getId(),use.getId()).header("Authorization",ownerToken))
+            .andExpect(status().isOk());
+        mvc.perform(post("/api/items/{id}/uses",second.getId()).header("Authorization",ownerToken)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":1}" )).andExpect(status().isCreated());
+    }
+
 }

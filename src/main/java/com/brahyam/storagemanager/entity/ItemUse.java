@@ -16,7 +16,7 @@ public class ItemUse {
     private Item item;
     @ManyToOne(optional = false) @JoinColumn(name = "used_by_id", nullable = false)
     private User usedBy;
-    @ManyToOne(optional = false) @JoinColumn(name = "location_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "location_id")
     private Location location;
     @Column(nullable = false) private Integer quantity;
     @Column(nullable = false) private LocalDateTime takenAt;

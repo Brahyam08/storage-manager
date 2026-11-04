@@ -128,8 +128,6 @@ class LocationArchiveTest {
         archive(source, ownerToken, 200);
         archive(source, ownerToken, 200);
         update(source, "Otro", null, house.getId(), ownerToken, 409);
-        mvc.perform(delete("/api/locations/{id}", source).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
         assertEquals("Cajón", locations.findById(source).orElseThrow().getName());
         restore(source, ownerToken, 200);
         restore(source, ownerToken, 200);

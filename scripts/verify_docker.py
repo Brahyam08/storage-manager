@@ -478,6 +478,55 @@ def verify():
                 check(len(api("GET", f"/api/items/{item_id}/history", owner)[1]) == 1, "Bulk history duplicated")
             print("Bulk transfer: stale snapshot, zero stock, atomic rollback and concurrent confirmation passed", flush=True)
 
+            # Removing a location detaches inventory, never removes it or its history.
+            _, removed_place = api("POST", "/api/locations", owner, {"name": "Removed drawer", "houseId": house["id"]}, 201)
+            removed_id = removed_place["id"]
+            _, child_place = api("POST", "/api/locations", owner,
+                {"name": "Inner box", "houseId": house["id"], "parentId": removed_id}, 201)
+            _, unassigned = api("POST", "/api/items", owner,
+                {"name": "Unassigned private fixture", "quantity": 5, "locationId": removed_id}, 201)
+            unassigned_id = unassigned["id"]
+            api("POST", f"/api/items/{unassigned_id}/consume", owner, {"quantity": 1})
+            query("CREATE FUNCTION verification_reject_location_delete() RETURNS trigger LANGUAGE plpgsql AS $$ "
+                  f"BEGIN IF NEW.id = {removed_id} AND NEW.deleted THEN RAISE EXCEPTION 'verification failure'; END IF; RETURN NEW; END; $$; "
+                  "CREATE TRIGGER verification_reject_location_delete BEFORE UPDATE ON locations "
+                  "FOR EACH ROW EXECUTE FUNCTION verification_reject_location_delete();")
+            try:
+                api("DELETE", f"/api/locations/{removed_id}", member, expected=500)
+                check(api("GET", f"/api/items/{unassigned_id}", owner)[1]["location"]["id"] == removed_id, "Failed deletion detached item")
+                check(api("GET", f"/api/locations/{child_place['id']}", owner)[1]["parentId"] == removed_id, "Failed deletion detached child")
+            finally:
+                query("DROP TRIGGER verification_reject_location_delete ON locations; DROP FUNCTION verification_reject_location_delete();")
+            api("DELETE", f"/api/locations/{removed_id}", outsider, expected=404)
+            api("DELETE", f"/api/locations/{removed_id}", member, expected=204)
+            api("GET", f"/api/locations/{removed_id}", owner, expected=404)
+            api("PATCH", f"/api/locations/{removed_id}/restore", owner, expected=404)
+            check(not any(location["id"] == removed_id for location in api("GET", f"/api/locations?houseId={house['id']}&includeArchived=true", owner)[1]), "Deleted location listed")
+            check(api("GET", f"/api/locations/{child_place['id']}", owner)[1]["parentId"] is None, "Child not promoted to house root")
+            saved_unassigned = api("GET", f"/api/items/{unassigned_id}", owner)[1]
+            check(saved_unassigned["location"] is None and saved_unassigned["houseId"] == house["id"] and saved_unassigned["quantity"] == 4, "Unassigned inventory lost house or quantity")
+            api("GET", f"/api/items/{unassigned_id}", member, expected=404)
+            api("GET", f"/api/items/{unassigned_id}", outsider, expected=404)
+            check(any(item["id"] == unassigned_id for item in api("GET", f"/api/items?houseId={house['id']}", owner)[1]), "Unassigned item missing from inventory")
+            old_consumption = api("GET", f"/api/items/{unassigned_id}/consumptions", owner)[1][0]
+            check(old_consumption["location"]["deleted"] and old_consumption["location"]["path"] == "Removed drawer (eliminada)", "Historical location lost")
+            api("POST", f"/api/items/{unassigned_id}/consume", owner, {"quantity": 1})
+            api("POST", f"/api/items/{unassigned_id}/restocks", owner, {"quantity": 1})
+            check(api("GET", f"/api/items/{unassigned_id}/restocks", owner)[1][0]["location"] is None, "Unassigned restock recorded wrong location")
+            check(api("GET", f"/api/items/{unassigned_id}/consumptions", owner)[1][0]["location"] is None, "Unassigned consumption recorded wrong location")
+            # Exercise relocating another unassigned item, keeping the first for persistence checks.
+            _, relocated = api("POST", "/api/items", owner, {"name": "Relocated fixture", "quantity": 1, "locationId": child_place["id"]}, 201)
+            api("DELETE", f"/api/locations/{child_place['id']}", owner, expected=204)
+            api("PATCH", f"/api/items/{relocated['id']}/move?toLocationId={places[0]}&quantity=1", owner)
+            check(api("GET", f"/api/items/{relocated['id']}/history", owner)[1][0]["fromLocation"] is None, "Unassigned movement origin not empty")
+            _, long_parent = api("POST", "/api/locations", owner, {"name": "r" * 255, "houseId": house["id"]}, 201)
+            _, long_child = api("POST", "/api/locations", owner,
+                {"name": "s" * 255, "houseId": house["id"], "parentId": long_parent["id"]}, 201)
+            api("DELETE", f"/api/locations/{long_child['id']}", owner, expected=204)
+            check(query(f"SELECT length(deleted_path) > 255 FROM locations WHERE id={long_child['id']};") == "t",
+                  "Long historical path was truncated")
+            print("Location deletion preserves objects, house privacy and history; rollback and unassigned operations passed", flush=True)
+
             for cycle in range(3):
                 print("Removing containers and recreating them with the same test volume", flush=True)
                 command("down")
@@ -498,6 +547,10 @@ def verify():
                 check(api("GET", f"/api/items/{restock_id}", owner)[1]["quantity"] == 12, "Restocked quantity did not persist")
                 check(api("GET", f"/api/items/{restock_id}/restocks", owner)[1] == restock_history, "Restock history did not persist")
                 check(api("GET", f"/api/items/{moving_id}/history", owner)[1] == history, "Movement history did not persist")
+                persisted_unassigned = api("GET", f"/api/items/{unassigned_id}", owner)[1]
+                check(persisted_unassigned["location"] is None and persisted_unassigned["houseId"] == house["id"] and persisted_unassigned["quantity"] == 4, "Unassigned item did not persist")
+                api("GET", f"/api/locations/{removed_id}", owner, expected=404)
+                api("GET", f"/api/items/{unassigned_id}", member, expected=404)
                 api("GET", f"/api/houses/{house['id']}", member)
                 check(api("GET", f"/api/items/{retired_id}", owner)[1]["archived"], "Archived item status did not persist")
                 check(api("GET", f"/api/locations/{retired_place_id}", owner)[1]["archived"], "Archived location status did not persist")

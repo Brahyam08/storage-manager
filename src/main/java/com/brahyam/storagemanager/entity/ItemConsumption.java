@@ -19,8 +19,8 @@ public class ItemConsumption {
     @ManyToOne(optional = false)
     @JoinColumn(name = "consumed_by_id", nullable = false)
     private User consumedBy;
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "location_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "location_id")
     private Location location;
     @Column(nullable = false)
     private Integer quantity;

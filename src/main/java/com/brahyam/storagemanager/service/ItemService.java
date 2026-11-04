@@ -45,10 +45,14 @@ public class ItemService {
 
     @Transactional
     public ItemResponse create(ItemRequest request, User user) {
+        if (request.getLocationId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Elige una ubicación al crear el objeto");
+        }
         Location location = locations.lockForUpdate(request.getLocationId(), user);
         Item item = new Item();
         item.setOwner(user);
         item.setLocation(location);
+        item.setHouse(location.getHouse());
         item.setVisibility(request.getVisibility() == null ? ItemVisibility.PRIVATE : request.getVisibility());
         applyKind(item, request);
         applyDetails(item, request);
@@ -59,7 +63,7 @@ public class ItemService {
     public ItemResponse update(Long id, ItemRequest request, User user) {
         Item item = forUpdate(id, user);
         requireOwner(item, user);
-        if (!item.getLocation().getId().equals(request.getLocationId())) {
+        if (!java.util.Objects.equals(item.getLocation() == null ? null : item.getLocation().getId(), request.getLocationId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usa el movimiento para cambiar la ubicación");
         }
         if (request.getKind() == ItemKind.REUSABLE && item.getKind() != ItemKind.REUSABLE
@@ -107,10 +111,10 @@ public class ItemService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Se debe mover la cantidad completa del objeto");
         }
         Location destination = locations.findActiveById(toLocationId, user);
-        if (!item.getLocation().getHouse().getId().equals(destination.getHouse().getId())) {
+        if (!item.getHouse().getId().equals(destination.getHouse().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pueden mover objetos entre casas");
         }
-        if (item.getLocation().getId().equals(destination.getId())) {
+        if (item.getLocation() != null && item.getLocation().getId().equals(destination.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El objeto ya está en esa ubicación");
         }
         ItemMovement movement = new ItemMovement();
@@ -209,7 +213,7 @@ public class ItemService {
     public ItemResponse restore(Long id, User user) {
         Item item = lockAccessible(id, user);
         requireOwner(item, user);
-        locations.findActiveById(item.getLocation().getId(), user);
+        if (item.getLocation() != null) locations.findActiveById(item.getLocation().getId(), user);
         item.setArchived(false);
         return response(items.save(item));
     }

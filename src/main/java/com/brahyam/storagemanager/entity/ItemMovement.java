@@ -22,7 +22,7 @@ public class ItemMovement {
     private Item item;
 
     @ManyToOne
-    @JoinColumn(name = "from_location_id", nullable = false)
+    @JoinColumn(name = "from_location_id")
     private Location fromLocation;
 
     @ManyToOne

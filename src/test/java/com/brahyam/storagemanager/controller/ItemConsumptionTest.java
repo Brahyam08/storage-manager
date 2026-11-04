@@ -256,13 +256,13 @@ class ItemConsumptionTest {
     }
 
     @Test
-    void shouldPreserveHistoricalLocationsUntilTheirItemsAreDeleted() throws Exception {
+    void shouldPreserveConsumptionLocationReferenceAfterLocationDeletion() throws Exception {
         consume(5, ownerToken, 200);
         mvc.perform(patch("/api/items/{id}/move", item.getId()).header("Authorization", ownerToken)
                         .param("toLocationId", target.getId().toString()).param("quantity", "5"))
                 .andExpect(status().isOk());
         mvc.perform(delete("/api/locations/{id}", source.getId()).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNoContent());
         mvc.perform(get("/api/items/{id}/consumptions", item.getId()).header("Authorization", ownerToken))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].location.id").value(source.getId()));
     }

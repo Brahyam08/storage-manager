@@ -31,6 +31,11 @@ public class Location {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean archived = false;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted = false;
+    @Column(columnDefinition = "text")
+    private String deletedPath;
+
     public Location(Long id, String name, String description) {
         this.id = id;
         this.name = name;

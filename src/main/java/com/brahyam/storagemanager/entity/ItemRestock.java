@@ -19,8 +19,8 @@ public class ItemRestock {
     @ManyToOne(optional = false)
     @JoinColumn(name = "restocked_by_id", nullable = false)
     private User restockedBy;
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "location_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "location_id")
     private Location location;
     @Column(nullable = false)
     private Integer quantity;

@@ -163,7 +163,7 @@ class ItemRestockTest {
                 .param("toLocationId", target.getId().toString()).param("quantity", "12"))
                 .andExpect(status().isOk());
         mvc.perform(delete("/api/locations/{id}", source.getId()).header("Authorization", ownerToken))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNoContent());
         assertEquals(1, restocks.count());
     }
 

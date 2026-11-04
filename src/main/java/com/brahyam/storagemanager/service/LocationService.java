@@ -17,10 +17,6 @@ public class LocationService {
     private final LocationRepository locationRepository;
     private final HouseService houseService;
     private final ItemRepository items;
-    private final ItemMovementRepository movements;
-    private final ItemConsumptionRepository consumptions;
-    private final ItemUseRepository uses;
-    private final ItemRestockRepository restocks;
 
     public List<LocationResponse> findAll(Long houseId, User user) {
         return findAll(houseId, false, user);
@@ -29,7 +25,7 @@ public class LocationService {
     public List<LocationResponse> findAll(Long houseId, boolean includeArchived, User user) {
         houseService.findById(houseId, user);
         return locationRepository.findAllByHouseIdOrderByIdAsc(houseId).stream()
-                .filter(location -> includeArchived || !location.isArchived())
+                .filter(location -> !location.isDeleted() && (includeArchived || !location.isArchived()))
                 .map(LocationResponse::from).toList();
     }
 
@@ -70,13 +66,22 @@ public class LocationService {
 
     @Transactional
     public void deleteById(Long id, User user) {
-        Location location = lockForUpdate(id, user);
-        if (locationRepository.existsByParentId(id) || items.existsByLocationId(id)
-                || movements.existsByFromLocationIdOrToLocationId(id, id) || consumptions.existsByLocationId(id) || uses.existsByLocationId(id) || restocks.existsByLocationId(id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "La ubicación contiene otras ubicaciones, objetos o historial");
+        Location location = lockedLocation(id, user);
+        String path = LocationResponse.from(location).path();
+        for (Item item : items.findAllByLocationId(id)) {
+            item.setHouse(location.getHouse());
+            item.setLocation(null);
         }
-        locationRepository.delete(location);
+        for (Location child : locationRepository.findAllByHouseIdOrderByIdAsc(location.getHouse().getId())) {
+            if (!child.isDeleted() && child.getParent() != null && child.getParent().getId().equals(id)) {
+                child.setParent(null);
+            }
+        }
+        // Retain a historical reference, excluded from every usable location endpoint.
+        location.setDeletedPath(path);
+        location.setDeleted(true);
+        location.setParent(null);
+        locationRepository.flush();
     }
 
     @Transactional
@@ -119,7 +124,8 @@ public class LocationService {
     }
 
     private Location inHouse(Long id, Long houseId) {
-        return locationRepository.findByIdAndHouseId(id, houseId).orElseThrow(this::notFound);
+        return locationRepository.findByIdAndHouseId(id, houseId)
+                .filter(location -> !location.isDeleted()).orElseThrow(this::notFound);
     }
 
     private void apply(Location location, LocationRequest request) {

@@ -25,7 +25,6 @@ public class ItemRequest {
     @Min(value = 0, message = "La cantidad no puede ser negativa")
     private Integer quantity;
 
-    @NotNull(message = "La ubicación es obligatoria")
     private Long locationId;
 
     private ItemVisibility visibility;

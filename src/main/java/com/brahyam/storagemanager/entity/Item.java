@@ -21,8 +21,18 @@ public class Item {
     @Column(nullable = false)
     private Integer quantity;
     @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
+    @JoinColumn(name = "location_id")
     private Location location;
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "house_id")
+    private House house;
+
+    @PrePersist
+    void assignHouse() {
+        if (house == null && location != null) house = location.getHouse();
+    }
 
     // Nullable to preserve legacy rows without assigning them to an arbitrary user.
     @JsonIgnore
