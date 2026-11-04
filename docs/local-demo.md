@@ -46,8 +46,8 @@ cantidades resultantes; la demo modifica los datos de prueba y conserva historia
 | 3:30–4:15 | Segunda pestaña como otro miembro | Ve lo compartido, pero no el ratón privado de la primera cuenta. |
 | 4:15–5:00 | Tests y decisiones técnicas | Backend autoritativo, transacciones, límites conocidos y siguiente mejora. |
 
-Puedes enseñar una cancelación de borrado para explicar la confirmación y la
-protección del historial. Usa solo registros que puedas eliminar si decides
+Puedes enseñar una cancelación de borrado para explicar la confirmación del
+borrado permanente y su diferencia con archivar. Usa solo registros que puedas eliminar si decides
 confirmar. Las ubicaciones de la casa son compartidas; sus nombres no son secretos.
 
 ## Cómo explicar el código

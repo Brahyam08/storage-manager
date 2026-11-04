@@ -20,7 +20,7 @@ Retirada y devolución usan el bloqueo de casa que ya serializa inventario. No s
 puede retirar por encima de lo disponible. Mientras hay objetos en uso no se puede
 trasladar el conjunto, cambiar visibilidad/tipo ni bajar el total por debajo de lo
 retirado. Un historial de uso impide cambiar de tipo. Tras devolver las piezas, su propietario
-puede eliminar definitivamente el objeto y sus historiales. Las ubicaciones referenciadas por ese historial no se borran.
+puede eliminar definitivamente el objeto y sus historiales. Las ubicaciones permanecen protegidas mientras existan referencias desde historiales.
 
 Cada devolución registra todos los objetos de esa retirada en su ubicación habitual.
 No hay devolución parcial, destino alternativo, fechas límite ni identificación

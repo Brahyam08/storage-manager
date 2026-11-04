@@ -27,8 +27,9 @@ Son registros separados: el consumo no genera movimientos ni cambia de ubicació
   compartidos de su casa. Creador de casa y ADMIN no evitan la privacidad.
 - El historial de consumos sigue la visibilidad actual del objeto, igual que los
   movimientos. Una cuenta externa o privado ajeno/inexistente recibe el mismo 404.
-- Borrar un objeto con consumos devuelve 409. Se conservan también las ubicaciones
-  referenciadas por el historial; no hay borrado en cascada.
+- El propietario puede eliminar un objeto con consumos tras confirmar el borrado
+  permanente del objeto y su historial. Las ubicaciones no se borran automáticamente;
+  ver [reglas de eliminación](item-deletion.md).
 
 El consumo y su registro comparten transacción y el bloqueo de casa usado por
 movimientos, ediciones y ubicaciones. Dos consumos simultáneos no pueden descontar
