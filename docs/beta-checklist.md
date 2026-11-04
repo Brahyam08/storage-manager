@@ -28,6 +28,13 @@ el filtro privado. El avatar abre perfil con nombre/correo propios; viewport390
 sin desbordamiento horizontal. Perfil solo de consulta. 122 tests Java y57 Angular
 pasan; las rutas nuevas no abren endpoints de inventario anónimos.
 
+## Jerarquía del detalle
+
+Las acciones de uso e historial van antes de la gestión del objeto; eliminar queda
+al final de la gestión. Existencias destacadas a la derecha del nombre, con total
+y disponibles/en uso separados en reutilizables. Consumible revisado en escritorio
+y viewport390 sin desbordamiento horizontal; pruebas de Safari real pendientes.
+
 ## Siguientes recorridos
 
 - Registro, validaciones, contraseña incorrecta y sesión caducada.

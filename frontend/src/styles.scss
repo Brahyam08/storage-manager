@@ -1256,3 +1256,50 @@ input[readonly] {
   margin: 0;
   font-weight: 600;
 }
+
+.item-detail-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(85px, 35%);
+  align-items: start;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.item-detail-heading h2 {
+  overflow-wrap: anywhere;
+}
+.item-stock {
+  text-align: right;
+  color: var(--green);
+  overflow-wrap: anywhere;
+}
+.item-stock strong,
+.item-stock span,
+.item-stock small {
+  display: block;
+}
+.item-stock strong {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.item-stock span,
+.item-stock small {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.item-stock small {
+  color: var(--muted);
+  margin-top: 4px;
+}
+.item-stock.empty {
+  color: #963a2c;
+}
+.item-action-group {
+  margin-top: 24px;
+}
+.action-group-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 10px;
+}

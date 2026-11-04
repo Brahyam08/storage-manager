@@ -172,7 +172,10 @@ describe('Item detail', () => {
     http.expectNone('/api/items/4/consume');
     expect(fixture.nativeElement.textContent).not.toContain('Registrar consumo');
     expect(fixture.nativeElement.textContent).not.toContain('Ver consumos');
-    expect(fixture.nativeElement.textContent).toContain('Reutilizable · 1 objeto registrado');
+    expect(fixture.nativeElement.textContent).toContain('Reutilizable');
+    const stock = fixture.nativeElement.querySelector('[aria-label="Existencias del objeto"]');
+    expect(stock.querySelector('strong').textContent).toBe('1');
+    expect(stock.textContent).toContain('objeto registrado');
     component.editForm.controls.quantity.setValue(0);
     component.save();
     expect(component.editForm.hasError('reusableQuantity')).toBe(true);

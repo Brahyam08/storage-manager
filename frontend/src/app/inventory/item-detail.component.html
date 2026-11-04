@@ -1,67 +1,73 @@
 <section class="panel item-detail-panel" aria-label="Detalle del objeto">
-  <div class="inventory-heading">
+  <p class="eyebrow">{{ item.location.path }}</p>
+  <div class="item-detail-heading">
     <div>
-      <p class="eyebrow">{{ item.location.path }}</p>
       <h2 #detailTitle tabindex="-1">{{ item.name }}</h2>
-      <p class="muted" role="status">
-        {{ item.kind === 'REUSABLE' ? 'Reutilizable ·' : 'Consumible · Quedan' }}
-        {{ item.quantity }}
-        {{
-          item.kind === 'REUSABLE'
-            ? item.quantity === 1
-              ? 'objeto registrado'
-              : 'objetos registrados'
-            : 'unidades'
-        }}
-        ·
+      <p class="muted">
+        {{ item.kind === 'REUSABLE' ? 'Reutilizable' : 'Consumible' }} ·
         {{ item.visibility === 'PRIVATE' ? 'Privado' : 'Compartido con la casa' }}
       </p>
+    </div>
+    <div
+      class="item-stock"
+      [class.empty]="item.outOfStock"
+      role="status"
+      aria-label="Existencias del objeto"
+    >
+      <strong>{{ item.quantity }}</strong>
+      <span>{{
+        item.kind === 'REUSABLE'
+          ? item.quantity === 1
+            ? 'objeto registrado'
+            : 'objetos registrados'
+          : item.quantity === 1
+            ? 'unidad disponible'
+            : 'unidades disponibles'
+      }}</span>
+      @if (item.kind === 'REUSABLE') {
+        <small
+          >{{ item.availableQuantity }}
+          {{ item.availableQuantity === 1 ? 'disponible' : 'disponibles' }} ·
+          {{ item.inUseQuantity }} en uso</small
+        >
+      } @else if (item.outOfStock) {
+        <small>Sin existencias</small>
+      }
     </div>
   </div>
   @if (item.description) {
     <p>{{ item.description }}</p>
   }
-  <div class="detail-actions">
-    @if (item.ownerId === userId) {
-      <button class="button secondary" type="button" [disabled]="busy()" (click)="open('edit')">
-        Editar objeto
-      </button>
+  <div class="item-action-group" role="group" aria-label="Uso e historial">
+    <p class="action-group-title">Uso e historial</p>
+    <div class="detail-actions">
+      @if (item.kind === 'CONSUMABLE') {
+        <button
+          class="button primary"
+          type="button"
+          [disabled]="busy() || item.quantity === 0"
+          (click)="open('consume')"
+        >
+          Registrar consumo
+        </button>
+      }
       <button
-        class="button secondary danger-outline"
+        class="button secondary"
         type="button"
-        [disabled]="busy()"
-        (click)="askDelete()"
+        [disabled]="busy() || item.quantity === 0 || item.inUseQuantity > 0"
+        (click)="openMove()"
       >
-        Eliminar objeto
+        Mover objeto
       </button>
-    }
-    @if (item.kind === 'CONSUMABLE') {
-      <button
-        class="button primary"
-        type="button"
-        [disabled]="busy() || item.quantity === 0"
-        (click)="open('consume')"
-      >
-        Registrar consumo
+      <button class="button secondary" type="button" [disabled]="busy()" (click)="loadMovements()">
+        Ver movimientos
       </button>
-      <button class="button secondary" type="button" [disabled]="busy()" (click)="loadHistory()">
-        Ver consumos
-      </button>
-    }
-    <button
-      class="button secondary"
-      type="button"
-      [disabled]="busy() || item.quantity === 0 || item.inUseQuantity > 0"
-      (click)="openMove()"
-    >
-      Mover objeto
-    </button>
-    <button class="button secondary" type="button" [disabled]="busy()" (click)="loadMovements()">
-      Ver movimientos
-    </button>
-    <button class="button secondary" type="button" [disabled]="busy()" (click)="refresh()">
-      Actualizar objeto
-    </button>
+      @if (item.kind === 'CONSUMABLE') {
+        <button class="button secondary" type="button" [disabled]="busy()" (click)="loadHistory()">
+          Ver consumos
+        </button>
+      }
+    </div>
   </div>
   @if (error()) {
     <p class="error-banner" role="alert">
@@ -80,6 +86,29 @@
     }
     <app-item-use-panel [item]="item" [userId]="userId" (updated)="updated.emit($event)" />
   }
+  <div class="item-action-group" role="group" aria-label="Gestión del objeto">
+    <p class="action-group-title">Gestión del objeto</p>
+    <div class="detail-actions">
+      @if (item.ownerId === userId) {
+        <button class="button secondary" type="button" [disabled]="busy()" (click)="open('edit')">
+          Editar objeto
+        </button>
+      }
+      <button class="button secondary" type="button" [disabled]="busy()" (click)="refresh()">
+        Actualizar objeto
+      </button>
+      @if (item.ownerId === userId) {
+        <button
+          class="button secondary danger-outline"
+          type="button"
+          [disabled]="busy()"
+          (click)="askDelete()"
+        >
+          Eliminar objeto
+        </button>
+      }
+    </div>
+  </div>
   @if (mode() === 'delete') {
     <div class="delete-confirmation" role="group" aria-label="Confirmar eliminación de objeto">
       <h3 #deleteTitle tabindex="-1">¿Eliminar {{ item.name }}?</h3>
