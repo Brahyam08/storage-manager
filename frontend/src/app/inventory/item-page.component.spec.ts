@@ -47,7 +47,12 @@ describe('Item page navigation', () => {
           useValue: {
             paramMap: params,
             snapshot: {
-              queryParamMap: convertToParamMap({ house: '1', search: 'tor', filter: 'private' }),
+              queryParamMap: convertToParamMap({
+                house: '1',
+                search: 'tor',
+                filter: 'private',
+                location: '3',
+              }),
             },
           },
         },
@@ -69,7 +74,7 @@ describe('Item page navigation', () => {
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
     fixture.componentInstance.back();
     expect(router.navigate).toHaveBeenCalledWith(['/inventario'], {
-      queryParams: { house: '1', search: 'tor', filter: 'private' },
+      queryParams: { house: '1', search: 'tor', filter: 'private', location: '3' },
     });
   });
 

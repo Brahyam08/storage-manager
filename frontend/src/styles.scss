@@ -617,10 +617,12 @@ input[readonly] {
 }
 .inventory-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   margin-bottom: 22px;
 }
 .search-field {
+  min-width: min(100%, 220px);
   position: relative;
   flex: 1;
 }

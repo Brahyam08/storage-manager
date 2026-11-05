@@ -26,7 +26,7 @@ import { Subject } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
-import { House, InventoryItem } from '../core/models';
+import { House, InventoryItem, StorageLocation } from '../core/models';
 
 type ItemFilter = 'unassigned' | 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
 
@@ -44,6 +44,15 @@ export class InventoryPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly refreshItems = new Subject<void>();
+  private readonly refreshLocations = new Subject<void>();
+  private currentHouseId: number | null = null;
+  readonly locationOptions = signal<StorageLocation[]>([]);
+  readonly locationError = signal('');
+  readonly loadingLocations = signal(false);
+  readonly locationControl = new FormControl<number | null>({
+    value: this.initialLocation(),
+    disabled: true,
+  });
   readonly inventoryNotice = signal('');
   readonly houses = signal<House[]>([]);
   readonly items = signal<InventoryItem[]>([]);
@@ -102,7 +111,14 @@ export class InventoryPageComponent {
     combineLatest([
       this.houseControl.valueChanges.pipe(
         startWith(null),
-        tap(() => {
+        tap((houseId) => {
+          if (houseId !== this.currentHouseId) {
+            if (this.currentHouseId !== null)
+              this.locationControl.setValue(null, { emitEvent: false });
+            this.currentHouseId = houseId;
+            this.locationOptions.set([]);
+            this.locationControl.disable({ emitEvent: false });
+          }
           this.inventoryNotice.set('');
           this.invitationCode.set('');
           this.notice.set('');
@@ -121,18 +137,58 @@ export class InventoryPageComponent {
           this.itemError.set('');
           this.loadingItems.set(houseId !== null);
           if (houseId === null) return EMPTY;
-          return this.api.items(houseId, search.trim(), this.showArchived()).pipe(
-            catchError((error) => {
-              this.itemError.set(apiError(error));
-              return of([]);
-            }),
-          );
+          return this.api
+            .items(houseId, search.trim(), this.showArchived(), this.locationControl.value)
+            .pipe(
+              catchError((error) => {
+                this.itemError.set(apiError(error));
+                return of([]);
+              }),
+            );
         }),
         takeUntilDestroyed(),
       )
       .subscribe((items) => {
         this.items.set(items);
         this.loadingItems.set(false);
+      });
+    this.locationControl.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.refreshItems.next());
+    combineLatest([
+      this.houseControl.valueChanges.pipe(startWith(null), distinctUntilChanged()),
+      this.refreshLocations.pipe(startWith(undefined)),
+    ])
+      .pipe(
+        switchMap(([houseId]) => {
+          this.locationError.set('');
+          this.locationControl.disable({ emitEvent: false });
+          this.loadingLocations.set(houseId !== null);
+          if (houseId === null) return of([]);
+          return this.api.locations(houseId, true).pipe(
+            catchError((error) => {
+              this.locationError.set(apiError(error));
+              return of([]);
+            }),
+            finalize(() => this.loadingLocations.set(false)),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((locations) => {
+        if (this.selectedId() === null || this.locationError()) return;
+        this.locationOptions.set(
+          locations.filter(
+            (location) => location.houseId === this.selectedId() && !location.deleted,
+          ),
+        );
+        if (
+          this.locationControl.value !== null &&
+          !this.locationOptions().some((location) => location.id === this.locationControl.value)
+        ) {
+          this.locationControl.setValue(null);
+        }
+        if (!this.locationError()) this.locationControl.enable({ emitEvent: false });
       });
     const house = Number(this.route.snapshot.queryParamMap.get('house'));
     this.loadHouses(Number.isSafeInteger(house) && house > 0 ? house : undefined);
@@ -145,6 +201,15 @@ export class InventoryPageComponent {
     )
       ? (filter as ItemFilter)
       : 'all';
+  }
+
+  private initialLocation(): number | null {
+    const id = Number(this.route.snapshot.queryParamMap.get('location'));
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+  }
+
+  reloadLocations() {
+    if (!this.loadingLocations()) this.refreshLocations.next();
   }
 
   loadHouses(preferredId?: number) {
@@ -252,11 +317,13 @@ export class InventoryPageComponent {
 
   locationsChanged() {
     this.inventoryNotice.set('');
+    this.refreshLocations.next();
     this.refreshItems.next();
   }
 
   itemCreated() {
     this.inventoryNotice.set('');
+    this.locationControl.setValue(null, { emitEvent: false });
     this.filter.set('all');
     this.searchControl.setValue('');
     this.refreshItems.next();
@@ -271,6 +338,7 @@ export class InventoryPageComponent {
     this.filter.set((event.target as HTMLSelectElement).value as ItemFilter);
   }
   resetSearch() {
+    if (this.locationControl.value !== null) this.locationControl.setValue(null);
     this.searchControl.setValue('');
     this.filter.set('all');
   }

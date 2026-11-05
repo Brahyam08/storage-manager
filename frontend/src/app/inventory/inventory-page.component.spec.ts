@@ -35,11 +35,118 @@ describe('House switching', () => {
     fixture = TestBed.createComponent(InventoryPageComponent);
     http.expectOne('/api/houses').flush(houses);
     fixture.detectChanges();
-    http.expectOne((request) => request.url === '/api/locations').flush([]);
+    http
+      .expectOne('/api/locations?houseId=1&includeArchived=true')
+      .flush([{ id: 3, houseId: 1, name: 'Cajón', path: 'Estudio → Cajón', parentId: null }]);
+    http.expectOne('/api/locations?houseId=1').flush([]);
   });
   afterEach(() => {
     fixture.destroy();
     http.verify();
+  });
+
+  it('combines a direct location with search and archived items and keeps it in detail links', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.locationControl.setValue(3);
+    const located = http.expectOne((request) => request.url === '/api/items');
+    expect(located.request.params.get('locationId')).toBe('3');
+    located.flush([
+      {
+        id: 1,
+        name: 'Tornillos',
+        kind: 'CONSUMABLE',
+        quantity: 4,
+        location: { id: 3, houseId: 1, path: 'Estudio → Cajón' },
+      },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a.item-card-link').getAttribute('href')).toContain(
+      'location=3',
+    );
+    component.searchControl.setValue('tor');
+    const searched = await vi.waitFor(() =>
+      http.expectOne((request) => request.url === '/api/items'),
+    );
+    expect(searched.request.params.get('locationId')).toBe('3');
+    expect(searched.request.params.get('search')).toBe('tor');
+    searched.flush([]);
+    component.toggleArchived();
+    const archived = http.expectOne((request) => request.url === '/api/items');
+    expect(archived.request.params.get('locationId')).toBe('3');
+    expect(archived.request.params.get('includeArchived')).toBe('true');
+    archived.flush([]);
+  });
+
+  it('clears a location removed during inventory management and cancels the obsolete item load', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.locationControl.setValue(3);
+    http.expectOne((request) => request.url === '/api/items').flush([]);
+    component.locationsChanged();
+    const stale = http.expectOne((request) => request.url === '/api/items');
+    http.expectOne('/api/locations?houseId=1&includeArchived=true').flush([]);
+    expect(component.locationControl.value).toBeNull();
+    expect(stale.cancelled).toBe(true);
+    const current = http.expectOne((request) => request.url === '/api/items');
+    expect(current.request.params.has('locationId')).toBe(false);
+    current.flush([]);
+  });
+
+  it('allows retrying location options without losing access to the inventory', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.locationControl.setValue(3);
+    http.expectOne((request) => request.url === '/api/items').flush([]);
+    component.reloadLocations();
+    http
+      .expectOne('/api/locations?houseId=1&includeArchived=true')
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(component.locationControl.value).toBe(3);
+    expect(component.locationOptions()).toHaveLength(1);
+    http.expectNone((request) => request.url === '/api/items');
+    expect(component.locationControl.disabled).toBe(true);
+    expect(component.locationError()).not.toBe('');
+    component.reloadLocations();
+    http
+      .expectOne('/api/locations?houseId=1&includeArchived=true')
+      .flush([{ id: 3, houseId: 1, path: 'Cajón' }]);
+    expect(component.locationControl.enabled).toBe(true);
+    expect(component.locationError()).toBe('');
+  });
+
+  it('clears the location on a house change and cancels pending options and item requests', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.locationControl.setValue(3);
+    const oldItems = http.expectOne((request) => request.url === '/api/items');
+    component.reloadLocations();
+    const oldOptions = http.expectOne('/api/locations?houseId=1&includeArchived=true');
+    component.houseControl.setValue(2);
+    fixture.detectChanges();
+    expect(oldItems.cancelled).toBe(true);
+    expect(oldOptions.cancelled).toBe(true);
+    expect(component.locationControl.value).toBeNull();
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
+    http.expectOne('/api/locations?houseId=2').flush([]);
+    const current = http.expectOne((request) => request.url === '/api/items');
+    expect(current.request.params.get('houseId')).toBe('2');
+    expect(current.request.params.has('locationId')).toBe(false);
+    current.flush([]);
+  });
+
+  it('can clear a location that contains no matching items', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.locationControl.setValue(3);
+    http.expectOne((request) => request.url === '/api/items').flush([]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No encontramos coincidencias.');
+    expect(fixture.nativeElement.textContent).toContain('Limpiar filtros');
+    component.resetSearch();
+    const request = http.expectOne((request) => request.url === '/api/items');
+    expect(request.request.params.has('locationId')).toBe(false);
+    request.flush([]);
   });
 
   it('keeps unassigned objects visible and offers a filter for them', async () => {
@@ -112,9 +219,13 @@ describe('House switching', () => {
     );
     fixture.componentInstance.houseControl.setValue(2);
     fixture.detectChanges();
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
     http
       .expectOne(
-        (request) => request.url === '/api/locations' && request.params.get('houseId') === '2',
+        (request) =>
+          request.url === '/api/locations' &&
+          request.params.get('houseId') === '2' &&
+          !request.params.has('includeArchived'),
       )
       .flush([]);
     expect(first.cancelled).toBe(true);
@@ -152,9 +263,13 @@ describe('House switching', () => {
     const invitation = http.expectOne('/api/houses/1/invitation');
     fixture.componentInstance.houseControl.setValue(2);
     fixture.detectChanges();
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
     http
       .expectOne(
-        (request) => request.url === '/api/locations' && request.params.get('houseId') === '2',
+        (request) =>
+          request.url === '/api/locations' &&
+          request.params.get('houseId') === '2' &&
+          !request.params.has('includeArchived'),
       )
       .flush([]);
     http.expectOne((request) => request.url === '/api/items').flush([]);

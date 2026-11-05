@@ -135,9 +135,15 @@ export class InventoryApiService {
     return this.http.post<ItemUse>(`/api/items/${id}/uses/${useId}/return`, {});
   }
 
-  items(houseId: number, search: string, includeArchived = false) {
+  items(
+    houseId: number,
+    search: string,
+    includeArchived = false,
+    locationId: number | null = null,
+  ) {
     let params = new HttpParams().set('houseId', houseId);
     if (search) params = params.set('search', search);
+    if (locationId !== null) params = params.set('locationId', locationId);
     if (includeArchived) params = params.set('includeArchived', true);
     return this.http.get<InventoryItem[]>('/api/items', { params });
   }

@@ -209,6 +209,19 @@
                 autocomplete="off"
               />
             </div>
+            <label class="sr-only" for="location-filter">Filtrar por ubicación</label>
+            <select
+              id="location-filter"
+              [formControl]="locationControl"
+              aria-describedby="location-filter-help"
+            >
+              <option [ngValue]="null">Todas las ubicaciones</option>
+              @for (location of locationOptions(); track location.id) {
+                <option [ngValue]="location.id">
+                  {{ location.path }}{{ location.archived ? ' (archivada)' : '' }}
+                </option>
+              }
+            </select>
             <label class="sr-only" for="item-filter">Filtrar objetos</label
             ><select id="item-filter" [value]="filter()" (change)="setFilter($event)">
               <option value="all">Todos los objetos</option>
@@ -220,6 +233,20 @@
               <option value="reusable">Reutilizables</option>
             </select>
           </div>
+          <p id="location-filter-help" class="muted">
+            La ubicación muestra solo los objetos guardados directamente en ella.
+          </p>
+          @if (loadingLocations()) {
+            <p role="status">Cargando ubicaciones del filtro…</p>
+          }
+          @if (locationError()) {
+            <p class="error-banner" role="alert">
+              {{ locationError() }}
+              <button class="text-button" type="button" (click)="reloadLocations()">
+                Reintentar ubicaciones del filtro
+              </button>
+            </p>
+          }
           <label class="archive-toggle"
             ><input type="checkbox" [checked]="showArchived()" (change)="toggleArchived()" />
             Mostrar objetos archivados</label
@@ -248,6 +275,7 @@
                       house: selectedId(),
                       search: searchControl.value,
                       filter: filter(),
+                      location: locationControl.value,
                       archived: showArchived() ? '1' : null,
                     }"
                     [attr.aria-label]="'Ver detalle de ' + item.name"
@@ -305,21 +333,21 @@
               <span class="empty-symbol" aria-hidden="true">▧</span>
               <h3>
                 {{
-                  searchControl.value || filter() !== 'all'
+                  searchControl.value || filter() !== 'all' || locationControl.value !== null
                     ? 'No encontramos coincidencias.'
                     : 'Un lugar para tus cosas.'
                 }}
               </h3>
               <p class="muted">
                 {{
-                  searchControl.value || filter() !== 'all'
+                  searchControl.value || filter() !== 'all' || locationControl.value !== null
                     ? 'Prueba con otro nombre o cambia los filtros.'
                     : 'Todavía no hay objetos visibles en esta casa.'
                 }}
               </p>
-              @if (searchControl.value || filter() !== 'all') {
+              @if (searchControl.value || filter() !== 'all' || locationControl.value !== null) {
                 <button type="button" class="button secondary" (click)="resetSearch()">
-                  Limpiar búsqueda
+                  Limpiar filtros
                 </button>
               }
             </div>
