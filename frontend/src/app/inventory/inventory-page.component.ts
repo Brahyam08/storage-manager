@@ -98,9 +98,6 @@ export class InventoryPageComponent {
       }
     }),
   );
-  readonly units = computed(() =>
-    this.visibleItems().reduce((total, item) => total + item.quantity, 0),
-  );
   readonly emptyCount = computed(
     () => this.visibleItems().filter((item) => item.outOfStock).length,
   );

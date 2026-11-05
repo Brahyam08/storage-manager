@@ -292,6 +292,7 @@
         </ul>
       }
       @if (mode() === 'edit' && item.ownerId === userId) {
+        <h3 #editTitle tabindex="-1" class="edit-form-title">Editar objeto</h3>
         <form [formGroup]="editForm" (ngSubmit)="save()">
           <fieldset class="creation-fields" [disabled]="busy()">
             <div>

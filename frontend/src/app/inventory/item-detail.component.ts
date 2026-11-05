@@ -41,6 +41,15 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   @ViewChild('actionTitle') set actionTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
     title?.nativeElement.focus();
   }
+  @ViewChild('editTitle') set editTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
+    if (!title) return;
+    const element = title.nativeElement;
+    const viewport = element.ownerDocument.defaultView;
+    if (viewport?.matchMedia?.('(max-width: 760px)').matches) {
+      element.focus({ preventScroll: true });
+      element.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  }
   readonly updated = output<InventoryItem>();
   readonly deleted = output<number>();
   private readonly api = inject(InventoryApiService);

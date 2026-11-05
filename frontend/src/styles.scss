@@ -568,7 +568,7 @@ input[readonly] {
 }
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-bottom: 38px;
 }
@@ -1400,4 +1400,8 @@ input[readonly] {
   .inventory-toolbar > select {
     font-size: max(16px, 1rem);
   }
+}
+
+.edit-form-title {
+  scroll-margin-top: 24px;
 }
