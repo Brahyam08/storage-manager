@@ -12,6 +12,7 @@ Run the app with Docker at http://localhost:8080. Follow the
 reusable items, movement history and privacy between two accounts.
 
 The demo runs locally; no public hosting or shared demo credentials are configured.
+A [closed beta profile](docs/private-beta-security.md) can disable registration and API docs; external deployment checks remain pending.
 [Mobile installation groundwork](docs/pwa-installation.md) provides a manifest and
 icons; full installation still needs HTTPS and checks on actual devices.
 

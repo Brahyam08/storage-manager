@@ -1,0 +1,23 @@
+# Use a separate Compose project, database, and JWT secret for external testing.
+# Registration is closed; provision test accounts locally before publishing.
+security:
+  registration:
+    enabled: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+spring:
+  jpa:
+    show-sql: false
+
+server:
+  forward-headers-strategy: none
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false

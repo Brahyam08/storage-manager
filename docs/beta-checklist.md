@@ -73,3 +73,7 @@ Para el relanzamiento, entrar marcando Mantener sesión en este dispositivo, cer
 la PWA por completo y abrirla de nuevo con la misma URL. Debe verificar identidad
 sin pedir contraseña mientras el token sea válido. Comprobar también caducidad de 24 h,
 Cerrar sesión, almacenamiento bloqueado y modo temporal sin la casilla marcada.
+
+La preparación del perfil cerrado y los bloqueos antes de publicar se detallan en
+[seguridad de la beta](private-beta-security.md). El perfil no publica servicios ni
+separa por sí solo los datos personales.

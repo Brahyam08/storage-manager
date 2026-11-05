@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +23,14 @@ public class AuthController {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+    @Value("${security.registration.enabled:true}")
+    private boolean registrationEnabled;
+
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+        if (!registrationEnabled) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El registro está cerrado en esta beta");
+        }
         requireBcryptLength(request.getPassword());
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(userService.register(request)));
     }
