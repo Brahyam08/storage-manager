@@ -1405,3 +1405,26 @@ input[readonly] {
 .edit-form-title {
   scroll-margin-top: 24px;
 }
+
+app-root {
+  display: block;
+}
+.app-update-notice {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--ink, #203d32);
+  color: white;
+}
+.app-update-notice p {
+  margin: 0;
+}
+.app-update-notice .button {
+  flex-shrink: 0;
+}
