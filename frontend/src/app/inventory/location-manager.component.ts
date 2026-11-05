@@ -293,7 +293,9 @@ export class LocationManagerComponent implements OnChanges {
         next: (items) => {
           this.transferring.set(null);
           this.transferReady.set(false);
-          this.notice.set(`${items.length} registros trasladados a ${destination.path}.`);
+          this.notice.set(
+            `${items.length} ${items.length === 1 ? 'objeto trasladado' : 'objetos trasladados'} a ${destination.path}.`,
+          );
           this.changed.emit();
         },
         error: (error) => {

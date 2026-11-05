@@ -19,7 +19,9 @@
       @if (item.archived) {
         <strong>Archivado</strong>
         <span>{{
-          item.individual ? 'Objeto individual' : item.quantity + ' unidades registradas'
+          item.individual
+            ? 'Objeto individual'
+            : item.quantity + (item.quantity === 1 ? ' unidad registrada' : ' unidades registradas')
         }}</span>
       } @else if (item.individual) {
         <strong>{{ item.inUseQuantity ? 'En uso' : 'Disponible' }}</strong>
@@ -273,8 +275,8 @@
           @for (entry of restocks(); track entry.id) {
             <li>
               <strong
-                >+{{ entry.quantity }} unidades · Total tras reponer:
-                {{ entry.resultingQuantity }}</strong
+                >+{{ entry.quantity }} {{ entry.quantity === 1 ? 'unidad' : 'unidades' }} · Total
+                tras reponer: {{ entry.resultingQuantity }}</strong
               >
               <span
                 >{{ entry.restockedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
@@ -407,7 +409,8 @@
                 >
               }
               <small class="field-hint"
-                >Se descontarán de las {{ item.quantity }} unidades actuales. El consumo quedará
+                >Existencias actuales: {{ item.quantity }}
+                {{ item.quantity === 1 ? 'unidad' : 'unidades' }}. El consumo quedará
                 registrado.</small
               >
             </div>
@@ -491,7 +494,9 @@
           @for (entry of history(); track entry.id) {
             <li>
               <strong
-                >{{ entry.quantity }} unidades consumidas · Quedaron
+                >{{ entry.quantity }}
+                {{ entry.quantity === 1 ? 'unidad consumida' : 'unidades consumidas' }} ·
+                {{ entry.remainingQuantity === 1 ? 'Quedó' : 'Quedaron' }}
                 {{ entry.remainingQuantity }}</strong
               ><span
                 >{{ entry.consumedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ·
