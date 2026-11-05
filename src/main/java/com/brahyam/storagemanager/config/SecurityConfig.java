@@ -82,6 +82,16 @@ public class SecurityConfig {
 
         if (browserHeadersEnabled) {
             http.headers(headers -> headers
+                    .addHeaderWriter((request, response) -> {
+                        String path = request.getServletPath();
+                        String type = response.getContentType();
+                        if (response.getStatus() == 200 && type != null
+                                && (type.startsWith("text/javascript") || type.startsWith("application/javascript") || type.startsWith("text/css"))
+                                && ("GET".equals(request.getMethod()) || "HEAD".equals(request.getMethod()))
+                                && path.matches("/(?:main|polyfills|chunk|styles)-[A-Za-z0-9_-]{6,}\\.(?:js|css)")) {
+                            response.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable");
+                        }
+                    })
                     .contentSecurityPolicy(csp -> csp.policyDirectives(
                             "default-src 'none'; script-src 'self'; style-src 'self'; " +
                             "img-src 'self' data:; font-src 'self'; connect-src 'self'; " +

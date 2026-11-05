@@ -42,6 +42,19 @@ class BetaSecurityTest {
     }
 
     @Test
+    void cachesOnlySuccessfulVersionedPublicAssets() throws Exception {
+        mvc.perform(get("/chunk-BETATEST1.js").servletPath("/chunk-BETATEST1.js"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "public, max-age=31536000, immutable"));
+        mvc.perform(get("/chunk-MISSING1.js").servletPath("/chunk-MISSING1.js"))
+                .andExpect(status().isNotFound())
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+        mvc.perform(get("/api/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+    @Test
     void closedRegistrationCannotCreateAccountsEvenWhenClientSendsAdminRole() throws Exception {
         long before = users.count();
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)

@@ -75,3 +75,15 @@ conservan cuotas globales conservadoras: login20/minuto, registro10/15minutos.
 
 [CLI oficial](https://tailscale.com/docs/reference/tailscale-cli/funnel) y
 [variantes para macOS](https://tailscale.com/docs/concepts/macos-variants).
+
+## Carga desde datos móviles
+
+El perfil beta comprime HTML, CSS y JavaScript a partir de1KB; las respuestas JSON
+privadas quedan fuera de esa compresión. Los JS/CSS públicos cuyo nombre contiene
+un hash reciben caché de un año e immutable, solo si responden200 con tipo JS/CSS.
+Errores, HTML y API conservan no-store. Al cambiar el build, cambia el nombre del
+archivo, por lo que la siguiente carga del HTML solicita la versión nueva.
+
+Medición inicial del Mac: chunk principal267843bytes sin comprimir, aproximadamente
+82910bytes con gzip. La latencia observada desde el propio Mac no reproduce la ruta
+real del iPhone en red móvil; repetir allí antes de dar por resuelta una carga lenta.
