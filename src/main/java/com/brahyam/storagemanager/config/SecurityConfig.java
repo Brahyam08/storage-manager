@@ -1,6 +1,9 @@
 package com.brahyam.storagemanager.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import jakarta.servlet.DispatcherType;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +34,9 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+
+    @Value("${security.browser-headers.enabled:false}")
+    private boolean browserHeadersEnabled;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -74,6 +80,20 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
+        if (browserHeadersEnabled) {
+            http.headers(headers -> headers
+                    .contentSecurityPolicy(csp -> csp.policyDirectives(
+                            "default-src 'none'; script-src 'self'; style-src 'self'; " +
+                            "img-src 'self' data:; font-src 'self'; connect-src 'self'; " +
+                            "manifest-src 'self'; worker-src 'none'; object-src 'none'; " +
+                            "base-uri 'none'; frame-ancestors 'none'; form-action 'self'"))
+                    .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                    .addHeaderWriter(new StaticHeadersWriter("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+                    // The HTTPS tunnel terminates TLS; do not trust client-supplied forwarded headers.
+                    // Browsers ignore HSTS over plain HTTP on the loopback preview.
+                    .httpStrictTransportSecurity(hsts -> hsts.requestMatcher(request -> true)
+                            .maxAgeInSeconds(31536000).includeSubDomains(false)));
+        }
         return http.build();
     }
 

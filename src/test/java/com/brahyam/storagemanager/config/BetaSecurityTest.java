@@ -27,6 +27,21 @@ class BetaSecurityTest {
     @Autowired private JwtService jwt;
 
     @Test
+    void browserPoliciesAlsoProtectUnauthenticatedResponses() throws Exception {
+        mvc.perform(get("/api/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("Content-Security-Policy",
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("script-src 'self'"),
+                                org.hamcrest.Matchers.containsString("style-src 'self'"),
+                                org.hamcrest.Matchers.containsString("frame-ancestors 'none'"))))
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andExpect(header().string("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+                .andExpect(header().string("Strict-Transport-Security", "max-age=31536000"))
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+    @Test
     void closedRegistrationCannotCreateAccountsEvenWhenClientSendsAdminRole() throws Exception {
         long before = users.count();
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
