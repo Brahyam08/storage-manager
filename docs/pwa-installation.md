@@ -45,10 +45,18 @@ las opciones varían según versión. No implica publicar en App Store o Google 
 
 Sin service worker, no se conserva una versión de bundles en una caché propia de
 la PWA: se usa el mecanismo HTTP habitual y se recarga para obtener la versión
-publicada. Las sesiones abiertas no se actualizan en vivo ni se recargan por la
-fuerza. No hay banner de nueva versión en esta entrega. Guardar cambios antes de
-recargar. Si añadimos worker, necesitaremos comprobar actualizaciones, bundles
-antiguos y navegación offline antes de habilitarlo.
+publicada. La app compara los nombres versionados de JS/CSS cargados con el HTML
+publicado cada60segundos mientras esté visible y al volver a la ventana. Si cambian,
+muestra «Nueva versión disponible» y un botón «Recargar web». No fuerza la recarga,
+no cambia el foco ni descarta borradores automáticamente: guardar antes de pulsar.
+Los errores de red o páginas incompletas no producen un aviso falso.
+
+Detecta entregas del frontend, incluidos estilos; una entrega exclusivamente de
+backend no cambia esta firma y normalmente no requiere recargar. La primera
+instalación de este detector requiere una recarga manual en clientes que aún no
+lo tenían. El HTML sigue no-store, aunque los archivos JS/CSS con hash tengan caché.
+Si añadimos worker, necesitaremos comprobar actualizaciones, bundles antiguos y
+navegación offline antes de habilitarlo.
 
 ## Comprobación
 

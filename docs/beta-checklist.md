@@ -77,3 +77,23 @@ Cerrar sesión, almacenamiento bloqueado y modo temporal sin la casilla marcada.
 La preparación del perfil cerrado y los bloqueos antes de publicar se detallan en
 [seguridad de la beta](private-beta-security.md). El perfil no publica servicios ni
 separa por sí solo los datos personales.
+
+## Recorrido para un tester con Android
+
+Sin teléfono Android real no dar por validados teclado, gestos ni instalación.
+La revisión de anchos en navegador comprueba el diseño, pero no sustituye el dispositivo.
+Pedir modelo del móvil, versión de Android y versión de Chrome junto al resultado.
+
+1. Abrir la beta HTTPS con datos móviles y entrar con su cuenta individual.
+2. Crear una casa, ubicación y objeto ficticios; editar un nombre largo y comprobar
+   que el teclado no tapa guardar, no aparece zoom involuntario ni scroll horizontal.
+3. Consumir unidades y retirar/devolver un reutilizable individual.
+4. Usar el menú de Chrome para añadir/instalar, si se ofrece. No asumir funcionamiento
+   offline: la app sigue necesitando conexión.
+5. Con Mantener sesión marcado, cerrar y relanzar; comprobar también Cerrar sesión.
+6. Dejar abierta la app durante una entrega posterior: ver el aviso de versión,
+   conservar un borrador sin recarga automática y recargar solo después de guardar.
+7. Enviar pasos/captura si falla. Usar exclusivamente datos ficticios.
+
+El emulador Android puede aportar comprobaciones posteriores, pero tampoco certifica
+el comportamiento de todos los teléfonos físicos. Prueba Android real: pendiente.
