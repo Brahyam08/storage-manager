@@ -2,6 +2,9 @@
 
 Inventory application with Angular and a Java REST API for managing physical items across storage locations. Built to solve a real problem: tracking where items like drone parts, batteries, controllers, and other gear are stored across multiple drawers and compartments — so you never have to tear apart a room looking for something again.
 
+Find items by name and direct location, with filters retained when returning from
+the detail page. See [inventory search](docs/inventory-search.md).
+
 ## Local demo
 
 Run the app with Docker at http://localhost:8080. Follow the

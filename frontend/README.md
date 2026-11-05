@@ -27,6 +27,7 @@ Angular 21 matches the installed Node version; consult the
   explicit consumable/reusable type.
 - Read inventory, search by name and filter private/shared/out-of-stock items.
 - Open item details, edit as owner, record consumption and view consumption history.
+- Filter by a direct location and combine it with name, type and archived items; keep filters when returning from an item.
 - Move all units to another location in the same house and inspect movement history.
 - Take reusable items for use, return them, and inspect availability and usage history.
 - Manage location names, descriptions and hierarchy; delete locations while keeping their objects as **Sin ubicación**.
