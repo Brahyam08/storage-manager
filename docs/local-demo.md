@@ -84,6 +84,11 @@ Para reproducir las comprobaciones en tu ordenador, usa `./scripts/verify_local.
 No hace push, no publica imágenes y no usa tu base para los tests de Docker.
 
 
+## Copias y recuperación
+
+Para conservar tu inventario y comprobar una recuperación sin sustituir la base
+en uso, sigue los [comandos de copias locales](local-backups.md).
+
 ## Capturas
 
 [Escritorio](images/inventory-desktop.jpg) · [Móvil](images/inventory-mobile.jpg). Ambas capturas usan cuentas e inventario ficticios.

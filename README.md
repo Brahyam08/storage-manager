@@ -124,6 +124,8 @@ Swagger is at http://localhost:8080/swagger-ui/index.html. No separate Node serv
 is needed to run this image. Both ports are bound to localhost; override
 API_PORT/DB_PORT as needed. See [packaging and routing](docs/docker-web.md).
 The storage-data volume keeps database contents across container recreation.
+Create private backups and test recovery without touching the live database:
+[local backup commands](docs/local-backups.md).
 
 To check the stack using an isolated disposable database and synthetic data:
 
