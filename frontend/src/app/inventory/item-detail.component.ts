@@ -252,7 +252,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   loadRestocks() {
-    if (this.busy()) return;
+    if (this.busy() || this.item.individual) return;
     this.mode.set('restocks');
     this.restocks.set([]);
     this.restocksLoaded.set(false);

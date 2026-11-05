@@ -93,9 +93,11 @@
           Ver consumos
         </button>
       }
-      <button class="button secondary" type="button" [disabled]="busy()" (click)="loadRestocks()">
-        Ver reposiciones
-      </button>
+      @if (!item.individual) {
+        <button class="button secondary" type="button" [disabled]="busy()" (click)="loadRestocks()">
+          Ver reposiciones
+        </button>
+      }
     </div>
   </div>
   @if (error()) {

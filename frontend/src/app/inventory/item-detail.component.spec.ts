@@ -132,6 +132,9 @@ describe('Item detail', () => {
     const component = fixture.componentInstance;
     expect(fixture.nativeElement.querySelector('.item-stock').textContent).toContain('Disponible');
     expect(fixture.nativeElement.textContent).not.toContain('Añadir unidades');
+    expect(fixture.nativeElement.textContent).not.toContain('Ver reposiciones');
+    fixture.componentInstance.loadRestocks();
+    http.expectNone('/api/items/4/restocks');
     component.open('restock');
     expect(component.mode()).toBeNull();
     component.restock();
@@ -152,6 +155,7 @@ describe('Item detail', () => {
     fixture.detectChanges();
     http.expectOne('/api/items/4/uses').flush([]);
     expect(fixture.nativeElement.textContent).toContain('Añadir unidades');
+    expect(fixture.nativeElement.textContent).toContain('Ver reposiciones');
     fixture.componentInstance.open('edit');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#edit-quantity')).not.toBeNull();
