@@ -18,6 +18,13 @@ En Docker Compose puede indicarse en el archivo de entorno de la instancia.
 - Desactiva el log SQL y la inclusión de mensajes internos, excepciones, trazas y
   errores de validación en las páginas de error de Spring Boot.
 - Mantiene desactivada la confianza en cabeceras reenviadas por clientes.
+- Aplica CSP: scripts, estilos, conexiones y manifiesto solo del mismo origen;
+  imágenes locales o `data:`; bloquea objetos, workers, bases e incrustación en iframes.
+  No permite scripts inline ni eval. La compilación no inserta CSS crítico ni
+  controladores inline para cargarlo.
+- Envía Referrer-Policy no-referrer, restringe cámara/micrófono/geolocalización y
+  añade HSTS sin includeSubDomains para la conexión HTTPS terminada por el túnel.
+  Los navegadores ignoran HSTS si la vista previa se abre por HTTP local.
 
 El perfil local normal conserva su registro. El perfil beta no cifra campos de la
 base, no crea una base separada y no habilita un túnel o acceso público por sí solo.
@@ -41,7 +48,8 @@ que quien se registra controla ese buzón.
 
 - Preparar y comprobar realmente el entorno separado y las cuentas de testers.
 - Configurar HTTPS y probarlo desde una red externa y móviles reales.
-- Añadir y validar una Content-Security-Policy compatible con el build Angular.
+- CSP aplicada y comprobada con build empaquetado: acceso, detalle, selector y
+  descarga CSV sin violaciones registradas. Repetir bajo HTTPS en iPhone.
   El token persistente sigue accesible a JavaScript del mismo origen; un XSS podría
   robarlo. Este perfil no lo convierte en una cookie HttpOnly ni en cifrado E2E.
 - Validar límites de peticiones detrás del túnel. Con la configuración actual,
@@ -56,3 +64,5 @@ almacenar información sensible real.
 
 Referencias: [autorización OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 y [cabeceras de Spring Security](https://docs.spring.io/spring-security/reference/servlet/exploits/headers.html).
+
+La guía del Mac y activación controlada está en [HTTPS con Funnel](https-funnel.md).

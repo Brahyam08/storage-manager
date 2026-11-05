@@ -73,8 +73,9 @@ La autenticación usa Bearer en Authorization. El filtro no autentica con cookie
 CSRF está deshabilitado para ese contrato actual. Cambiar a autenticación por
 cookies requerirá revisar CSRF y la configuración de cookies. Las respuestas
 privadas comprobadas y los accesos denegados incluyen Cache-Control no-store y
-X-Content-Type-Options nosniff. Falta definir CSP, HTTPS y cabeceras del servidor
-que alojará la interfaz antes de publicar.
+X-Content-Type-Options nosniff. El perfil beta añade CSP y cabeceras de navegador; véase
+[preparación de beta](private-beta-security.md). HTTPS y la comprobación externa
+requieren activar y verificar el túnel antes de publicar.
 
 ## Verificación realizada
 
