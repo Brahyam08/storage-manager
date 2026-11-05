@@ -10,3 +10,14 @@ frontend/dist
 frontend/.angular
 **/.env*
 frontend/.vscode
+
+# Local database backups
+**/*.dump
+**/*.partial
+**/backups/
+
+# Python tooling cache
+**/__pycache__/
+**/*.py[cod]
+
+**/AGENTS.md

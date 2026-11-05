@@ -45,3 +45,12 @@ build/
 !.env.example
 
 AGENTS.md
+
+# Local database backups
+*.dump
+*.partial
+backups/
+
+# Python tooling cache
+__pycache__/
+*.py[cod]
