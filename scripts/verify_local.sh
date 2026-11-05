@@ -18,4 +18,5 @@ cd "$project_root"
   npm test
   npm run build
 )
+python3 -m unittest discover -s scripts -p 'test_local_backups.py'
 python3 scripts/verify_docker.py

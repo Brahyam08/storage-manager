@@ -13,6 +13,8 @@ import urllib.error
 import urllib.request
 from urllib.parse import urljoin, urlsplit
 
+from local_backups import TABLES, BackupError, backup_database, restored_database, restored_query, verify_backup
+
 ROOT = Path(__file__).resolve().parents[1]
 
 LEGACY_SCHEMA = """
@@ -533,6 +535,39 @@ def verify():
             check(query(f"SELECT length(deleted_path) > 255 FROM locations WHERE id={long_child['id']};") == "t",
                   "Long historical path was truncated")
             print("Location deletion preserves objects, house privacy and history; rollback and unassigned operations passed", flush=True)
+
+            backup = backup_database(project, environment_file, Path(temporary) / "backups")
+            check(backup.stat().st_mode & 0o777 == 0o600, "Database backup permissions are not private")
+            fingerprints = {}
+            for table in TABLES:
+                sql = f"SELECT md5(coalesce(string_agg(row_to_json(record)::text, ',' ORDER BY id), '')) FROM {table} record;"
+                fingerprints[table] = query(sql)
+            with restored_database(backup) as restored:
+                inspection = json.loads(subprocess.check_output(["docker", "inspect", restored]))[0]
+                check(inspection["HostConfig"]["NetworkMode"] == "none", "Restoration container has network access")
+                check(not any((inspection["NetworkSettings"].get("Ports") or {}).values()), "Restoration publishes ports")
+                check(all(mount["Type"] == "tmpfs" for mount in inspection["Mounts"]), "Restoration mounted persistent data")
+                for table in TABLES:
+                    sql = f"SELECT md5(coalesce(string_agg(row_to_json(record)::text, ',' ORDER BY id), '')) FROM {table} record;"
+                    check(restored_query(restored, sql) == fingerprints[table], f"Restored {table} differs from source")
+                largest = int(restored_query(restored, "SELECT max(id) FROM locations;"))
+                new_id = restored_query(restored, "INSERT INTO locations(name) VALUES ('Restored sequence fixture') RETURNING id;").splitlines()[0]
+                check(int(new_id) > largest, "Restored identity sequence is invalid")
+            check(subprocess.run(["docker", "inspect", restored], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0,
+                  "Restoration container remains after verification")
+            check(verify_backup(backup) == len(TABLES), "Backup CLI verification did not check every table")
+            for table in TABLES:
+                sql = f"SELECT md5(coalesce(string_agg(row_to_json(record)::text, ',' ORDER BY id), '')) FROM {table} record;"
+                check(query(sql) == fingerprints[table], "Restoration changed the source database")
+            truncated = Path(temporary) / "truncated.dump"
+            truncated.write_bytes(backup.read_bytes()[:64])
+            try:
+                verify_backup(truncated)
+            except BackupError:
+                pass
+            else:
+                raise AssertionError("Truncated backup was accepted")
+            print("Private backup restored exactly: all tables, identity sequences, isolated networking and unchanged source verified", flush=True)
 
             for cycle in range(3):
                 print("Removing containers and recreating them with the same test volume", flush=True)
