@@ -43,3 +43,5 @@ build/
 # Local environment variants; retain the public template
 .env.*
 !.env.example
+
+AGENTS.md
