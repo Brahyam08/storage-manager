@@ -1,12 +1,20 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of, startWith, Subject, switchMap } from 'rxjs';
+import { catchError, finalize, of, startWith, Subject, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { InventoryItem } from '../core/models';
 import { ItemDetailComponent } from './item-detail.component';
+import { onVisibleRefresh } from '../core/visible-refresh';
 
 @Component({
   selector: 'app-item-page',
@@ -43,6 +51,9 @@ export class ItemPageComponent {
   private readonly api = inject(InventoryApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  @ViewChild(ItemDetailComponent) private detail?: ItemDetailComponent;
+  private readonly destroyRef = inject(DestroyRef);
+  private checkingUpdates = false;
   private readonly reload = new Subject<void>();
   readonly item = signal<InventoryItem | null>(null);
   readonly loading = signal(true);
@@ -63,6 +74,7 @@ export class ItemPageComponent {
   }
 
   constructor() {
+    onVisibleRefresh(() => this.checkUpdates());
     this.route.paramMap
       .pipe(
         switchMap((params) =>
@@ -93,6 +105,40 @@ export class ItemPageComponent {
         return of(null);
       }),
     );
+  }
+
+  private checkUpdates() {
+    const previous = this.item();
+    const detail = this.detail;
+    if (!previous || !detail || !detail.canRefresh() || this.loading() || this.checkingUpdates)
+      return;
+    this.checkingUpdates = true;
+    this.api
+      .item(previous.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.checkingUpdates = false;
+        }),
+      )
+      .subscribe({
+        next: (item) => {
+          if (
+            this.item() !== previous ||
+            this.detail !== detail ||
+            !detail.canRefresh() ||
+            this.loading()
+          )
+            return;
+          if (JSON.stringify(item) !== JSON.stringify(previous)) this.item.set(item);
+        },
+        error: (error) => {
+          if (this.item() === previous && [403, 404].includes(error.status)) {
+            this.item.set(null);
+            this.error.set(apiError(error));
+          }
+        },
+      });
   }
 
   load() {

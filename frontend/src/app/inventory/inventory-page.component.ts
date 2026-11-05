@@ -28,6 +28,7 @@ import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { House, InventoryItem, StorageLocation } from '../core/models';
 import { InventoryCsvExport } from './inventory-csv';
+import { onVisibleRefresh } from '../core/visible-refresh';
 
 type ItemFilter = 'unassigned' | 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
 
@@ -108,7 +109,10 @@ export class InventoryPageComponent {
     code: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(128)]],
   });
 
+  private checkingUpdates = false;
+
   constructor() {
+    onVisibleRefresh(() => this.checkUpdates());
     combineLatest([
       this.houseControl.valueChanges.pipe(
         startWith(null),
@@ -331,6 +335,51 @@ export class InventoryPageComponent {
     } catch {
       this.exportError.set('No se pudo preparar la descarga. Inténtalo de nuevo.');
     }
+  }
+
+  private checkUpdates() {
+    const houseId = this.selectedId();
+    if (
+      houseId === null ||
+      this.loadingItems() ||
+      this.checkingUpdates ||
+      this.requestedSearch() !== this.searchControl.value.trim()
+    )
+      return;
+    const previous = this.items();
+    const search = this.searchControl.value.trim();
+    const archived = this.showArchived();
+    const location = this.locationControl.value;
+    this.checkingUpdates = true;
+    this.api
+      .items(houseId, search, archived, location)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.checkingUpdates = false;
+        }),
+      )
+      .subscribe({
+        next: (items) => {
+          if (
+            this.selectedId() !== houseId ||
+            this.items() !== previous ||
+            this.loadingItems() ||
+            this.searchControl.value.trim() !== search ||
+            this.showArchived() !== archived ||
+            this.locationControl.value !== location
+          )
+            return;
+          this.itemError.set('');
+          this.items.set(items);
+        },
+        error: (error) => {
+          if (this.selectedId() === houseId && this.items() === previous && error.status === 403) {
+            this.items.set([]);
+            this.itemError.set(apiError(error));
+          }
+        },
+      });
   }
 
   reloadItems() {

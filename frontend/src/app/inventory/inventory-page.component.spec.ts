@@ -50,6 +50,18 @@ describe('House switching', () => {
     http.verify();
   });
 
+  it('updates remote results without clearing the list', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([
+      { id: 1, name: 'Antes', quantity: 1 },
+    ]);
+    const component = fixture.componentInstance;
+    window.dispatchEvent(new Event('focus'));
+    const pending = http.expectOne((request) => request.url === '/api/items');
+    expect(component.items()[0].name).toBe('Antes');
+    pending.flush([{ id: 1, name: 'Después', quantity: 2 }]);
+    expect(component.items()[0].name).toBe('Después');
+  });
+
   it('exports only the visible filtered objects and blocks stale search results', async () => {
     (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([
       { id: 1, name: 'Compartido', visibility: 'HOUSE_SHARED', quantity: 3 },

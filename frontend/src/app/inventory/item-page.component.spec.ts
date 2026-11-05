@@ -5,6 +5,8 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { BehaviorSubject } from 'rxjs';
 import { signal } from '@angular/core';
 import { AuthService } from '../core/auth.service';
+import { ItemDetailComponent } from './item-detail.component';
+import { By } from '@angular/platform-browser';
 import { ItemPageComponent } from './item-page.component';
 
 const item = {
@@ -64,6 +66,50 @@ describe('Item page navigation', () => {
   afterEach(() => {
     fixture.destroy();
     http.verify();
+  });
+
+  it('checks remote changes on return without blanking the current view', () => {
+    http.expectOne('/api/items/4').flush(item);
+    fixture.detectChanges();
+    window.dispatchEvent(new Event('focus'));
+    const request = http.expectOne('/api/items/4');
+    expect(fixture.componentInstance.item()).toEqual(item);
+    expect(fixture.componentInstance.loading()).toBe(false);
+    request.flush({ ...item, name: 'Cambio remoto' });
+    expect(fixture.componentInstance.item()?.name).toBe('Cambio remoto');
+  });
+
+  it('preserves editing started during an automatic check', () => {
+    http.expectOne('/api/items/4').flush(item);
+    fixture.detectChanges();
+    window.dispatchEvent(new Event('focus'));
+    const request = http.expectOne('/api/items/4');
+    const detail = fixture.debugElement.query(By.directive(ItemDetailComponent))
+      .componentInstance as ItemDetailComponent;
+    detail.open('edit');
+    detail.editForm.controls.name.setValue('Mi borrador');
+    request.flush({ ...item, name: 'Cambio remoto' });
+    fixture.detectChanges();
+    expect(detail.editForm.controls.name.value).toBe('Mi borrador');
+    expect(fixture.componentInstance.item()?.name).toBe('Tornillos');
+  });
+
+  it('keeps current data on transient check failures', () => {
+    http.expectOne('/api/items/4').flush(item);
+    fixture.detectChanges();
+    window.dispatchEvent(new Event('focus'));
+    http.expectOne('/api/items/4').flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(fixture.componentInstance.item()).toEqual(item);
+  });
+
+  it('does not check while editing', () => {
+    http.expectOne('/api/items/4').flush(item);
+    fixture.detectChanges();
+    const detail = fixture.debugElement.query(By.directive(ItemDetailComponent))
+      .componentInstance as ItemDetailComponent;
+    detail.open('edit');
+    window.dispatchEvent(new Event('focus'));
+    http.expectNone('/api/items/4');
   });
 
   it('loads a direct item URL and returns to the same inventory context', () => {

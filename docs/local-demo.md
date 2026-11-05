@@ -92,3 +92,16 @@ en uso, sigue los [comandos de copias locales](local-backups.md).
 ## Capturas
 
 [Escritorio](images/inventory-desktop.jpg) · [Móvil](images/inventory-mobile.jpg). Ambas capturas usan cuentas e inventario ficticios.
+
+### Changes from another device
+
+The visible inventory and an idle item detail check the server every 15 seconds and
+when the window regains focus or becomes visible. This is polling, not a live push
+connection. Hidden pages do not poll. Local saves still update immediately.
+
+Automatic checks retain the current view during the request. An open action panel,
+an ongoing item operation, or an edited withdrawal quantity pauses detail updates
+so a remote response cannot overwrite a draft. Close the panel to resume checks.
+Transient network failures retain the last results and retry on the next check;
+confirmed loss of access removes the inaccessible result. Existing manual refresh
+buttons remain available.

@@ -7,6 +7,7 @@ import {
   DestroyRef,
   Input,
   OnChanges,
+  SimpleChanges,
   inject,
   output,
   signal,
@@ -50,6 +51,12 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       element.scrollIntoView({ block: 'start', behavior: 'instant' });
     }
   }
+  @ViewChild(ItemUsePanelComponent) private usePanel?: ItemUsePanelComponent;
+
+  canRefresh() {
+    return !this.mode() && !this.busy() && !this.usePanel?.busy() && !this.usePanel?.form.dirty;
+  }
+
   readonly updated = output<InventoryItem>();
   readonly deleted = output<number>();
   private readonly api = inject(InventoryApiService);
@@ -106,7 +113,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   );
   readonly consumeForm = this.fb.nonNullable.group({ quantity: [1] });
 
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     this.selectionChanged.next();
     this.mode.set(null);
     this.error.set('');
@@ -141,7 +148,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
       Validators.pattern(/^\d+$/),
     ]);
     this.restockForm.reset({ quantity: 1 });
-    this.title?.nativeElement.focus();
+    if (changes['item']?.previousValue?.id !== this.item.id) this.title?.nativeElement.focus();
   }
 
   ngAfterViewInit() {
