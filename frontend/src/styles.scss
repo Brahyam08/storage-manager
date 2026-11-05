@@ -16,6 +16,7 @@
 }
 body {
   margin: 0;
+  touch-action: manipulation;
 }
 button,
 input,
@@ -1373,4 +1374,16 @@ input[readonly] {
 }
 .transfer-panel > .detail-actions {
   margin-top: 20px;
+}
+
+// Keep touch controls readable without automatic focus zoom on iOS.
+@media (max-width: 760px), (any-pointer: coarse) {
+  input,
+  select,
+  textarea,
+  .house-selector select,
+  .search-field input,
+  .inventory-toolbar > select {
+    font-size: max(16px, 1rem);
+  }
 }
