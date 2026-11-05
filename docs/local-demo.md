@@ -17,7 +17,7 @@ entorno al arrancarlo; cambiar de proyecto crea otro volumen y puede parecer que
 la base está vacía. No elimines volúmenes para preparar la presentación.
 
 Crea dos cuentas de prueba en dos pestañas abiertas de forma independiente. El
-token se conserva en sessionStorage por pestaña: refrescar verifica la sesión con
+token se conserva por pestaña, o entre aperturas si marcas «Mantener sesión en este dispositivo»: refrescar verifica la sesión con
 el servidor y conserva el acceso mientras siga vigente. Cerrar sesión la borra.
 No hay contraseña ni usuario de demostración incluidos en el repositorio.
 

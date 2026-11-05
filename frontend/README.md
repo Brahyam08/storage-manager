@@ -39,8 +39,10 @@ Deletion permanently removes the object and its history; active withdrawals must
 
 ## Session and privacy
 
-The JWT is kept in sessionStorage for this tab, so a reload restores the session
-only after fetching a fresh profile from the API. The profile stays in memory.
+By default the JWT stays in sessionStorage for this tab. Opting into **Mantener
+sesión en este dispositivo** stores only the token in localStorage, allowing a new
+PWA window to verify the session again. The server expiry remains 24 hours. A reload
+or relaunch always fetches a fresh profile; passwords and profiles are not persisted.
 Logout or a rejected/expired token clears the stored credential. The
 interceptor sends Bearer credentials only to relative `/api/` requests. Protected
 401 responses clear the matching session; old failures cannot clear a new login.

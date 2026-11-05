@@ -27,6 +27,7 @@ describe('Registration completion', () => {
     const http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AuthPageComponent);
     fixture.componentInstance.form.setValue({
+      remember: false,
       username: 'Alice',
       email: 'alice@example.test',
       password: 'valid-password',
@@ -56,6 +57,7 @@ describe('Recovering a stored mobile session', () => {
   };
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     sessionStorage.setItem('storage-manager.session', 'saved-token');
     TestBed.configureTestingModule({
       imports: [AuthPageComponent],
@@ -76,6 +78,7 @@ describe('Recovering a stored mobile session', () => {
     fixture = undefined;
     http.verify();
     sessionStorage.clear();
+    localStorage.clear();
   });
   function create(returnTo = '/objetos/4?house=1') {
     route.snapshot.queryParamMap = convertToParamMap({ returnTo });

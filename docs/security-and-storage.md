@@ -8,39 +8,35 @@ sus límites; no es una auditoría integral ni una garantía de ausencia de fall
 La interfaz Angular llama a la API Java y esta guarda el inventario en PostgreSQL.
 En el entorno local, PostgreSQL corre en Docker en el ordenador del usuario y
 conserva sus datos en un volumen. No se guarda el inventario en localStorage ni
-IndexedDB. El JWT se conserva en sessionStorage de la pestaña para sobrevivir a
-recargas; el perfil se mantiene en memoria y se vuelve a consultar a la API antes
-de permitir acceso al inventario tras una recarga. No se guarda la contraseña.
-Cerrar sesión o recibir un 401 para el token actual borra el acceso almacenado.
-La caducidad del servidor no se amplía al recargar. Si el navegador bloquea el
-almacenamiento, el acceso funciona solo en memoria.
+IndexedDB. El perfil se mantiene en memoria y se verifica con la API antes de abrir
+el inventario después de recargar o relanzar la app. No se guarda la contraseña.
 
-sessionStorage es accesible al JavaScript del mismo origen: no protege el token
-ante una vulnerabilidad XSS. No equivale a una cookie HttpOnly. El navegador
-puede restaurar pestañas o copiar su sesión al duplicarlas; en equipos compartidos
-hay que usar Cerrar sesión. Una sesión con cookies HttpOnly requeriría adaptar
-el backend y la protección CSRF; queda como mejora independiente.
+Por defecto el token JWT se guarda en sessionStorage de la pestaña. Si marcas
+**Mantener sesión en este dispositivo** al entrar, se guarda solo ese token en
+localStorage para poder recuperar la sesión al cerrar y volver a abrir la PWA.
+La opción es voluntaria y está desmarcada inicialmente. El servidor mantiene su
+caducidad de 24 horas: cerrar/abrir o recordar no renueva el token. Debes usar la misma
+URL (protocolo, nombre/IP y puerto); cada origen tiene su almacenamiento separado.
 
-Al restaurar una sesión, un fallo temporal de red o del servidor no equivale a
-caducidad. Si queda un token guardado, la pantalla de acceso intenta verificarlo
-y permite reintentar sin pedir contraseña. Solo un rechazo401 elimina ese token;
-el inventario no se abre hasta verificar el perfil. Si no queda sesión guardada,
-sigue siendo necesario iniciar sesión. El navegador controla la conservación de
-sessionStorage; no se garantiza persistencia al cerrar pestañas o en navegación
-privada. La causa exacta de la incidencia de Safari iPhone requiere comprobarse
-en el dispositivo: se corrigió un fallo reproducible de la app, no se verificó
-una política interna de Safari.
+Cerrar sesión o un 401 confirmado retira el token correspondiente. Un error de red
+0/5xx conserva la credencial y permite reintentar la verificación sin contraseña.
+Las respuestas de un login antiguo no pueden reactivar una sesión cerrada. Entre
+ventanas, invalidar un token viejo no borra el token nuevo que haya sustituido su
+recuerdo. Un cambio de la sesión persistida cierra la vista anterior en las ventanas
+que la usaban, sin cambiarles de cuenta silenciosamente. Las sesiones temporales de
+otras pestañas permanecen independientes.
 
-Las contraseñas se almacenan como hashes BCrypt. Nombres, descripciones, categorías,
-ubicaciones e historiales no tienen cifrado de campos implementado por la app.
-El cifrado del disco del sistema no se ha verificado y es una capa independiente.
-Los backups locales tampoco tienen cifrado propio de la aplicación; proteger el
-volumen y las copias es parte de la protección de los datos.
+sessionStorage y localStorage son accesibles al JavaScript del mismo origen:
+no protegen ante XSS ni equivalen a cookies HttpOnly. La persistencia amplía el tiempo
+durante el que una credencial puede quedar en ese dispositivo; úsala en uno de
+confianza y pulsa Cerrar sesión al dejarlo. No se guarda el perfil, la contraseña
+ni el inventario junto al token. Cookies HttpOnly requieren otro diseño de backend
+y protección CSRF; no forman parte de esta entrega.
 
-Por defecto los puertos están ligados a loopback. `API_BIND_ADDRESS` permite
-habilitar la web/API en la red local; PostgreSQL sigue en loopback y el servidor
-Angular de desarrollo no cambia. El modo LAN usa HTTP y se limita a redes de
-confianza con datos de prueba; no define un despliegue público con HTTPS.
+Si el navegador bloquea guardar el token persistente, la app intenta conservarlo
+solo en la pestaña o memoria y muestra un aviso. Si el navegador borra todos los
+datos del sitio o se usa navegación privada, puede ser necesario entrar de nuevo.
+La comprobación final del cierre y relanzamiento de PWA sigue requiriendo iPhone real.
 
 ## Qué significa Privado
 

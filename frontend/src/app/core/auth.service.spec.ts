@@ -21,6 +21,7 @@ describe('Authentication boundaries', () => {
 
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
@@ -36,6 +37,7 @@ describe('Authentication boundaries', () => {
   afterEach(() => {
     http.verify();
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   function signIn() {
@@ -47,6 +49,140 @@ describe('Authentication boundaries', () => {
     expect(me.request.headers.get('Authorization')).toBe('Bearer test-token');
     me.flush(profile);
   }
+
+  it('remembers only a verified token and restores it after the tab storage is gone', () => {
+    auth.login('alice@example.test', 'password', true).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 'remembered-token' });
+    expect(localStorage.getItem('storage-manager.session')).toBeNull();
+    http.expectOne('/api/users/me').flush(profile);
+    expect(localStorage.getItem('storage-manager.session')).toBe('remembered-token');
+    expect(sessionStorage.getItem('storage-manager.session')).toBeNull();
+    const reloaded = TestBed.runInInjectionContext(() => new AuthService());
+    expect(reloaded.user()).toBeNull();
+    expect(reloaded.token()).toBe('remembered-token');
+    reloaded.restore().subscribe();
+    http.expectOne('/api/users/me').flush(profile);
+    expect(reloaded.user()?.id).toBe(7);
+    reloaded.clear();
+    expect(localStorage.getItem('storage-manager.session')).toBeNull();
+  });
+
+  it('keeps a remembered token on a transient failure and removes it on a confirmed 401', () => {
+    auth.login('alice@example.test', 'password', true).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 'remembered-token' });
+    http.expectOne('/api/users/me').flush(profile);
+    auth.restore().subscribe();
+    http.expectOne('/api/users/me').flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(localStorage.getItem('storage-manager.session')).toBe('remembered-token');
+    auth.restore().subscribe();
+    http.expectOne('/api/users/me').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(localStorage.getItem('storage-manager.session')).toBeNull();
+    expect(auth.user()).toBeNull();
+  });
+
+  it('does not erase a newer persistent token when an older tab receives a 401', () => {
+    auth.login('alice@example.test', 'password', true).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 'older-token' });
+    http.expectOne('/api/users/me').flush(profile);
+    TestBed.inject(HttpClient)
+      .get('/api/houses')
+      .subscribe({ error: () => {} });
+    const pending = http.expectOne('/api/houses');
+    localStorage.setItem('storage-manager.session', 'newer-other-tab-token');
+    pending.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(localStorage.getItem('storage-manager.session')).toBe('newer-other-tab-token');
+    expect(auth.token()).toBeNull();
+  });
+
+  it('invalidates a remembered window on a storage change without switching its account', () => {
+    auth.login('alice@example.test', 'password', true).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 'older-token' });
+    http.expectOne('/api/users/me').flush(profile);
+    localStorage.setItem('storage-manager.session', 'newer-token');
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        storageArea: localStorage,
+        key: 'storage-manager.session',
+        oldValue: 'older-token',
+        newValue: 'newer-token',
+      }),
+    );
+    expect(auth.user()).toBeNull();
+    expect(auth.token()).toBeNull();
+    expect(localStorage.getItem('storage-manager.session')).toBe('newer-token');
+    expect(router.navigate).toHaveBeenCalledWith(['/acceso'], { queryParams: { expired: '1' } });
+  });
+
+  it('keeps a different remembered login while finishing a temporary login', () => {
+    auth.login('alice@example.test', 'password', false).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 'temporary-token' });
+    const pending = http.expectOne('/api/users/me');
+    localStorage.setItem('storage-manager.session', 'other-window-token');
+    pending.flush(profile);
+    expect(sessionStorage.getItem('storage-manager.session')).toBe('temporary-token');
+    expect(localStorage.getItem('storage-manager.session')).toBe('other-window-token');
+  });
+
+  it('synchronizes clearing all persistent storage for a remembered session', () => {
+    auth.login('alice@example.test', 'password', true).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 'remembered-token' });
+    http.expectOne('/api/users/me').flush(profile);
+    localStorage.clear();
+    window.dispatchEvent(new StorageEvent('storage', { storageArea: localStorage, key: null }));
+    expect(auth.token()).toBeNull();
+    expect(auth.user()).toBeNull();
+  });
+
+  it('keeps a temporary tab independent from persistent changes in another window', () => {
+    signIn();
+    localStorage.setItem('storage-manager.session', 'other-token');
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        storageArea: localStorage,
+        key: 'storage-manager.session',
+        newValue: 'other-token',
+      }),
+    );
+    expect(auth.token()).toBe('test-token');
+    expect(auth.user()?.id).toBe(7);
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('does not resurrect a login when logout occurs before its pending profile response', () => {
+    const signedIn = vi.fn();
+    auth.login('alice@example.test', 'password', true).subscribe(signedIn);
+    http.expectOne('/api/auth/login').flush({ token: 'candidate-token' });
+    const pending = http.expectOne('/api/users/me');
+    auth.clear();
+    pending.flush(profile);
+    expect(signedIn).not.toHaveBeenCalled();
+    expect(auth.user()).toBeNull();
+    expect(localStorage.getItem('storage-manager.session')).toBeNull();
+  });
+
+  it('does not resurrect a login response that arrives after logout', () => {
+    auth.login('alice@example.test', 'password', true).subscribe();
+    const pending = http.expectOne('/api/auth/login');
+    auth.clear();
+    pending.flush({ token: 'late-token' });
+    http.expectNone('/api/users/me');
+    expect(auth.token()).toBeNull();
+  });
+
+  it('keeps a working memory session and reports blocked storage', () => {
+    const blocked = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    try {
+      auth.login('alice@example.test', 'password', true).subscribe();
+      http.expectOne('/api/auth/login').flush({ token: 'memory-token' });
+      http.expectOne('/api/users/me').flush(profile);
+      expect(auth.token()).toBe('memory-token');
+      expect(auth.storageWarning()).not.toBe('');
+    } finally {
+      blocked.mockRestore();
+    }
+  });
 
   it('loads identity from the backend and clears it on logout', () => {
     signIn();

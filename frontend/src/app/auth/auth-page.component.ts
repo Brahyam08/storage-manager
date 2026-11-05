@@ -26,6 +26,7 @@ export class AuthPageComponent {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly form = this.fb.nonNullable.group({
+    remember: [false],
     username: [
       '',
       this.registering
@@ -96,16 +97,16 @@ export class AuthPageComponent {
     }
     this.busy.set(true);
     this.error.set('');
-    const { username, email, password } = this.form.getRawValue();
+    const { username, email, password, remember } = this.form.getRawValue();
     let accountCreated = false;
     const login = this.registering
       ? this.auth.register(username, email, password).pipe(
           tap(() => {
             accountCreated = true;
           }),
-          switchMap(() => this.auth.login(email, password)),
+          switchMap(() => this.auth.login(email, password, remember)),
         )
-      : this.auth.login(email, password);
+      : this.auth.login(email, password, remember);
     login
       .pipe(
         finalize(() => this.busy.set(false)),

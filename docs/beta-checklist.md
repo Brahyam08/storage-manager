@@ -61,3 +61,15 @@ restauración comprobadas, y límites del alojamiento gratuito. La [base PWA](pw
 instalación y actualizaciones con HTTPS y móviles reales antes de darla por terminada. No cachear respuestas privadas de API
 como parte del funcionamiento offline. El soporte de inventario sin conexión
 queda fuera de la primera beta.
+
+## Gestos y cierre de PWA — 5 noviembre 2026
+
+Los campos táctiles usan al menos 16 px y la página aplica `touch-action: manipulation`
+para mantener desplazamiento/pellizco y evitar el zoom por doble toque. El viewport
+sigue permitiendo ampliación manual. [Comportamiento documentado por WebKit](https://webkit.org/blog/5610/more-responsive-tapping-on-ios/).
+El ajuste está desplegado localmente; la comprobación iPhone del usuario sigue pendiente.
+
+Para el relanzamiento, entrar marcando Mantener sesión en este dispositivo, cerrar
+la PWA por completo y abrirla de nuevo con la misma URL. Debe verificar identidad
+sin pedir contraseña mientras el token sea válido. Comprobar también caducidad de 24 h,
+Cerrar sesión, almacenamiento bloqueado y modo temporal sin la casilla marcada.

@@ -56,7 +56,8 @@ internos FORWARD/ERROR se permiten para servir la vista fija y las respuestas de
 error, siguiendo la [configuración documentada de Spring Security](https://docs.spring.io/spring-security/reference/7.0/servlet/authorization/authorize-http-requests.html).
 No hay un forward calculado a partir de parámetros del usuario.
 
-Refrescar restaura el token de sessionStorage y verifica el perfil con la API.
+Refrescar verifica el perfil con la API usando el token temporal o el recuerdo
+voluntario del dispositivo; [reglas de sesión](security-and-storage.md).
 Cerrar sesión o recibir un rechazo por caducidad elimina ese token. El inventario
 permanece en PostgreSQL. Los bundles se generan sin mapas de
 fuente de producción y las licencias se distribuyen con la aplicación.

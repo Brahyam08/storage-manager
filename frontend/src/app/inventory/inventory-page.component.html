@@ -164,6 +164,9 @@
             (locationsUpdated)="locationsChanged()"
           />
         }
+        @if (auth.storageWarning()) {
+          <p class="error-banner" role="status">{{ auth.storageWarning() }}</p>
+        }
         @if (inventoryNotice()) {
           <p class="creation-notice" role="status">{{ inventoryNotice() }}</p>
         }

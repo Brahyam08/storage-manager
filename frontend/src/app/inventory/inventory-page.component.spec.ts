@@ -27,6 +27,7 @@ describe('House switching', () => {
           useValue: {
             user: signal({ id: 7, username: 'Alice', email: 'alice@example.test', role: 'VIEWER' }),
             clear: vi.fn(),
+            storageWarning: signal(''),
           },
         },
       ],

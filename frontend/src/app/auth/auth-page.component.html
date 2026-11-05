@@ -117,6 +117,19 @@
                   : 'Escribe tu contraseña.'
             }}</small>
           }
+          <label class="archive-toggle" for="remember-session">
+            <input
+              id="remember-session"
+              type="checkbox"
+              formControlName="remember"
+              aria-describedby="remember-help"
+            />
+            Mantener sesión en este dispositivo
+          </label>
+          <small id="remember-help" class="field-hint"
+            >Hasta 24 horas en un dispositivo de confianza. Cerrar sesión elimina el
+            recuerdo.</small
+          >
           <button class="button primary auth-submit" type="submit" [disabled]="busy()">
             {{ busy() ? 'Un momento…' : registering ? 'Crear mi cuenta' : 'Entrar a mi inventario'
             }}<span aria-hidden="true">↗</span>
