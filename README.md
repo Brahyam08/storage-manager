@@ -46,6 +46,7 @@ flowchart LR
 - JWT-based authentication; public registrations receive the VIEWER role
 - Item movement tracking with full history — every time an item is moved between locations, the system records where it came from, where it went, the quantity moved, and the timestamp
 - Search and filtering — find items by name, category, or location
+- [CSV export](docs/inventory-csv.md) of the visible inventory with active filters
 - Automatic API documentation via Swagger UI
 - Centralized error handling for API responses
 - Input validation for location and item requests
@@ -353,6 +354,6 @@ is not a complete security audit of the application, image or deployment.
 - Review account deletion lifecycle and additional administration requirements
 - Multi-location item support with quantity per location
 - Image attachments for items
-- Export inventory to CSV/PDF
+- Export inventory to PDF
 - OAuth2 login (Google)
 - Complete Angular forms for inventory, locations, consumption and history

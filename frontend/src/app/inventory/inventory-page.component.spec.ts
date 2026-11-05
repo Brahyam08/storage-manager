@@ -5,6 +5,8 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { InventoryPageComponent } from './inventory-page.component';
+import { InventoryCsvExport } from './inventory-csv';
+const csvExport = { download: vi.fn() };
 
 const houses = [
   { id: 1, name: 'First', ownerId: 7 },
@@ -21,6 +23,7 @@ describe('House switching', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: InventoryCsvExport, useValue: csvExport },
         provideRouter([]),
         {
           provide: AuthService,
@@ -42,8 +45,47 @@ describe('House switching', () => {
     http.expectOne('/api/locations?houseId=1').flush([]);
   });
   afterEach(() => {
+    csvExport.download.mockReset();
     fixture.destroy();
     http.verify();
+  });
+
+  it('exports only the visible filtered objects and blocks stale search results', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([
+      { id: 1, name: 'Compartido', visibility: 'HOUSE_SHARED', quantity: 3 },
+      { id: 2, name: 'Privado', visibility: 'PRIVATE', quantity: 1 },
+    ]);
+    const component = fixture.componentInstance;
+    component.filter.set('shared');
+    component.exportCsv();
+    expect(csvExport.download).toHaveBeenCalledExactlyOnceWith([
+      { id: 1, name: 'Compartido', visibility: 'HOUSE_SHARED', quantity: 3 },
+    ]);
+    csvExport.download.mockClear();
+    component.searchControl.setValue('nuevo');
+    component.exportCsv();
+    expect(csvExport.download).not.toHaveBeenCalled();
+    const pending = await vi.waitFor(() =>
+      http.expectOne((request) => request.url === '/api/items'),
+    );
+    component.exportCsv();
+    expect(csvExport.download).not.toHaveBeenCalled();
+    pending.flush([], { status: 503, statusText: 'Unavailable' });
+    component.exportCsv();
+    expect(csvExport.download).not.toHaveBeenCalled();
+  });
+
+  it('shows a download error without exposing data or breaking the inventory', async () => {
+    (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([
+      { id: 1, name: 'Objeto', quantity: 1 },
+    ]);
+    csvExport.download.mockImplementationOnce(() => {
+      throw new Error('browser unavailable');
+    });
+    fixture.componentInstance.exportCsv();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No se pudo preparar la descarga.');
+    expect(fixture.componentInstance.items()).toHaveLength(1);
   });
 
   it('combines a direct location with search and archived items and keeps it in detail links', async () => {

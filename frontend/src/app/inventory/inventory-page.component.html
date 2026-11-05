@@ -189,15 +189,31 @@
             <h2 id="inventory-title">
               Tu inventario <span class="count-badge">{{ visibleItems().length }}</span>
             </h2>
-            <button
-              class="button secondary"
-              type="button"
-              [disabled]="loadingItems()"
-              (click)="reloadItems()"
-            >
-              Actualizar inventario
-            </button>
+            <div class="detail-actions">
+              <button
+                class="button secondary"
+                type="button"
+                [disabled]="!canExportCsv()"
+                (click)="exportCsv()"
+              >
+                Exportar CSV
+              </button>
+              <button
+                class="button secondary"
+                type="button"
+                [disabled]="loadingItems()"
+                (click)="reloadItems()"
+              >
+                Actualizar inventario
+              </button>
+            </div>
           </div>
+          <p class="muted">
+            El CSV incluye solo los resultados visibles, también los privados que puedas ver.
+          </p>
+          @if (exportError()) {
+            <p class="error-banner" role="alert">{{ exportError() }}</p>
+          }
           <div class="inventory-toolbar">
             <div class="search-field">
               <svg viewBox="0 0 24 24" aria-hidden="true">

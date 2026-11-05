@@ -27,6 +27,7 @@ import { AuthService } from '../core/auth.service';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { House, InventoryItem, StorageLocation } from '../core/models';
+import { InventoryCsvExport } from './inventory-csv';
 
 type ItemFilter = 'unassigned' | 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
 
@@ -39,6 +40,7 @@ type ItemFilter = 'unassigned' | 'all' | 'private' | 'shared' | 'empty' | 'consu
 export class InventoryPageComponent {
   readonly auth = inject(AuthService);
   private readonly api = inject(InventoryApiService);
+  private readonly csv = inject(InventoryCsvExport);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -61,6 +63,8 @@ export class InventoryPageComponent {
   readonly houseBusy = signal(false);
   readonly error = signal('');
   readonly itemError = signal('');
+  readonly exportError = signal('');
+  private readonly requestedSearch = signal<string | null>(null);
   readonly showArchived = signal(this.route.snapshot.queryParamMap.get('archived') === '1');
   readonly managingHouses = signal(false);
   readonly invitationCode = signal('');
@@ -120,6 +124,7 @@ export class InventoryPageComponent {
             this.locationControl.disable({ emitEvent: false });
           }
           this.inventoryNotice.set('');
+          this.exportError.set('');
           this.invitationCode.set('');
           this.notice.set('');
         }),
@@ -133,6 +138,7 @@ export class InventoryPageComponent {
     ])
       .pipe(
         switchMap(([houseId, search]) => {
+          this.requestedSearch.set(search.trim());
           this.items.set([]);
           this.itemError.set('');
           this.loadingItems.set(houseId !== null);
@@ -307,6 +313,27 @@ export class InventoryPageComponent {
         },
         error: (error) => this.error.set(apiError(error)),
       });
+  }
+
+  canExportCsv(): boolean {
+    return (
+      this.selectedId() !== null &&
+      !this.loadingHouses() &&
+      !this.loadingItems() &&
+      !this.itemError() &&
+      this.visibleItems().length > 0 &&
+      this.requestedSearch() === this.searchControl.value.trim()
+    );
+  }
+
+  exportCsv() {
+    if (!this.canExportCsv()) return;
+    this.exportError.set('');
+    try {
+      this.csv.download(this.visibleItems());
+    } catch {
+      this.exportError.set('No se pudo preparar la descarga. Inténtalo de nuevo.');
+    }
   }
 
   reloadItems() {
