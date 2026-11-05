@@ -2,6 +2,7 @@ package com.brahyam.storagemanager.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.*;
 
 @Getter
@@ -44,7 +45,8 @@ public class Item {
     private ItemVisibility visibility = ItemVisibility.PRIVATE;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(20) default 'CONSUMABLE'")
+    @Column(nullable = false, length = 20)
+    @ColumnDefault("'CONSUMABLE'")
     private ItemKind kind = ItemKind.CONSUMABLE;
 
     @Column(nullable = false, columnDefinition = "boolean default false")

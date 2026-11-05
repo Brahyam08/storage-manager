@@ -101,6 +101,12 @@ def verify():
                     time.sleep(1)
             raise AssertionError("API did not become ready: " + last_error)
 
+        def verify_schema_startup():
+            logs = command("logs", "--no-color", "app", capture=True)
+            check("Error executing DDL" not in logs, "Hibernate schema update generated invalid DDL")
+            check("CommandAcceptanceException" not in logs, "Hibernate schema update rejected a command")
+            print("Hibernate schema startup completed without DDL errors", flush=True)
+
         def verify_web():
             with urllib.request.urlopen(url + "/", timeout=30) as response:
                 index = response.read()
@@ -168,6 +174,7 @@ def verify():
             command("up", "-d", "--build", "app")
             url = base_url()
             wait_for_api()
+            verify_schema_startup()
             preserved_legacy_data()
             verify_web()
             _, schema = api("GET", "/v3/api-docs")
@@ -533,6 +540,7 @@ def verify():
                 command("up", "-d", "--wait")
                 url = base_url()
                 wait_for_api()
+                verify_schema_startup()
                 verify_web()
                 _, login = api("POST", "/api/auth/login", body={"email": "owner@example.invalid", "password": password})
                 owner = login["token"]
