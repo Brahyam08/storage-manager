@@ -1,107 +1,84 @@
-# Demo local para una entrevista
+# Demostración de Storage Manager
 
-La demo se ejecuta en el ordenador con Docker. No necesita contratar alojamiento.
-La web y la API están en http://localhost:8080. Los datos persisten en PostgreSQL.
-Las capturas del repositorio usan datos ficticios, no una cuenta compartida.
+Recorrido reproducible de aproximadamente cinco minutos con datos ficticios.
+Permite comprobar búsqueda, consumo, uso de reutilizables, movimientos y privacidad
+entre cuentas. No requiere ejecutar toda la suite de tests durante la demostración.
 
 ## Preparación
 
-En una copia nueva, configura `.env` desde `.env.example` y arranca:
+En una copia nueva, configura `.env` desde `.env.example` con secretos propios y ejecuta:
 
 ```bash
 docker compose up -d --build
 ```
 
-Si ya tienes un proyecto Compose con datos, usa su mismo nombre y archivo de
-entorno al arrancarlo; cambiar de proyecto crea otro volumen y puede parecer que
-la base está vacía. No elimines volúmenes para preparar la presentación.
+Abre http://localhost:8080. Para una instancia existente conserva su nombre de
+proyecto Compose y archivo de entorno; no elimines volúmenes para preparar datos.
+En el perfil local normal puedes registrar cuentas. La beta HTTPS tiene el
+registro cerrado y requiere cuentas de prueba provisionadas previamente.
 
-Crea dos cuentas de prueba en dos pestañas abiertas de forma independiente. El
-token se conserva por pestaña, o entre aperturas si marcas «Mantener sesión en este dispositivo»: refrescar verifica la sesión con
-el servidor y conserva el acceso mientras siga vigente. Cerrar sesión la borra.
-No hay contraseña ni usuario de demostración incluidos en el repositorio.
+Prepara dos sesiones independientes, por ejemplo una ventana normal y otra privada,
+sin marcar Mantener sesión. La segunda cuenta debe estar unida por invitación a la
+misma casa ficticia «Casa demo». No compartas contraseñas, tokens ni archivos de entorno.
 
-Con la primera cuenta crea una casa, una ubicación Estudio y un Cajón dentro.
-Añade estos ejemplos en el cajón:
+Crea las ubicaciones «Estudio → Cajón 1» y «Estantería 1». En el cajón añade:
 
-| Objeto | Tipo | Cantidad | Visibilidad |
-| --- | --- | --- | --- |
-| Tornillos M3 | Consumible | 10 | Compartido |
-| Ratón de repuesto | Reutilizable | 1 | Privado |
-| Arandelas M4 | Consumible | 0 | Compartido |
+| Objeto            | Tipo y formato                     | Cantidad inicial | Visibilidad            |
+| ----------------- | ---------------------------------- | ---------------- | ---------------------- |
+| Tornillos M3      | Consumible                         | 10               | Compartido con la casa |
+| Ratón de repuesto | Reutilizable, Un objeto individual | 1                | Privado                |
+| Arandelas M4      | Consumible                         | 0                | Compartido con la casa |
 
-Genera una invitación y une la segunda cuenta a la casa. Prepara otra ubicación
-para el traslado. Si ensayas varias veces, usa objetos nuevos o registra las
-cantidades resultantes; la demo modifica los datos de prueba y conserva historial.
+El ratón debe estar disponible. El recorrido modifica datos y conserva historial;
+para repetirlo, usa nuevos objetos ficticios o repón las cantidades antes de empezar.
 
-## Recorrido de cinco minutos
+## Recorrido
 
-| Tiempo | Qué mostrar | Qué explicar |
-| --- | --- | --- |
-| 0:00–0:40 | Casa y ruta Estudio → Cajón | El problema es encontrar objetos físicos y saber dónde se guardan. |
-| 0:40–1:20 | Buscar Tornillos y filtrar agotados | Un consumible conserva su registro incluso con cantidad cero. |
-| 1:20–2:00 | Gastar 5 de 10 y abrir consumos | Quedan 5; se guarda actor, cantidad, fecha y ubicación sin mover el objeto. |
-| 2:00–2:50 | Retirar y devolver el ratón | El total sigue siendo 1; cambian disponibles/en uso. No se gasta un reutilizable. |
-| 2:50–3:30 | Mover los tornillos y ver movimientos | Se traslada la cantidad completa dentro de la casa y se registra origen/destino. |
-| 3:30–4:15 | Segunda pestaña como otro miembro | Ve lo compartido, pero no el ratón privado de la primera cuenta. |
-| 4:15–5:00 | Tests y decisiones técnicas | Backend autoritativo, transacciones, límites conocidos y siguiente mejora. |
+| Tiempo aproximado | Acción                                                          | Resultado esperado                                                                 |
+| ----------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 0:00–0:35         | Abrir Casa demo y sus ubicaciones                               | Se distingue la jerarquía Estudio → Cajón 1.                                       |
+| 0:35–1:15         | Buscar Tornillos M3, limpiar búsqueda y filtrar agotados        | Aparecen las arandelas con cantidad cero. Limpiar el filtro antes de seguir.       |
+| 1:15–2:00         | Abrir los tornillos, registrar consumo de 5 y ver consumos      | Quedan 5 unidades y se conserva el registro del consumo.                           |
+| 2:00–2:45         | Volver al inventario sin filtros, retirar el ratón y devolverlo | Cambia disponible/en uso; el objeto no se consume y no pide cantidad.              |
+| 2:45–3:20         | Mover los tornillos a Estantería 1 y ver movimientos            | Se trasladan las 5 unidades restantes y aparece origen/destino en el historial.    |
+| 3:20–4:05         | Abrir la misma casa con la segunda cuenta                       | Puede encontrar los tornillos compartidos, pero no el ratón privado.               |
+| 4:05–5:00         | Consultar arquitectura, pruebas y límites en el README          | La documentación permite relacionar cada operación con el backend y su validación. |
 
-Puedes enseñar una cancelación de borrado para explicar la confirmación del
-borrado permanente y su diferencia con archivar. Usa solo registros que puedas eliminar si decides
-confirmar. Las ubicaciones de la casa son compartidas; sus nombres no son secretos.
+Los permisos se aplican en el servidor, incluidas búsquedas y accesos por ID.
+Las ubicaciones y sus nombres se comparten dentro de la casa. Consultar el
+[contrato de privacidad](item-privacy.md) para las reglas completas.
 
-## Cómo explicar el código
+## Otros recorridos disponibles
 
-No memorices una lista de tecnologías. Sigue una petición concreta:
+- Añadir unidades y consultar el historial de reposiciones.
+- Archivar y restaurar un objeto; el borrado permanente también elimina su historial.
+- Eliminar una ubicación y comprobar que sus objetos permanecen como Sin ubicación.
+- Exportar los resultados visibles a CSV; no sustituye una copia de la base.
+- Modificar un objeto desde otra sesión: las vistas visibles comprueban cambios
+  cada 15 segundos. Una acción abierta o un borrador pausa la actualización del detalle.
+- Publicar una nueva versión del frontend: aparece un aviso con recarga voluntaria.
+  No hay recarga forzada de formularios ni conexión WebSocket.
 
-1. Formulario Angular valida una cantidad y llama al servicio HTTP.
-2. El interceptor añade Bearer a `/api/`; el servidor valida el JWT.
-3. El servicio Java comprueba acceso y ejecuta la operación en una transacción.
-4. PostgreSQL guarda el cambio y su historial. La respuesta actualiza la interfaz.
+## Comprobaciones y alternativas
 
-Preguntas para practicar con tus propias palabras:
+La verificación completa se ejecuta con `./scripts/verify_local.sh`, en una sesión
+separada. Utiliza Docker desechable para las pruebas y no hace push ni publica imágenes.
+[Instrucciones de verificación](verification.md).
 
-- ¿Por qué el guard Angular no sustituye los permisos de la API?
-- ¿Por qué mover y consumir son operaciones distintas de editar detalles?
-- ¿Cómo evitas que dos retiradas gasten la misma disponibilidad? ¿Qué coste tiene
-  bloquear las operaciones de una casa mientras se actualiza su inventario?
-- ¿Qué pasa si falla guardar el historial o si se repite una devolución?
-- ¿Qué ocurre si el servidor acepta una retirada pero falla la lectura posterior?
-- ¿Quién puede leer un objeto privado y quién puede leer directamente la base?
-- ¿Por qué la API envía las fechas con zona UTC?
-- ¿Qué mejorarías con muchos objetos: paginación y consultas agregadas de usos?
+Si el túnel no está disponible, usar la instancia local o las capturas. Si los datos
+no están preparados, el recorrido puede consultarse con imágenes y código sin
+modificar inventario real. No borrar volúmenes para resolver un fallo de acceso.
 
-## Límites que conviene explicar
+[Captura de escritorio](images/inventory-desktop.jpg) ·
+[Captura móvil](images/inventory-mobile.jpg). Ambas contienen datos ficticios.
 
-La demo actual usa Angular, Java y PostgreSQL locales. El inventario no tiene
-cifrado de campos frente a administradores de la base o copias legibles. La app
-instalable con almacenamiento local cifrado, sincronización, cambios de identidad
-visual y ejercicios de mantenimiento se han pospuesto. No se han introducido fallos
-intencionales en la rama principal. Revisa [privacidad](security-and-storage.md),
-[uso/devolución](reusable-usage.md) y [fechas](history-timestamps.md).
+## Límites
 
-Para reproducir las comprobaciones en tu ordenador, usa `./scripts/verify_local.sh`.
-No hace push, no publica imágenes y no usa tu base para los tests de Docker.
+Se necesita conexión. El operador de la base y los backups legibles quedan fuera
+del aislamiento entre usuarios de la API: no hay cifrado de extremo a extremo.
+La beta depende de que el Mac, Docker y el túnel estén activos. La validación en
+Android físico sigue pendiente.
 
-
-## Copias y recuperación
-
-Para conservar tu inventario y comprobar una recuperación sin sustituir la base
-en uso, sigue los [comandos de copias locales](local-backups.md).
-
-## Capturas
-
-[Escritorio](images/inventory-desktop.jpg) · [Móvil](images/inventory-mobile.jpg). Ambas capturas usan cuentas e inventario ficticios.
-
-### Changes from another device
-
-The visible inventory and an idle item detail check the server every 15 seconds and
-when the window regains focus or becomes visible. This is polling, not a live push
-connection. Hidden pages do not poll. Local saves still update immediately.
-
-Automatic checks retain the current view during the request. An open action panel,
-an ongoing item operation, or an edited withdrawal quantity pauses detail updates
-so a remote response cannot overwrite a draft. Close the panel to resume checks.
-Transient network failures retain the last results and retry on the next check;
-confirmed loss of access removes the inaccessible result. Existing manual refresh
-buttons remain available.
+[Seguridad y almacenamiento](security-and-storage.md) ·
+[Copias y recuperación](local-backups.md) ·
+[Recorrido Android para testers](beta-checklist.md#recorrido-para-un-tester-con-android).

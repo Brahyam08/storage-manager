@@ -16,7 +16,7 @@ reported issues and validating the main workflows, rather than adding features.
 
 ## Try it
 
-- **Interview walkthrough:** [five-minute demo and Spanish speaking script](docs/local-demo.md).
+- **Demo walkthrough:** [reproducible five-minute demo](docs/local-demo.md).
 - **Shared beta:** HTTPS access is available on request with individual test accounts.
   It runs on the developer's Mac through Tailscale Funnel, so availability depends
   on the Mac, Docker and connection. Public registration is closed; no credentials

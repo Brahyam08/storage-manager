@@ -21,3 +21,6 @@ frontend/.vscode
 **/*.py[cod]
 
 **/AGENTS.md
+
+# Personal interview preparation (local only)
+/INTERVIEW-NOTES.local.md

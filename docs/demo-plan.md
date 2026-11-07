@@ -1,46 +1,39 @@
-# Plan para una demo de portfolio
+# Alcance del MVP y siguiente etapa
 
-Objetivo: completar el recorrido útil antes del 21 de noviembre de 2026,
-reservando margen para corregir problemas y ensayar la entrevista.
-No es una garantía de contratación. Las candidaturas pueden avanzar en paralelo.
+Estado revisado el 7 de noviembre de 2026. El MVP de Storage Manager está funcional
+y disponible como beta HTTPS con cuentas individuales. La siguiente etapa consiste
+en recoger feedback, corregir fallos y presentarlo en entrevistas.
 
-## Entregas pequeñas, por orden
+## Dentro del MVP
 
-1. Casas, miembros e invitaciones: implementadas y con tests H2.
-2. Ubicaciones por casa, jerarquía y ruta completa: implementadas y con tests H2.
-3. Objetos privados/compartidos y acceso por casa: implementados con pruebas de
-   búsqueda, ID, edición, movimiento e historial; rollback y concurrencia en H2.
-4. Angular: registro/login, casas e invitaciones y consulta de inventario con
-   búsqueda, filtros y diseño móvil implementados. Creación de ubicaciones anidadas
-   y objetos con cantidad/visibilidad implementada. Edición por propietario, consumo
-   e historial de consumos implementados. Tipos consumible/reutilizable explícitos,
-   con consumo bloqueado para reutilizables. Movimiento completo e historial de
-   movimientos, uso/devolución de reutilizables, borrado de objetos y edición/borrado
-   de ubicaciones implementados. Empaquetado web/API Docker implementado y verificado. La demo se mantendrá local y sin contratar alojamiento, por decisión del usuario. Ver frontend/README.md.
-5. Docker/PostgreSQL: verificados con datos sintéticos, concurrencia, rollback y
-   persistencia tras recrear contenedores. Preparación de datos de presentación y revisión del recorrido local. Registro/login, errores genéricos y cuotas básicas por dirección ya verificados.
-   Dependencias Maven y recursos HTTP de Swagger revisados; ver dependency-review.md.
-6. README de portfolio y guion local en local-demo.md; verificaciones locales y
-   workflow remoto manual opcional en verification.md. Capturas con datos ficticios.
+Autenticación, casas e invitaciones, ubicaciones anidadas, inventario privado o
+compartido, consumos, reposiciones, uso y devolución de reutilizables, movimientos,
+archivo/restauración, borrado y exportación CSV. Interfaz Angular adaptable,
+PostgreSQL persistente, copias verificadas y beta separada del inventario personal.
 
-## Distribución orientativa del tiempo
+Las actualizaciones de datos se consultan periódicamente. Las nuevas versiones del
+frontend ofrecen recarga voluntaria. PWA sin inventario offline; validación en
+Android físico todavía pendiente.
 
-- 3–6 de noviembre: backend doméstico y permisos.
-- 7–12 de noviembre: recorrido Angular completo.
-- 13–16 de noviembre: integración, PostgreSQL/Docker y correcciones.
-- 17–20 de noviembre: documentación, demo, accesibilidad básica y ensayo.
+## Prioridad ahora
 
-Quedan fuera de esta versión OAuth, planos, fotos, cantidades repartidas entre
-ubicaciones y permisos privados por persona. Verificar PostgreSQL, autenticación, errores y despliegue antes de publicar
-una demo con datos reales. Se permiten staging y commits revisados; el push queda a cargo del usuario.
+1. Corregir errores reproducibles que bloqueen recorridos, pierdan datos o rompan permisos.
+2. Recoger feedback de una primera ronda pequeña, incluyendo una persona con Android.
+3. Revisar el [recorrido de cinco minutos](local-demo.md) y explicar una petición de extremo a extremo.
+4. Mantener el README y las instrucciones reproducibles para revisión técnica.
+5. Utilizar el proyecto en candidaturas mientras continúa la beta.
 
-Cada entrega termina con pruebas pertinentes y un diff revisable, conservando los
-cambios previos. Se prioriza código sencillo que el autor pueda explicar.
+No añadir funciones solo para ampliar la lista de tecnologías. Clasificar cada
+propuesta como fallo del MVP, mejora pequeña de uso o backlog, antes de implementarla.
 
-## Práctica de mantenimiento acordada
+## Backlog fuera del MVP
 
-Tras terminar y desplegar una versión estable se prepararán ejercicios de fallos
-realistas en una rama separada. Cada ejercicio tendrá síntoma y comportamiento
-esperado; el usuario investigará y escribirá una prueba, con pistas progresivas si
-las necesita. No introducir fallos intencionales en la demo ni debilitar autenticación
-o privacidad. No se ha creado aún ninguna rama ni ejercicio.
+Fotos, cantidades repartidas entre ubicaciones, exportación PDF, OAuth y una rama
+experimental de microservicios. Paginación y cambios de concurrencia se evaluarán
+con medidas y volumen de uso. La beta no ofrece disponibilidad ni protección DDoS
+garantizadas; el alcance de seguridad se describe en [sus límites](security-and-storage.md).
+
+## Práctica de mantenimiento
+
+Los ejercicios con fallos deliberados quedan para una rama aislada posterior.
+No se introducen fallos intencionales en main ni en la beta de testers.
