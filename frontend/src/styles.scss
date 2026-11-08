@@ -1428,3 +1428,18 @@ app-root {
 .app-update-notice .button {
   flex-shrink: 0;
 }
+
+.house-rename-form {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.house-rename-form .creation-fields {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 640px;
+}
+.invitation-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

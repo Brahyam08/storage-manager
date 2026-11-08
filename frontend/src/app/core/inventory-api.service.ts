@@ -24,6 +24,10 @@ export class InventoryApiService {
     return this.http.post<House>('/api/houses', { name: name.trim() });
   }
 
+  renameHouse(id: number, name: string) {
+    return this.http.put<House>(`/api/houses/${id}`, { name: name.trim() });
+  }
+
   joinHouse(code: string) {
     return this.http.post<House>('/api/houses/join', { code: code.trim() });
   }

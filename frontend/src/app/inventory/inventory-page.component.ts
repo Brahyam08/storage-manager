@@ -105,6 +105,12 @@ export class InventoryPageComponent {
   readonly createForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
   });
+  readonly renamingHouse = signal<number | null>(null);
+  readonly renameError = signal('');
+  readonly renameNotice = signal('');
+  readonly renameForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
+  });
   readonly joinForm = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(128)]],
   });
@@ -118,6 +124,8 @@ export class InventoryPageComponent {
         startWith(null),
         tap((houseId) => {
           if (houseId !== this.currentHouseId) {
+            this.cancelHouseRename();
+            this.renameNotice.set('');
             if (this.currentHouseId !== null)
               this.locationControl.setValue(null, { emitEvent: false });
             this.currentHouseId = houseId;
@@ -240,6 +248,59 @@ export class InventoryPageComponent {
           this.error.set(apiError(error));
           this.loadingHouses.set(false);
           if (this.houses().length) this.houseControl.enable({ emitEvent: false });
+        },
+      });
+  }
+
+  beginHouseRename() {
+    const house = this.selectedHouse();
+    if (!house || house.ownerId !== this.auth.user()?.id || this.houseBusy()) return;
+    this.renameForm.reset({ name: house.name });
+    this.renameError.set('');
+    this.renameNotice.set('');
+    this.renamingHouse.set(house.id);
+  }
+
+  cancelHouseRename() {
+    this.renamingHouse.set(null);
+    this.renameError.set('');
+    this.renameForm.reset();
+  }
+
+  renameHouse() {
+    const house = this.selectedHouse();
+    if (
+      !house ||
+      this.renamingHouse() !== house.id ||
+      house.ownerId !== this.auth.user()?.id ||
+      this.houseBusy()
+    )
+      return;
+    if (this.renameForm.invalid) {
+      this.renameForm.markAllAsTouched();
+      return;
+    }
+    this.houseBusy.set(true);
+    this.renameError.set('');
+    this.api
+      .renameHouse(house.id, this.renameForm.controls.name.value)
+      .pipe(
+        finalize(() => this.houseBusy.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.houses.update((houses) =>
+            houses.map((current) => (current.id === house.id ? updated : current)),
+          );
+          if (this.selectedId() === house.id && this.renamingHouse() === house.id) {
+            this.cancelHouseRename();
+            this.renameNotice.set('Nombre de la casa actualizado.');
+          }
+        },
+        error: (error) => {
+          if (this.selectedId() === house.id && this.renamingHouse() === house.id)
+            this.renameError.set(apiError(error));
         },
       });
   }

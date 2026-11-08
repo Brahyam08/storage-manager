@@ -18,8 +18,15 @@ beta and available locally at `/swagger-ui/index.html`.
 | POST   | `/api/houses`                 | Create a house: `{"name":"Casa Valencia"}`                   |
 | GET    | `/api/houses`                 | List houses created by or shared with the authenticated user |
 | GET    | `/api/houses/{id}`            | Read a house as its creator or member                        |
+| PUT    | `/api/houses/{id}`            | Owner renames the house with `{"name":"New name"}`           |
 | POST   | `/api/houses/{id}/invitation` | Creator generates or renews the invitation code              |
 | POST   | `/api/houses/join`            | Join using `{"code":"..."}`                                  |
+
+House names must be nonblank and at most 255 characters. The creator can rename a
+house from Casas e invitaciones; members and unrelated accounts, including global
+ADMIN accounts, cannot rename it. Renaming preserves its ID, owner, members,
+invitations and inventory. Existing sessions on other devices see the new name
+when their house list is reloaded.
 
 The owner is taken from the authenticated account, never from the request body.
 Creation returns `201`, a `Location` header and `{id, name, ownerId}`.

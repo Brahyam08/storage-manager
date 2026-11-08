@@ -131,6 +131,16 @@
             </div>
             @if (house.ownerId === auth.user()?.id) {
               <div class="invitation-controls">
+                @if (renamingHouse() !== house.id) {
+                  <button
+                    class="button secondary"
+                    type="button"
+                    [disabled]="houseBusy()"
+                    (click)="beginHouseRename()"
+                  >
+                    Cambiar nombre
+                  </button>
+                }
                 <button
                   type="button"
                   class="button secondary"
@@ -140,6 +150,31 @@
                   Generar / renovar invitación</button
                 ><small class="field-hint">Un código nuevo sustituye al anterior.</small>
               </div>
+            }
+            @if (renamingHouse() === house.id && house.ownerId === auth.user()?.id) {
+              <form class="house-rename-form" [formGroup]="renameForm" (ngSubmit)="renameHouse()">
+                <fieldset class="creation-fields" [disabled]="houseBusy()">
+                  <div>
+                    <label for="rename-house-name">Nuevo nombre de la casa</label>
+                    <input id="rename-house-name" formControlName="name" maxlength="255" />
+                    @if (renameForm.controls.name.touched && renameForm.controls.name.invalid) {
+                      <small class="field-error">Escribe un nombre de hasta 255 caracteres.</small>
+                    }
+                  </div>
+                  <div class="detail-actions">
+                    <button class="button primary" type="submit">Guardar nombre</button>
+                    <button class="button secondary" type="button" (click)="cancelHouseRename()">
+                      Cancelar
+                    </button>
+                  </div>
+                </fieldset>
+                @if (renameError()) {
+                  <p class="error-banner" role="alert">{{ renameError() }}</p>
+                }
+              </form>
+            }
+            @if (renameNotice()) {
+              <p class="creation-notice" role="status">{{ renameNotice() }}</p>
             }
             @if (invitationCode()) {
               <div class="invitation-result">

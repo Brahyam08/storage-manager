@@ -50,6 +50,73 @@ describe('House switching', () => {
     http.verify();
   });
 
+  it('renames the owned house and updates its heading and selector without changing selection', async () => {
+    (await vi.waitFor(() => http.expectOne((r) => r.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.managingHouses.set(true);
+    component.beginHouseRename();
+    component.renameForm.controls.name.setValue('  Mi nueva casa  ');
+    component.renameHouse();
+    component.renameHouse();
+    const request = http.expectOne('/api/houses/1');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ name: 'Mi nueva casa' });
+    request.flush({ ...houses[0], name: 'Mi nueva casa' });
+    fixture.detectChanges();
+    expect(component.selectedId()).toBe(1);
+    expect(component.selectedHouse()?.name).toBe('Mi nueva casa');
+    expect(fixture.nativeElement.querySelector('#house').textContent).toContain('Mi nueva casa');
+    expect(fixture.nativeElement.querySelector('.current-house h2').textContent).toContain(
+      'Mi nueva casa',
+    );
+    expect(component.renamingHouse()).toBeNull();
+  });
+
+  it('cancels renaming without sending a request and rejects blank names', async () => {
+    (await vi.waitFor(() => http.expectOne((r) => r.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.beginHouseRename();
+    component.renameForm.controls.name.setValue('   ');
+    component.renameHouse();
+    http.expectNone('/api/houses/1');
+    expect(component.renameForm.controls.name.touched).toBe(true);
+    component.cancelHouseRename();
+    expect(component.selectedHouse()?.name).toBe('First');
+    expect(component.renamingHouse()).toBeNull();
+  });
+
+  it('offers no rename action to members', async () => {
+    (await vi.waitFor(() => http.expectOne((r) => r.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.houses.set([{ ...houses[0], ownerId: 99 }, houses[1]]);
+    component.managingHouses.set(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Cambiar nombre');
+    component.beginHouseRename();
+    expect(component.renamingHouse()).toBeNull();
+    component.renameHouse();
+    http.expectNone('/api/houses/1');
+  });
+
+  it('keeps a late rename response associated with its original house', async () => {
+    (await vi.waitFor(() => http.expectOne((r) => r.url === '/api/items'))).flush([]);
+    const component = fixture.componentInstance;
+    component.beginHouseRename();
+    component.renameForm.controls.name.setValue('Renamed first');
+    component.renameHouse();
+    const pending = http.expectOne('/api/houses/1');
+    component.houseControl.setValue(2);
+    http.expectOne('/api/locations?houseId=2&includeArchived=true').flush([]);
+    http.expectOne((r) => r.url === '/api/items').flush([]);
+    fixture.detectChanges();
+    http.expectOne('/api/locations?houseId=2').flush([]);
+    pending.flush({ ...houses[0], name: 'Renamed first' });
+    expect(component.selectedHouse()?.name).toBe('Second');
+    expect(component.renameNotice()).toBe('');
+    expect(component.renamingHouse()).toBeNull();
+    expect(component.houses()[0].name).toBe('Renamed first');
+  });
+
   it('updates remote results without clearing the list', async () => {
     (await vi.waitFor(() => http.expectOne((request) => request.url === '/api/items'))).flush([
       { id: 1, name: 'Antes', quantity: 1 },
