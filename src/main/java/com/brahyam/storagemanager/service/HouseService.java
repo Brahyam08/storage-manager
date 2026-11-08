@@ -27,6 +27,17 @@ public class HouseService {
         return houseRepository.save(house);
     }
 
+    @Transactional
+    public House rename(Long id, String name, User user) {
+        House house = houseRepository.findOwnedForUpdate(id, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Casa no encontrada"));
+        if (name == null || name.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre es obligatorio");
+        }
+        house.setName(name.strip());
+        return house;
+    }
+
     public House findById(Long id, User user) {
         return houseRepository.findAccessibleById(id, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(

@@ -43,6 +43,60 @@ class HouseControllerTest {
     }
 
     @Test
+    void shouldRenameOwnedHouseWithoutChangingOwnershipMembershipOrInvitation() throws Exception {
+        House house = houses.saveAndFlush(new House(null, "Original", owner));
+        String code = invitationCode(house.getId());
+        mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + code + "\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(put("/api/houses/{id}", house.getId()).header("Authorization", ownerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"  Nuevo nombre  \",\"ownerId\":" + other.getId() + "}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(house.getId()))
+                .andExpect(jsonPath("$.name").value("Nuevo nombre"))
+                .andExpect(jsonPath("$.ownerId").value(owner.getId()));
+        mvc.perform(get("/api/houses/{id}", house.getId()).header("Authorization", otherToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Nuevo nombre"));
+        mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + code + "\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(house.getId()));
+        assertEquals(owner.getId(), houses.findById(house.getId()).orElseThrow().getOwner().getId());
+    }
+
+    @Test
+    void shouldDenyRenameToAnonymousOutsiderAndMemberEvenWithAdminRole() throws Exception {
+        House house = houses.saveAndFlush(new House(null, "Original", owner));
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mvc.perform(put("/api/houses/{id}", house.getId()).header("Authorization", otherToken)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"No permitido\"}"))
+                    .andExpect(status().isNotFound());
+            if (attempt == 0) mvc.perform(post("/api/houses/join").header("Authorization", otherToken)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + invitationCode(house.getId()) + "\"}"))
+                    .andExpect(status().isOk());
+        }
+        mvc.perform(put("/api/houses/{id}", house.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"No permitido\"}")).andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/houses/{id}", Long.MAX_VALUE).header("Authorization", ownerToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"No existe\"}"))
+                .andExpect(status().isNotFound());
+        assertEquals("Original", houses.findById(house.getId()).orElseThrow().getName());
+    }
+
+    @Test
+    void shouldValidateRenameWithoutChangingTheExistingName() throws Exception {
+        House house = houses.saveAndFlush(new House(null, "Original", owner));
+        for (String body : new String[]{"{}", "{\"name\":null}", "{\"name\":\"\"}",
+                "{\"name\":\"   \"}", "{\"name\":\"" + "a".repeat(256) + "\"}"}) {
+            mvc.perform(put("/api/houses/{id}", house.getId()).header("Authorization", ownerToken)
+                    .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
+            assertEquals("Original", houses.findById(house.getId()).orElseThrow().getName());
+        }
+        mvc.perform(put("/api/houses/{id}", house.getId()).header("Authorization", ownerToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"" + "a".repeat(255) + "\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.name").value("a".repeat(255)));
+    }
+
+    @Test
     void shouldCreateHouseForAuthenticatedUserAndAllowReadingIt() throws Exception {
         mvc.perform(post("/api/houses").header("Authorization", ownerToken)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"  Casa Valencia  \"}"))

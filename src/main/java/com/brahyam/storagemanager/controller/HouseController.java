@@ -32,6 +32,13 @@ public class HouseController {
         return ResponseEntity.created(URI.create("/api/houses/" + house.id())).body(house);
     }
 
+    @PutMapping("/{id}")
+    public HouseResponse rename(@PathVariable Long id, @Valid @RequestBody HouseRequest request,
+                                Principal principal) {
+        User user = userService.findByEmail(principal.getName());
+        return HouseResponse.from(houseService.rename(id, request.name(), user));
+    }
+
     @PostMapping("/{id}/invitation")
     public HouseInvitationResponse renewInvitation(@PathVariable Long id, Principal principal) {
         User user = userService.findByEmail(principal.getName());
