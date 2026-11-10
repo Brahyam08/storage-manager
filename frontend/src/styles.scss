@@ -620,6 +620,9 @@ input[readonly] {
   font-size: 0.7rem;
   vertical-align: middle;
 }
+.inventory-search {
+  margin-bottom: 24px;
+}
 .inventory-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -1402,7 +1405,7 @@ input[readonly] {
   }
 }
 
-.edit-form-title {
+.item-form-title {
   scroll-margin-top: 24px;
 }
 

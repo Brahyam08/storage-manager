@@ -42,7 +42,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   @ViewChild('actionTitle') set actionTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
     title?.nativeElement.focus();
   }
-  @ViewChild('editTitle') set editTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
+  @ViewChild('formTitle') set formTitle(title: ElementRef<HTMLHeadingElement> | undefined) {
     if (!title) return;
     const element = title.nativeElement;
     const viewport = element.ownerDocument.defaultView;
@@ -54,7 +54,19 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   @ViewChild(ItemUsePanelComponent) private usePanel?: ItemUsePanelComponent;
 
   canRefresh() {
-    return !this.mode() && !this.busy() && !this.usePanel?.busy() && !this.usePanel?.form.dirty;
+    return (
+      !this.mode() &&
+      !this.busy() &&
+      !this.editForm.dirty &&
+      !this.usePanel?.busy() &&
+      !this.usePanel?.form.dirty
+    );
+  }
+
+  confirmDiscardEdit(): boolean {
+    return (
+      !this.editForm.dirty || window.confirm('Hay cambios sin guardar. ¿Quieres descartarlos?')
+    );
   }
 
   readonly updated = output<InventoryItem>();
@@ -193,7 +205,10 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
         finalize(() => this.busy.set(false)),
       )
       .subscribe({
-        next: (item) => this.updated.emit(item),
+        next: (item) => {
+          this.editForm.markAsPristine();
+          this.updated.emit(item);
+        },
         error: (error) => this.error.set(apiError(error)),
       });
   }
@@ -291,7 +306,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
   }
 
   refresh() {
-    if (this.busy()) return;
+    if (this.busy() || !this.confirmDiscardEdit()) return;
     this.busy.set(true);
     this.error.set('');
     this.api

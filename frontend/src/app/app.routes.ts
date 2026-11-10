@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
+import type { ItemPageComponent } from './inventory/item-page.component';
 
 export const routes: Routes = [
   {
@@ -23,6 +24,7 @@ export const routes: Routes = [
   {
     path: 'objetos/:id',
     canActivate: [authGuard],
+    canDeactivate: [(page: ItemPageComponent) => page.confirmLeaving()],
     loadComponent: () =>
       import('./inventory/item-page.component').then((module) => module.ItemPageComponent),
   },

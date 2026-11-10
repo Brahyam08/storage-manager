@@ -214,7 +214,7 @@
   @if (mode() && mode() !== 'delete' && mode() !== 'archive') {
     <div class="item-action-content">
       @if (mode() === 'restock' && item.ownerId === userId) {
-        <h3>Añadir unidades</h3>
+        <h3 #formTitle tabindex="-1" class="item-form-title">Añadir unidades</h3>
         <form [formGroup]="restockForm" (ngSubmit)="restock()">
           <fieldset class="creation-fields" [disabled]="busy()">
             <div>
@@ -292,7 +292,7 @@
         </ul>
       }
       @if (mode() === 'edit' && item.ownerId === userId) {
-        <h3 #editTitle tabindex="-1" class="edit-form-title">Editar objeto</h3>
+        <h3 #formTitle tabindex="-1" class="item-form-title">Editar objeto</h3>
         <form [formGroup]="editForm" (ngSubmit)="save()">
           <fieldset class="creation-fields" [disabled]="busy()">
             <div>
@@ -422,7 +422,7 @@
         </form>
       }
       @if (mode() === 'move') {
-        <h3>Cambiar de sitio</h3>
+        <h3 #formTitle tabindex="-1" class="item-form-title">Cambiar de sitio</h3>
         <p class="muted">
           Ubicación actual: {{ item.location?.path ?? 'Sin ubicación' }}. Se trasladará la cantidad
           completa ({{ item.quantity }}

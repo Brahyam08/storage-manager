@@ -19,6 +19,7 @@ import { onVisibleRefresh } from '../core/visible-refresh';
 @Component({
   selector: 'app-item-page',
   imports: [RouterLink, ItemDetailComponent],
+  host: { '(window:beforeunload)': 'warnBeforeUnload($event)' },
   template: `
     <main class="detail-page">
       <nav class="detail-page-nav" aria-label="Navegación del objeto">
@@ -143,6 +144,14 @@ export class ItemPageComponent {
 
   load() {
     if (!this.loading()) this.reload.next();
+  }
+
+  confirmLeaving(): boolean {
+    return !this.auth.user() || (this.detail?.confirmDiscardEdit() ?? true);
+  }
+
+  warnBeforeUnload(event: BeforeUnloadEvent) {
+    if (this.detail?.editForm.dirty) event.preventDefault();
   }
 
   back() {

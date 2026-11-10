@@ -192,59 +192,7 @@
           </section>
         }
       } @else {
-        @if (selectedHouse(); as house) {
-          <app-inventory-create
-            [houseId]="house.id"
-            (created)="itemCreated()"
-            (locationsUpdated)="locationsChanged()"
-          />
-        }
-        @if (auth.storageWarning()) {
-          <p class="error-banner" role="status">{{ auth.storageWarning() }}</p>
-        }
-        @if (inventoryNotice()) {
-          <p class="creation-notice" role="status">{{ inventoryNotice() }}</p>
-        }
-        <section class="summary-grid" aria-label="Resumen del inventario mostrado">
-          <article class="summary-card">
-            <span>Objetos encontrados</span><strong>{{ visibleItems().length }}</strong
-            ><small>En esta búsqueda</small>
-          </article>
-          <article class="summary-card">
-            <span>Consumibles agotados</span><strong>{{ emptyCount() }}</strong
-            ><small>Para tener en cuenta al reponer</small>
-          </article>
-        </section>
-        <section class="inventory-section" aria-labelledby="inventory-title">
-          <div class="inventory-heading">
-            <h2 id="inventory-title">
-              Tu inventario <span class="count-badge">{{ visibleItems().length }}</span>
-            </h2>
-            <div class="detail-actions">
-              <button
-                class="button secondary"
-                type="button"
-                [disabled]="!canExportCsv()"
-                (click)="exportCsv()"
-              >
-                Exportar CSV
-              </button>
-              <button
-                class="button secondary"
-                type="button"
-                [disabled]="loadingItems()"
-                (click)="reloadItems()"
-              >
-                Actualizar inventario
-              </button>
-            </div>
-          </div>
-          <p class="muted">
-            El CSV incluye solo los resultados visibles, también los privados que puedas ver.
-          </p>
-          @if (exportError()) {
-            <p class="error-banner" role="alert">{{ exportError() }}</p>
-          }
+        <section class="inventory-search" aria-label="Buscar y filtrar inventario">
           <div class="inventory-toolbar">
             <div class="search-field">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -301,6 +249,60 @@
             ><input type="checkbox" [checked]="showArchived()" (change)="toggleArchived()" />
             Mostrar objetos archivados</label
           >
+        </section>
+        @if (selectedHouse(); as house) {
+          <app-inventory-create
+            [houseId]="house.id"
+            (created)="itemCreated()"
+            (locationsUpdated)="locationsChanged()"
+          />
+        }
+        @if (auth.storageWarning()) {
+          <p class="error-banner" role="status">{{ auth.storageWarning() }}</p>
+        }
+        @if (inventoryNotice()) {
+          <p class="creation-notice" role="status">{{ inventoryNotice() }}</p>
+        }
+        <section class="summary-grid" aria-label="Resumen del inventario mostrado">
+          <article class="summary-card">
+            <span>Objetos encontrados</span><strong>{{ visibleItems().length }}</strong
+            ><small>En esta búsqueda</small>
+          </article>
+          <article class="summary-card">
+            <span>Consumibles agotados</span><strong>{{ emptyCount() }}</strong
+            ><small>Para tener en cuenta al reponer</small>
+          </article>
+        </section>
+        <section class="inventory-section" aria-labelledby="inventory-title">
+          <div class="inventory-heading">
+            <h2 id="inventory-title">
+              Tu inventario <span class="count-badge">{{ visibleItems().length }}</span>
+            </h2>
+            <div class="detail-actions">
+              <button
+                class="button secondary"
+                type="button"
+                [disabled]="!canExportCsv()"
+                (click)="exportCsv()"
+              >
+                Exportar CSV
+              </button>
+              <button
+                class="button secondary"
+                type="button"
+                [disabled]="loadingItems()"
+                (click)="reloadItems()"
+              >
+                Actualizar inventario
+              </button>
+            </div>
+          </div>
+          <p class="muted">
+            El CSV incluye solo los resultados visibles, también los privados que puedas ver.
+          </p>
+          @if (exportError()) {
+            <p class="error-banner" role="alert">{{ exportError() }}</p>
+          }
           @if (itemError()) {
             <div class="error-banner" role="alert">
               {{ itemError() }}

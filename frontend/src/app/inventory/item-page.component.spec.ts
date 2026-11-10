@@ -68,6 +68,30 @@ describe('Item page navigation', () => {
     http.verify();
   });
 
+  it('keeps the draft when leaving or refreshing is cancelled', () => {
+    http.expectOne('/api/items/4').flush(item);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const detail = fixture.debugElement.query(By.directive(ItemDetailComponent))
+      .componentInstance as ItemDetailComponent;
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    try {
+      detail.open('edit');
+      expect(page.confirmLeaving()).toBe(true);
+      expect(confirm).not.toHaveBeenCalled();
+      detail.editForm.controls.name.setValue('Mi borrador');
+      detail.editForm.controls.name.markAsDirty();
+      expect(page.confirmLeaving()).toBe(false);
+      detail.refresh();
+      http.expectNone('/api/items/4');
+      expect(detail.editForm.controls.name.value).toBe('Mi borrador');
+      confirm.mockReturnValue(true);
+      expect(page.confirmLeaving()).toBe(true);
+    } finally {
+      confirm.mockRestore();
+    }
+  });
+
   it('checks remote changes on return without blanking the current view', () => {
     http.expectOne('/api/items/4').flush(item);
     fixture.detectChanges();
