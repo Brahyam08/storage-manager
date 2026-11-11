@@ -62,6 +62,10 @@ describe('Item page navigation', () => {
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(ItemPageComponent);
+    http.expectOne('/api/houses').flush([
+      { id: 1, name: 'Estudio', ownerId: 7 },
+      { id: 2, name: 'Taller', ownerId: 7 },
+    ]);
   });
   afterEach(() => {
     fixture.destroy();
@@ -148,11 +152,25 @@ describe('Item page navigation', () => {
     });
   });
 
+  it('keeps the item house selected when leaving via the house selector is cancelled', () => {
+    http.expectOne('/api/items/4').flush(item);
+    fixture.detectChanges();
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector('#house');
+    expect(select.selectedOptions[0].textContent).toBe('Estudio');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(false);
+    select.selectedIndex = Array.from(select.options).findIndex(
+      (option) => option.textContent === 'Taller',
+    );
+    select.dispatchEvent(new Event('change'));
+    expect(navigate).toHaveBeenCalledWith(['/inventario'], { queryParams: { house: 2 } });
+    expect(select.selectedOptions[0].textContent).toBe('Estudio');
+  });
+
   it('offers retry after a failed request without rendering another item', () => {
     http.expectOne('/api/items/4').flush({}, { status: 404, statusText: 'Not found' });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-item-detail')).toBeNull();
-    fixture.nativeElement.querySelector('button').click();
+    fixture.nativeElement.querySelector('[role="alert"] button').click();
     http.expectOne('/api/items/4').flush(item);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();

@@ -2,31 +2,41 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
+  effect,
   ViewChild,
   inject,
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, startWith, Subject, switchMap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { InventoryApiService } from '../core/inventory-api.service';
 import { apiError } from '../core/api-error';
 import { InventoryItem } from '../core/models';
 import { ItemDetailComponent } from './item-detail.component';
+import { WorkspaceLayoutComponent } from './workspace-layout.component';
 import { onVisibleRefresh } from '../core/visible-refresh';
 
 @Component({
   selector: 'app-item-page',
-  imports: [RouterLink, ItemDetailComponent],
+  imports: [RouterLink, ItemDetailComponent, WorkspaceLayoutComponent],
   host: { '(window:beforeunload)': 'warnBeforeUnload($event)' },
   template: `
-    <main class="detail-page">
+    <app-workspace-layout
+      [houses]="houses()"
+      [houseControl]="houseControl"
+      housePlaceholder="Selecciona una casa"
+      (showInventory)="back()"
+      (showHouses)="openHouses()"
+      (signOut)="logout()"
+    >
       <nav class="detail-page-nav" aria-label="Navegación del objeto">
         <a class="button secondary" routerLink="/inventario" [queryParams]="backParams"
           >Volver al inventario</a
         >
-        <a class="button secondary" routerLink="/perfil">Mi perfil</a>
       </nav>
       @if (loading()) {
         <p role="status">Cargando objeto…</p>
@@ -43,7 +53,7 @@ import { onVisibleRefresh } from '../core/visible-refresh';
           (deleted)="back()"
         />
       }
-    </main>
+    </app-workspace-layout>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,22 +69,44 @@ export class ItemPageComponent {
   readonly item = signal<InventoryItem | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly houses = toSignal(this.api.houses().pipe(catchError(() => of([]))), {
+    initialValue: [],
+  });
+  readonly houseControl = new FormControl<number | null>({ value: null, disabled: true });
+  private readonly currentHouseId = computed(() => {
+    const item = this.item();
+    return item?.houseId ?? item?.location?.houseId ?? Number(this.backParams.house);
+  });
+  private readonly selectedHouseId = computed(
+    () => this.houses().find((house) => house.id === this.currentHouseId())?.id ?? null,
+  );
   get backParams() {
+    const { queryParamMap, paramMap } = this.route.snapshot;
     return {
-      house:
-        this.route.snapshot.queryParamMap.get('house') ??
-        this.item()?.houseId ??
-        this.item()?.location?.houseId,
-      search: this.route.snapshot.queryParamMap.get('search'),
-      filter: this.route.snapshot.queryParamMap.get('filter'),
-      ...(this.route.snapshot.queryParamMap.get('location')
-        ? { location: this.route.snapshot.queryParamMap.get('location') }
+      house: queryParamMap.get('house') ?? this.item()?.houseId ?? this.item()?.location?.houseId,
+      search: queryParamMap.get('search'),
+      filter: queryParamMap.get('filter'),
+      ...(queryParamMap.get('location') ? { location: queryParamMap.get('location') } : {}),
+      ...(queryParamMap.get('archived') === '1' ? { archived: '1' } : {}),
+      ...(queryParamMap.has('sort') ? { sort: queryParamMap.get('sort') } : {}),
+      ...(queryParamMap.has('page')
+        ? { page: queryParamMap.get('page'), focus: paramMap.get('id') }
         : {}),
-      ...(this.route.snapshot.queryParamMap.get('archived') === '1' ? { archived: '1' } : {}),
     };
   }
 
   constructor() {
+    effect(() => {
+      this.houseControl.setValue(this.selectedHouseId(), { emitEvent: false });
+      if (this.houses().length) this.houseControl.enable({ emitEvent: false });
+    });
+    this.houseControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((house) => {
+      // Keep showing the item's house if navigation is cancelled by the draft guard.
+      this.houseControl.setValue(this.selectedHouseId(), { emitEvent: false });
+      if (house !== null && house !== this.selectedHouseId()) {
+        void this.router.navigate(['/inventario'], { queryParams: { house } });
+      }
+    });
     onVisibleRefresh(() => this.checkUpdates());
     this.route.paramMap
       .pipe(
@@ -152,6 +184,18 @@ export class ItemPageComponent {
 
   warnBeforeUnload(event: BeforeUnloadEvent) {
     if (this.detail?.editForm.dirty) event.preventDefault();
+  }
+
+  openHouses() {
+    void this.router.navigate(['/inventario'], {
+      queryParams: { house: this.selectedHouseId() ?? this.backParams.house, view: 'casas' },
+    });
+  }
+
+  logout() {
+    if (!this.confirmLeaving()) return;
+    this.auth.clear();
+    void this.router.navigate(['/acceso']);
   }
 
   back() {

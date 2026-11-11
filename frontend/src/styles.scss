@@ -612,6 +612,35 @@ input[readonly] {
 .inventory-heading > span {
   font-size: 0.7rem;
 }
+.inventory-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin: 18px 0;
+}
+.inventory-order {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.inventory-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+.inventory-pagination span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.item-list + .inventory-pagination {
+  margin-top: 16px;
+}
 .count-badge {
   margin-left: 6px;
   border-radius: 5px;

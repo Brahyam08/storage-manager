@@ -308,6 +308,45 @@ describe('House switching', () => {
     active.flush([]);
   });
 
+  it('orders all matches before paginating and exports the full ordered result', async () => {
+    const request = await vi.waitFor(() => http.expectOne((r) => r.url === '/api/items'));
+    const items = Array.from({ length: 26 }, (_, index) => ({
+      id: index + 1,
+      name: `Objeto ${index + 1}`,
+      quantity: index + 1,
+      kind: 'CONSUMABLE',
+      visibility: 'PRIVATE',
+      location: null,
+    }));
+    request.flush(items);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+    const select = host.querySelector<HTMLSelectElement>('#inventory-order')!;
+    select.value = 'quantity-desc';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(host.querySelectorAll('.item-card-link')).toHaveLength(25);
+    expect(host.querySelector('.item-card-link h3')?.textContent).toBe('Objeto 26');
+    const pagination = host.querySelector('.inventory-pagination')!;
+    expect(pagination.textContent).toContain('1–25 de 26');
+    pagination.querySelectorAll('button')[1].click();
+    fixture.detectChanges();
+
+    expect(host.querySelectorAll('.item-card-link')).toHaveLength(1);
+    expect(host.querySelector('.item-card-link h3')?.textContent).toBe('Objeto 1');
+    expect(host.querySelector('.item-card-link')?.getAttribute('href')).toContain('page=2');
+    expect(pagination.textContent).toContain('26–26 de 26');
+    fixture.componentInstance.exportCsv();
+    expect(csvExport.download).toHaveBeenCalledWith([...items].reverse());
+
+    select.value = 'name';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(host.querySelector('.item-card-link h3')?.textContent).toBe('Objeto 1');
+    expect(host.querySelectorAll('.item-card-link')).toHaveLength(25);
+  });
+
   it('distinguishes an individual state from a group quantity in the item cards', async () => {
     const request = await vi.waitFor(() =>
       http.expectOne((request) => request.url === '/api/items'),

@@ -1,10 +1,14 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
+  ElementRef,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -21,6 +25,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
+import { WorkspaceLayoutComponent } from './workspace-layout.component';
 import { InventoryCreateComponent } from './inventory-create.component';
 import { Subject } from 'rxjs';
 import { AuthService } from '../core/auth.service';
@@ -30,11 +35,60 @@ import { House, InventoryItem, StorageLocation } from '../core/models';
 import { InventoryCsvExport } from './inventory-csv';
 import { onVisibleRefresh } from '../core/visible-refresh';
 
+const PAGE_SIZE = 25;
+const ITEM_ORDERS = [
+  { value: 'registered', label: 'Orden de registro' },
+  { value: 'name', label: 'Nombre (A–Z)' },
+  { value: 'name-desc', label: 'Nombre (Z–A)' },
+  { value: 'location', label: 'Ubicación (A–Z)' },
+  { value: 'quantity-desc', label: 'Cantidad total (mayor primero)' },
+  { value: 'quantity', label: 'Cantidad total (menor primero)' },
+  { value: 'status', label: 'Estado (agotados primero)' },
+  { value: 'visibility', label: 'Visibilidad (compartidos primero)' },
+] as const;
+
+type ItemOrder = (typeof ITEM_ORDERS)[number]['value'];
+const inventoryCollator = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
+
+function itemStatus(item: InventoryItem): number {
+  if (item.archived) return 3;
+  if (item.outOfStock) return 0;
+  return item.inUseQuantity > 0 ? 1 : 2;
+}
+
+function compareItems(left: InventoryItem, right: InventoryItem, order: ItemOrder): number {
+  switch (order) {
+    case 'name-desc':
+      return inventoryCollator.compare(right.name, left.name);
+    case 'location':
+      if (!left.location || !right.location) {
+        return Number(!left.location) - Number(!right.location);
+      }
+      return inventoryCollator.compare(left.location.path, right.location.path);
+    case 'quantity':
+      return left.quantity - right.quantity;
+    case 'quantity-desc':
+      return right.quantity - left.quantity;
+    case 'status':
+      return itemStatus(left) - itemStatus(right);
+    case 'visibility':
+      return Number(left.visibility === 'PRIVATE') - Number(right.visibility === 'PRIVATE');
+    default:
+      return inventoryCollator.compare(left.name, right.name);
+  }
+}
+
 type ItemFilter = 'unassigned' | 'all' | 'private' | 'shared' | 'empty' | 'consumable' | 'reusable';
 
 @Component({
   selector: 'app-inventory-page',
-  imports: [ReactiveFormsModule, RouterLink, InventoryCreateComponent],
+  imports: [
+    NgTemplateOutlet,
+    ReactiveFormsModule,
+    RouterLink,
+    InventoryCreateComponent,
+    WorkspaceLayoutComponent,
+  ],
   templateUrl: './inventory-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,10 +121,19 @@ export class InventoryPageComponent {
   readonly exportError = signal('');
   private readonly requestedSearch = signal<string | null>(null);
   readonly showArchived = signal(this.route.snapshot.queryParamMap.get('archived') === '1');
-  readonly managingHouses = signal(false);
+  readonly managingHouses = signal(this.route.snapshot.queryParamMap.get('view') === 'casas');
   readonly invitationCode = signal('');
   readonly notice = signal('');
   readonly filter = signal<ItemFilter>(this.initialFilter());
+  readonly itemOrders = ITEM_ORDERS;
+  readonly sortControl = new FormControl(
+    this.parseOrder(this.route.snapshot.queryParamMap.get('sort')),
+    { nonNullable: true },
+  );
+  readonly sort = toSignal(this.sortControl.valueChanges, { initialValue: this.sortControl.value });
+  private readonly requestedPage = signal(this.positiveParam('page') ?? 1);
+  private returnItemId = this.positiveParam('focus');
+  private readonly itemList = viewChild<ElementRef<HTMLUListElement>>('itemList');
   readonly houseControl = new FormControl<number | null>({ value: null, disabled: true });
   readonly selectedId = toSignal(this.houseControl.valueChanges, { initialValue: null });
   readonly searchControl = new FormControl(this.route.snapshot.queryParamMap.get('search') ?? '', {
@@ -99,6 +162,25 @@ export class InventoryPageComponent {
       }
     }),
   );
+  readonly orderedItems = computed(() => {
+    const order = this.sort();
+    const items = this.visibleItems();
+    if (order === 'registered') return items;
+    return [...items].sort(
+      (left, right) =>
+        compareItems(left, right, order) ||
+        inventoryCollator.compare(left.name, right.name) ||
+        left.id - right.id,
+    );
+  });
+  readonly pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.visibleItems().length / PAGE_SIZE)),
+  );
+  readonly page = computed(() => Math.min(this.requestedPage(), this.pageCount()));
+  readonly pageStart = computed(() => (this.page() - 1) * PAGE_SIZE);
+  readonly pageItems = computed(() =>
+    this.orderedItems().slice(this.pageStart(), this.pageStart() + PAGE_SIZE),
+  );
   readonly emptyCount = computed(
     () => this.visibleItems().filter((item) => item.outOfStock).length,
   );
@@ -118,6 +200,16 @@ export class InventoryPageComponent {
   private checkingUpdates = false;
 
   constructor() {
+    afterRenderEffect(() => {
+      if (this.returnItemId === null) return;
+      const list = this.itemList()?.nativeElement;
+      if (!list) return;
+      const item = list.querySelector<HTMLElement>(`#inventory-item-${this.returnItemId}`);
+      this.returnItemId = null;
+      this.reveal(item ?? list);
+    });
+    this.searchControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.resetPage());
+    this.sortControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.resetPage());
     onVisibleRefresh(() => this.checkUpdates());
     combineLatest([
       this.houseControl.valueChanges.pipe(
@@ -126,8 +218,10 @@ export class InventoryPageComponent {
           if (houseId !== this.currentHouseId) {
             this.cancelHouseRename();
             this.renameNotice.set('');
-            if (this.currentHouseId !== null)
+            if (this.currentHouseId !== null) {
+              this.resetPage();
               this.locationControl.setValue(null, { emitEvent: false });
+            }
             this.currentHouseId = houseId;
             this.locationOptions.set([]);
             this.locationControl.disable({ emitEvent: false });
@@ -164,12 +258,13 @@ export class InventoryPageComponent {
         takeUntilDestroyed(),
       )
       .subscribe((items) => {
-        this.items.set(items);
+        if (!this.itemError()) this.applyItems(items);
         this.loadingItems.set(false);
       });
-    this.locationControl.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.refreshItems.next());
+    this.locationControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.resetPage();
+      this.refreshItems.next();
+    });
     combineLatest([
       this.houseControl.valueChanges.pipe(startWith(null), distinctUntilChanged()),
       this.refreshLocations.pipe(startWith(undefined)),
@@ -219,8 +314,42 @@ export class InventoryPageComponent {
   }
 
   private initialLocation(): number | null {
-    const id = Number(this.route.snapshot.queryParamMap.get('location'));
+    return this.positiveParam('location');
+  }
+
+  private positiveParam(name: string): number | null {
+    const id = Number(this.route.snapshot.queryParamMap.get(name));
     return Number.isSafeInteger(id) && id > 0 ? id : null;
+  }
+
+  private parseOrder(value: string | null): ItemOrder {
+    return ITEM_ORDERS.find((order) => order.value === value)?.value ?? 'registered';
+  }
+
+  private applyItems(items: InventoryItem[]) {
+    this.items.set(items);
+    const index =
+      this.returnItemId === null
+        ? -1
+        : this.orderedItems().findIndex((item) => item.id === this.returnItemId);
+    this.requestedPage.set(index === -1 ? this.page() : Math.floor(index / PAGE_SIZE) + 1);
+  }
+
+  private resetPage() {
+    this.returnItemId = null;
+    this.requestedPage.set(1);
+  }
+
+  private reveal(element: HTMLElement) {
+    element.focus({ preventScroll: true });
+    element.scrollIntoView?.({ block: 'nearest' });
+  }
+
+  changePage(delta: number, heading: HTMLElement) {
+    const next = this.page() + delta;
+    if (next < 1 || next > this.pageCount()) return;
+    this.requestedPage.set(next);
+    this.reveal(heading);
   }
 
   reloadLocations() {
@@ -392,7 +521,7 @@ export class InventoryPageComponent {
     if (!this.canExportCsv()) return;
     this.exportError.set('');
     try {
-      this.csv.download(this.visibleItems());
+      this.csv.download(this.orderedItems());
     } catch {
       this.exportError.set('No se pudo preparar la descarga. Inténtalo de nuevo.');
     }
@@ -432,7 +561,7 @@ export class InventoryPageComponent {
           )
             return;
           this.itemError.set('');
-          this.items.set(items);
+          this.applyItems(items);
         },
         error: (error) => {
           if (this.selectedId() === houseId && this.items() === previous && error.status === 403) {
@@ -464,11 +593,13 @@ export class InventoryPageComponent {
   }
 
   toggleArchived() {
+    this.resetPage();
     this.showArchived.update((value) => !value);
     this.refreshItems.next();
   }
 
   setFilter(event: Event) {
+    this.resetPage();
     this.filter.set((event.target as HTMLSelectElement).value as ItemFilter);
   }
   resetSearch() {
