@@ -11,6 +11,5 @@ public interface ItemUseRepository extends JpaRepository<ItemUse, Long> {
     long activeQuantity(@Param("itemId") Long itemId);
     Optional<ItemUse> findByIdAndItemId(Long id, Long itemId);
     List<ItemUse> findByItemIdOrderByTakenAtDescIdDesc(Long itemId);
-    boolean existsByItemId(Long itemId);
     boolean existsByLocationId(Long locationId);
 }

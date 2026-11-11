@@ -391,7 +391,7 @@ describe('Item detail', () => {
     expect(component.mode()).toBeNull();
     http.expectNone('/api/items/4/consume');
     expect(fixture.nativeElement.textContent).not.toContain('Registrar consumo');
-    expect(fixture.nativeElement.textContent).not.toContain('Ver consumos');
+    expect(fixture.nativeElement.textContent).toContain('Ver consumos');
     expect(fixture.nativeElement.textContent).toContain('Reutilizable');
     const stock = fixture.nativeElement.querySelector('[aria-label="Existencias del objeto"]');
     expect(stock.querySelector('strong').textContent).toBe('1');

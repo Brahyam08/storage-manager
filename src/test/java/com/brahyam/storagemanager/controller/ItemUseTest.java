@@ -170,11 +170,13 @@ class ItemUseTest {
     }
 
     @Test
-    void shouldPreserveHistoryAfterReturnAndAllowMovementAgain() throws Exception {
+    void shouldPreserveHistoryAfterReturnAndAllowConversionAndMovement() throws Exception {
         giveBack(take(1, ownerToken), ownerToken, 200);
         mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Ratón\",\"quantity\":10,\"kind\":\"CONSUMABLE\",\"locationId\":" + source.getId() + "}"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.kind").value("CONSUMABLE"));
+        mvc.perform(get("/api/items/{id}/uses", item.getId()).header("Authorization", ownerToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].returnedAt").isNotEmpty());
         mvc.perform(patch("/api/items/{id}/move", item.getId()).header("Authorization", ownerToken)
                 .param("toLocationId", target.getId().toString()).param("quantity", "10")).andExpect(status().isOk());
         assertEquals(source.getId(), uses.findByItemIdOrderByTakenAtDescIdDesc(item.getId()).getFirst().getLocation().getId());

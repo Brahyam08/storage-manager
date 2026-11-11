@@ -109,7 +109,7 @@ class ItemConsumptionTest {
     }
 
     @Test
-    void shouldReclassifyExistingItemsWithoutConsumptionButPreserveRecordedConsumptionMeaning() throws Exception {
+    void shouldReclassifyItemsAndPreserveRecordedConsumption() throws Exception {
         String request = "{\"name\":\"Ratón\",\"quantity\":1,\"kind\":\"REUSABLE\",\"locationId\":" + source.getId() + "}";
         mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
                         .contentType(MediaType.APPLICATION_JSON).content(request))
@@ -118,11 +118,16 @@ class ItemConsumptionTest {
         item.setQuantity(10);
         items.saveAndFlush(item);
         consume(5, ownerToken, 200);
+        String conversion = request.replace("\"quantity\":1", "\"quantity\":5");
         mvc.perform(put("/api/items/{id}", item.getId()).header("Authorization", ownerToken)
-                        .contentType(MediaType.APPLICATION_JSON).content(request))
-                .andExpect(status().isConflict());
-        assertEquals(ItemKind.CONSUMABLE, items.findById(item.getId()).orElseThrow().getKind());
-        assertEquals(5, items.findById(item.getId()).orElseThrow().getQuantity());
+                        .contentType(MediaType.APPLICATION_JSON).content(conversion))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kind").value("REUSABLE"))
+                .andExpect(jsonPath("$.quantity").value(5));
+        mvc.perform(get("/api/items/{id}/consumptions", item.getId()).header("Authorization", ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].quantity").value(5))
+                .andExpect(jsonPath("$[0].remainingQuantity").value(5));
         assertEquals(1, consumptions.count());
     }
 

@@ -1,53 +1,55 @@
 <section class="item-use-section" aria-label="Uso y devoluciones">
   <h3>Uso y devoluciones</h3>
-  @if (item.archived) {
-    <p class="muted">Registro archivado. Puedes consultar su historial de uso.</p>
-  } @else if (item.individual) {
-    <p class="muted">
-      {{
-        item.inUseQuantity ? 'Este objeto está en uso.' : 'Este objeto está disponible para usar.'
-      }}
-    </p>
-  } @else {
-    <p class="muted">
-      Disponibles: {{ item.availableQuantity }} · En uso: {{ item.inUseQuantity }}. Retirar para
-      usar no reduce el total de objetos.
-    </p>
-  }
+  @if (item.kind === 'REUSABLE') {
+    @if (item.archived) {
+      <p class="muted">Registro archivado. Puedes consultar su historial de uso.</p>
+    } @else if (item.individual) {
+      <p class="muted">
+        {{
+          item.inUseQuantity ? 'Este objeto está en uso.' : 'Este objeto está disponible para usar.'
+        }}
+      </p>
+    } @else {
+      <p class="muted">
+        Disponibles: {{ item.availableQuantity }} · En uso: {{ item.inUseQuantity }}. Retirar para
+        usar no reduce el total de objetos.
+      </p>
+    }
 
-  <p class="muted">
-    Las devoluciones registran la retirada completa. Ubicación habitual actual:
-    {{ item.location?.path ?? 'Sin ubicación' }}.
-  </p>
-  @if (error()) {
-    <p class="error-banner" role="alert">{{ error() }}</p>
-  }
-  @if (item.availableQuantity > 0 && !item.archived) {
-    <form [formGroup]="form" (ngSubmit)="take()">
-      <fieldset class="creation-fields use-fields" [disabled]="busy() || committed()">
-        @if (item.availableQuantity > 1) {
-          <div>
-            <label for="take-quantity">Objetos que retiras para usar</label
-            ><input
-              id="take-quantity"
-              formControlName="quantity"
-              type="number"
-              min="1"
-              [max]="item.availableQuantity"
-              step="1"
-            />
-            @if (form.controls.quantity.touched && form.invalid) {
-              <small class="field-error"
-                >Introduce un entero entre 1 y {{ item.availableQuantity }}.</small
-              >
-            }
-          </div>
-        }
-        <button class="button primary" type="submit">Retirar para usar</button>
-      </fieldset>
-    </form>
-  } @else if (!item.individual && !item.archived) {
-    <p class="muted">Todos los objetos están en uso.</p>
+    <p class="muted">
+      Las devoluciones registran la retirada completa. Ubicación habitual actual:
+      {{ item.location?.path ?? 'Sin ubicación' }}.
+    </p>
+    @if (error()) {
+      <p class="error-banner" role="alert">{{ error() }}</p>
+    }
+    @if (item.availableQuantity > 0 && !item.archived) {
+      <form [formGroup]="form" (ngSubmit)="take()">
+        <fieldset class="creation-fields use-fields" [disabled]="busy() || committed()">
+          @if (item.availableQuantity > 1) {
+            <div>
+              <label for="take-quantity">Objetos que retiras para usar</label
+              ><input
+                id="take-quantity"
+                formControlName="quantity"
+                type="number"
+                min="1"
+                [max]="item.availableQuantity"
+                step="1"
+              />
+              @if (form.controls.quantity.touched && form.invalid) {
+                <small class="field-error"
+                  >Introduce un entero entre 1 y {{ item.availableQuantity }}.</small
+                >
+              }
+            </div>
+          }
+          <button class="button primary" type="submit">Retirar para usar</button>
+        </fieldset>
+      </form>
+    } @else if (!item.individual && !item.archived) {
+      <p class="muted">Todos los objetos están en uso.</p>
+    }
   }
   @if (busy()) {
     <p role="status">Registrando la operación…</p>

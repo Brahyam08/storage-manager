@@ -83,6 +83,7 @@ export class ItemDetailComponent implements OnChanges, AfterViewInit {
     | 'restock'
     | 'restocks'
     | 'history'
+    | 'uses'
     | 'move'
     | 'movements'
     | 'delete'

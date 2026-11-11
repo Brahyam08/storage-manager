@@ -88,9 +88,12 @@
       <button class="button secondary" type="button" [disabled]="busy()" (click)="loadMovements()">
         Ver movimientos
       </button>
+      <button class="button secondary" type="button" [disabled]="busy()" (click)="loadHistory()">
+        Ver consumos
+      </button>
       @if (item.kind === 'CONSUMABLE') {
-        <button class="button secondary" type="button" [disabled]="busy()" (click)="loadHistory()">
-          Ver consumos
+        <button class="button secondary" type="button" [disabled]="busy()" (click)="error.set(''); mode.set('uses')">
+          Ver historial de uso
         </button>
       }
       @if (!item.individual) {
@@ -115,6 +118,8 @@
         Devuelve los objetos en uso antes de trasladarlos o cambiar su tipo o visibilidad.
       </p>
     }
+  }
+  @if (item.kind === 'REUSABLE' || mode() === 'uses') {
     <app-item-use-panel [item]="item" [userId]="userId" (updated)="updated.emit($event)" />
   }
   <div class="item-action-group" role="group" aria-label="Gestión del objeto">
@@ -309,8 +314,8 @@
                 <option value="CONSUMABLE">Consumible: se gasta</option>
                 <option value="REUSABLE">Reutilizable: se usa y se conserva</option></select
               ><small class="field-hint"
-                >Un objeto con historial de consumos, reposiciones o uso no puede cambiar de
-                tipo.</small
+                >Al cambiar de tipo se conservan los consumos y las devoluciones. Devuelve antes los
+                objetos en uso. Las reposiciones registradas impiden el cambio.</small
               >
             </div>
             @if (editForm.controls.kind.value === 'REUSABLE') {

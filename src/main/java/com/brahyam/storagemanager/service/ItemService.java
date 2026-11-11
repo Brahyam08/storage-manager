@@ -66,13 +66,6 @@ public class ItemService {
         if (!java.util.Objects.equals(item.getLocation() == null ? null : item.getLocation().getId(), request.getLocationId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usa el movimiento para cambiar la ubicación");
         }
-        if (request.getKind() == ItemKind.REUSABLE && item.getKind() != ItemKind.REUSABLE
-                && consumptions.existsByItemId(id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con consumos registrados");
-        }
-        if (request.getKind() != null && request.getKind() != item.getKind() && uses.existsByItemId(id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con usos registrados");
-        }
         if (request.getKind() != null && request.getKind() != item.getKind() && restocks.existsByItemId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el tipo de un objeto con reposiciones registradas");
         }
