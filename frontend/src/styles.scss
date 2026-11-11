@@ -1245,6 +1245,20 @@ input[readonly] {
   }
 }
 
+.consumption-list .active-use {
+  padding: 16px;
+  margin-block: 8px;
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--green);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.active-use-status {
+  color: var(--green);
+  font-weight: 650;
+}
+
 .item-use-section {
   margin-top: 24px;
   padding-top: 24px;

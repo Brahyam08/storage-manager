@@ -66,7 +66,7 @@
   }
   <ul class="consumption-list">
     @for (use of uses(); track use.id) {
-      <li>
+      <li [class.active-use]="!use.returnedAt">
         <strong
           >{{ use.quantity }} {{ use.quantity === 1 ? 'objeto' : 'objetos' }} ·
           {{ use.usedById === userId ? 'Tú' : 'Usuario #' + use.usedById }}</strong
@@ -77,15 +77,15 @@
         @if (use.returnedAt) {
           <span>Devuelto: {{ use.returnedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
         } @else {
-          <span>En uso</span>
+          <span class="active-use-status">En uso</span>
           @if (use.usedById === userId || item.ownerId === userId) {
             <button
-              class="button secondary"
+              class="button primary"
               type="button"
               [disabled]="busy() || committed()"
               (click)="giveBack(use)"
             >
-              Registrar devolución de {{ use.quantity }}
+              {{ item.individual ? 'Devolver objeto' : 'Devolver ' + use.quantity + (use.quantity === 1 ? ' objeto' : ' objetos') }}
             </button>
           }
         }
