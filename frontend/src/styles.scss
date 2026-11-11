@@ -158,8 +158,12 @@ select option {
       overflow-wrap: anywhere;
       cursor: pointer;
     }
-    select option:hover,
-    select option:focus-visible {
+    select option:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+    select option:enabled:hover,
+    select option:enabled:focus-visible {
       background: #f0f4ed;
     }
     select option:checked {

@@ -121,7 +121,7 @@
               </div>
               @if (itemForm.controls.kind.value === 'REUSABLE') {
                 <div>
-                  <label for="item-individual">Cómo lo gestionas</label>
+                  <label for="item-individual">Cómo lo registras</label>
                   <select
                     id="item-individual"
                     formControlName="individual"
@@ -129,12 +129,11 @@
                       itemForm.controls.individual.value && itemForm.controls.quantity.setValue(1)
                     "
                   >
-                    <option [ngValue]="true">Un objeto individual</option>
-                    <option [ngValue]="false">Un grupo de objetos iguales</option>
+                    <option [ngValue]="true">Por separado</option>
+                    <option [ngValue]="false">Por cantidad</option>
                   </select>
                   <small class="field-hint"
-                    >Un teclado concreto es individual. Varias sillas iguales pueden ser un
-                    grupo.</small
+                    >Registra un teclado por separado o lleva la cuenta de varias sillas iguales.</small
                   >
                 </div>
               }

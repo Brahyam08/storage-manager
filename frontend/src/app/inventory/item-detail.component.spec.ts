@@ -401,6 +401,48 @@ describe('Item detail', () => {
     expect(component.editForm.hasError('reusableQuantity')).toBe(true);
     http.expectNone('/api/items/4');
   });
+  it('explains the saved quantity requirement and allows converting a single reusable object', () => {
+    const group: InventoryItem = { ...item, kind: 'REUSABLE', individual: false };
+    fixture.componentRef.setInput('item', group);
+    fixture.detectChanges();
+    http.expectOne('/api/items/4/uses').flush([]);
+    const component = fixture.componentInstance;
+    component.open('edit');
+    fixture.detectChanges();
+
+    const quantity: HTMLInputElement = fixture.nativeElement.querySelector('#edit-quantity');
+    quantity.value = '1';
+    quantity.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const groupMode: HTMLSelectElement = fixture.nativeElement.querySelector('#edit-individual');
+    expect(groupMode.options[0].disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('#edit-individual-hint').textContent).toContain(
+      'guarda los cambios',
+    );
+
+    component.save();
+    const adjustment = http.expectOne('/api/items/4');
+    expect(adjustment.request.body).toMatchObject({ individual: false, quantity: 1 });
+    const single = { ...group, quantity: 1, availableQuantity: 1 };
+    adjustment.flush(single);
+    fixture.componentRef.setInput('item', single);
+    fixture.detectChanges();
+    http.match('/api/items/4/uses').forEach((request) => request.flush([]));
+
+    component.open('edit');
+    fixture.detectChanges();
+    const singleMode: HTMLSelectElement = fixture.nativeElement.querySelector('#edit-individual');
+    expect(singleMode.options[0].disabled).toBe(false);
+    singleMode.selectedIndex = 0;
+    singleMode.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#edit-quantity')).toBeNull();
+    component.save();
+    const conversion = http.expectOne('/api/items/4');
+    expect(conversion.request.body).toMatchObject({ individual: true, quantity: 1 });
+    conversion.flush({ ...single, individual: true });
+  });
+
   it('moves the full quantity for a member and excludes current or foreign-house destinations', () => {
     fixture.componentRef.setInput('userId', 8);
     fixture.detectChanges();

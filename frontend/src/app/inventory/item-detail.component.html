@@ -315,23 +315,28 @@
             </div>
             @if (editForm.controls.kind.value === 'REUSABLE') {
               <div>
-                <label for="edit-individual">Cómo lo gestionas</label>
+                <label for="edit-individual">Cómo lo registras</label>
                 <select
                   id="edit-individual"
+                  aria-describedby="edit-individual-hint"
                   formControlName="individual"
                   (change)="
                     editForm.controls.individual.value && editForm.controls.quantity.setValue(1)
                   "
                 >
                   <option [ngValue]="true" [disabled]="item.quantity !== 1">
-                    Un objeto individual
+                    Por separado
                   </option>
-                  <option [ngValue]="false">Un grupo de objetos iguales</option>
+                  <option [ngValue]="false">Por cantidad</option>
                 </select>
-                <small class="field-hint"
-                  >Un teclado concreto es individual. Varias sillas iguales pueden ser un
-                  grupo.</small
-                >
+                <small id="edit-individual-hint" class="field-hint">
+                  @if (item.quantity !== 1) {
+                    Para elegir «Por separado», ajusta la cantidad a 1, guarda los cambios y vuelve
+                    a editar.
+                  } @else {
+                    Registra un teclado por separado o lleva la cuenta de varias sillas iguales.
+                  }
+                </small>
               </div>
             }
             <div>
